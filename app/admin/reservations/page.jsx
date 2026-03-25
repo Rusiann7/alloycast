@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 
 export default function AdminReservations() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All Items");
@@ -58,133 +57,16 @@ export default function AdminReservations() {
   };
 
   return (
-    <div className="bg-[#111318] text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-[#131313]/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-container flex items-center justify-center rounded-[4px]">
-            <span className="material-symbols-outlined text-white text-sm">
-              precision_manufacturing
-            </span>
-          </div>
-          <h1 className="text-lg font-black font-headline uppercase leading-none italic">
-            ETHAN MARCUS
-          </h1>
-        </div>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="material-symbols-outlined text-white"
-        >
-          {isSidebarOpen ? "close" : "menu"}
-        </button>
-      </div>
-
-      {/* Sidebar Overlay for Mobile */}
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[65]"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* --- SideNavBar --- */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 z-[70] bg-[#131313] flex flex-col pt-12 pb-6 transition-transform duration-500 ease-in-out border-r border-white/5 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-      >
-        <div className="px-10 mb-16">
-          <h1 className="text-2xl font-black text-[#e5e2e1] font-headline uppercase leading-[0.8] tracking-tighter italic">
-            ETHAN MARCUS
-          </h1>
-          <p className="font-headline uppercase text-[9px] font-black tracking-[0.3em] text-[#C8102E] mt-2">
-            DIECAST ADMIN
-          </p>
-        </div>
-
-        <nav className="flex-1 space-y-0.5">
-          <SidebarLink
-            icon="grid_view"
-            label="OVERVIEW"
-            href="/admin/dashboard"
-          />
-          <SidebarLink
-            icon="inventory_2"
-            label="INVENTORY"
-            href="/admin/inventory"
-          />
-          <SidebarLink
-            icon="event_available"
-            label="RESERVATIONS"
-            active
-            href="/admin/reservations"
-          />
-          <SidebarLink icon="group" label="CUSTOMERS" href="/admin/customers" />
-          <SidebarLink icon="ios_share" label="EXPORT" href="/admin/export" />
-        </nav>
-
-        <div className="px-6 pt-6 border-t border-white/5 mt-auto">
-          <button className="w-full bg-primary-container text-white py-3 font-headline font-bold text-xs tracking-widest uppercase hover:brightness-110 transition-all rounded-[2px] mb-6">
-            ADD NEW LISTING
-          </button>
-          <div className="space-y-1">
-            <SidebarItemSmall icon="settings" label="Settings" />
-            <SidebarItemSmall icon="help" label="Support" />
-          </div>
-        </div>
-      </aside>
-
-      {/* --- TopNavBar (Desktop Only) --- */}
-      <header className="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#131313]/60 backdrop-blur-md hidden lg:flex justify-between items-center h-16 px-10 border-b border-white/[0.03]">
-        <div className="flex items-center bg-surface-container-highest/30 px-5 py-2 rounded-[2px] w-96 border border-white/5">
-          <span className="material-symbols-outlined text-on-surface/30 mr-3 text-sm">
-            search
-          </span>
-          <input
-            className="bg-transparent border-none focus:ring-0 text-xs font-headline font-bold uppercase tracking-widest w-full text-on-surface placeholder:opacity-20"
-            placeholder="Quick search..."
-            type="text"
-          />
-        </div>
-        <div className="flex items-center gap-8">
-          <span className="font-headline font-black uppercase tracking-widest text-on-surface/30 text-[10px]">
-            THE INDUSTRIAL CURATOR
-          </span>
-          <div className="flex items-center gap-6">
-            <button className="relative hover:text-primary-container transition-colors group">
-              <span className="material-symbols-outlined font-light">
-                notifications
-              </span>
-              <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-primary-container rounded-full ring-2 ring-[#131313]"></span>
-            </button>
-            <div className="flex items-center gap-4 pl-6 border-l border-white/10">
-              <div className="text-right">
-                <p className="text-[11px] font-black font-headline uppercase leading-none">
-                  MARCUS E.
-                </p>
-                <p className="text-[8px] text-[#C8102E] font-bold uppercase tracking-widest mt-1">
-                  HEAD CURATOR
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-full border border-primary-container/20 overflow-hidden group">
-                <img
-                  src="https://i.pravatar.cc/150?u=ethan"
-                  alt="Admin"
-                  className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       {/* --- Main Content --- */}
       <main
-        className={`lg:ml-64 pt-24 lg:pt-28 px-10 pb-12 transition-all duration-500 ${isDrawerOpen ? "lg:mr-[450px]" : ""}`}
+        className={`lg:ml-64 pt-24 lg:pt-10 px-10 pb-12 transition-all duration-500 ${isDrawerOpen ? "lg:mr-[450px]" : ""}`}
       >
         {/* Page Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up">
           <div>
             <div className="flex items-center gap-4 mb-2">
-              <h2 className="text-5xl font-black font-headline tracking-tighter uppercase italic">
+              <h2 className="text-6xl font-black font-headline tracking-tighter uppercase italic">
                 Reservations
               </h2>
               <span className="bg-primary-container text-white px-3 py-1 text-[10px] font-black font-headline uppercase tracking-widest rounded-[2px] shadow-lg shadow-primary-container/20">

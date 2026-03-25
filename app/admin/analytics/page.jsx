@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 
 export default function AdminAnalytics() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [dateRange, setDateRange] = useState("Last 30 Days");
 
   const topModels = [
@@ -51,131 +50,22 @@ export default function AdminAnalytics() {
   ];
 
   return (
-    <div className="bg-[#131313] text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-[#131313]/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-container flex items-center justify-center rounded-[4px]">
-            <span className="material-symbols-outlined text-white text-sm">
-              precision_manufacturing
-            </span>
-          </div>
-          <h1 className="text-lg font-black font-headline uppercase leading-none italic uppercase">
-            ETHAN MARCUS
-          </h1>
-        </div>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="material-symbols-outlined text-white"
-        >
-          {isSidebarOpen ? "close" : "menu"}
-        </button>
-      </div>
-
-      {/* Sidebar Overlay for Mobile */}
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[65]"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* --- SideNavBar --- */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 z-[70] bg-[#131313] flex flex-col pt-12 pb-6 transition-transform duration-500 ease-in-out border-r border-white/5 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-      >
-        <div className="px-10 mb-16">
-          <h1 className="text-2xl font-black text-[#e5e2e1] font-headline uppercase leading-[0.8] tracking-tighter italic">
-            ETHAN MARCUS
-          </h1>
-          <p className="font-headline uppercase text-[9px] font-black tracking-[0.3em] text-[#C8102E] mt-2">
-            DIECAST ADMIN
-          </p>
-        </div>
-
-        <nav className="flex-1 space-y-0.5">
-          <SidebarLink
-            icon="grid_view"
-            label="OVERVIEW"
-            href="/admin/dashboard"
-          />
-          <SidebarLink
-            icon="inventory_2"
-            label="INVENTORY"
-            href="/admin/inventory"
-          />
-          <SidebarLink
-            icon="event_available"
-            label="RESERVATIONS"
-            href="/admin/reservations"
-          />
-          <SidebarLink
-            icon="analytics"
-            label="ANALYTICS"
-            active
-            href="/admin/analytics"
-          />
-          <SidebarLink icon="group" label="CUSTOMERS" href="/admin/customers" />
-          <SidebarLink icon="ios_share" label="EXPORT" href="/admin/export" />
-        </nav>
-
-        <div className="px-6 pt-6 border-t border-white/5 mt-auto">
-          <button className="w-full bg-primary-container text-white py-3 font-headline font-bold text-xs tracking-widest uppercase hover:brightness-110 transition-all rounded-[2px] mb-6">
-            ADD NEW STOCK
-          </button>
-          <div className="flex items-center gap-4 px-4 py-2 bg-surface-container-high/20 rounded-[4px] border border-white/5 group">
-            <div className="w-9 h-9 rounded bg-surface-container-highest border border-white/10 overflow-hidden">
-              <img
-                src="https://i.pravatar.cc/150?u=ethan"
-                alt="Admin"
-                className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all"
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-tight">
-                Ethan Marcus
-              </p>
-              <p className="text-[8px] opacity-40 uppercase font-black tracking-widest">
-                Super Admin
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* --- TopNavBar --- */}
-      <header className="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#131313]/60 backdrop-blur-md hidden lg:flex justify-between items-center h-16 px-10 border-b border-white/[0.03]">
-        <div className="flex items-center gap-6">
-          <h2 className="font-headline uppercase font-black text-2xl tracking-tighter italic">
-            Analytics
-          </h2>
-          <span className="bg-primary-container/20 text-primary-container px-3 py-1 rounded-[2px] text-[10px] font-black border border-primary-container/30 uppercase tracking-widest">
-            1,284 UNITS
-          </span>
-        </div>
-        <div className="flex items-center gap-8">
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface/20 text-sm group-focus-within:text-primary-container transition-colors">
-              search
-            </span>
-            <input
-              className="bg-[#2a2a2a]/50 border border-white/5 text-[10px] font-headline font-black uppercase tracking-[0.1em] pl-11 pr-4 py-2.5 w-72 focus:ring-1 focus:ring-primary-container/40 rounded-[2px] outline-none transition-all placeholder:opacity-10"
-              placeholder="SEARCH SKU OR BRAND..."
-              type="text"
-            />
-          </div>
-          <div className="flex items-center gap-5">
-            <NavIcon icon="notifications" badge />
-            <NavIcon icon="settings" />
-            <NavIcon icon="account_circle" />
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-24 lg:pt-16 min-h-screen">
+      <main className="lg:ml-64 pt-10 lg:pt-10 min-h-screen ">
+        <div className="space-y-4 px-10 lg:flex flex-col md:flex flex-col sm:hidden">
+          <h2 className="text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
+            ANALYTICS
+          </h2>
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 bg-primary-container shadow-[0_0_10px_rgba(200,16,46,0.3)]"></span>
+            <span className="bg-surface-container-high/60 text-primary-container px-3 py-1 text-[10px] font-mono font-bold border border-white/5 uppercase tracking-widest">
+              AI ANALYSIS REPORT
+            </span>
+          </div>
+        </div>
         {/* Sticky Date Range Control */}
-        <div className="sticky top-16 z-30 bg-[#131313]/90 backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-between gap-6 reveal-up">
+        <div className="sticky top-35 z-30 bg-[#131313]/90 backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-between gap-6 reveal-up">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container text-lg">
               calendar_today
@@ -225,7 +115,7 @@ export default function AdminAnalytics() {
                   Aggregate financial performance across all channels
                 </p>
               </div>
-              <div className="flex sm:flex-col gap-10">
+              <div className="flex gap-10">
                 <LegendItem
                   dotColor="bg-secondary-container"
                   label="ESTIMATED"
@@ -562,7 +452,7 @@ export default function AdminAnalytics() {
                   <div
                     key={i}
                     className="bg-primary-container rounded-[2px] hover:scale-110 transition-transform cursor-pointer shadow-lg shadow-primary-container/0 hover:shadow-primary-container/20"
-                    style={{ opacity: Math.random() * 0.9 + 0.1 }}
+                    style={{ opacity: 0.5501490565683387 }}
                   />
                 ))}
               </div>

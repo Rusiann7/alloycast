@@ -1,8 +1,8 @@
-import "./globals.css";
+import AdminSidebar from "../components/AdminSidebar";
 
 export const metadata = {
-  title: "AlloyDiecast Vault",
-  description: "The premier destination for elite diecast collectors.",
+  title: "AlloyDash Admin",
+  description: "AI Inventory Management System",
 };
 
 export default function RootLayout({ children }) {
@@ -24,7 +24,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AdminSidebar />
+        {children}
+      </body>
     </html>
   );
 }

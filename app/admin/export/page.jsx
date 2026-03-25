@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 
 export default function AdminExport() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const exportHistory = [
     {
       name: "Inv_Audit_Aug24.pdf",
@@ -41,147 +39,13 @@ export default function AdminExport() {
   ];
 
   return (
-    <div className="bg-[#131313] text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-[#131313]/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-container flex items-center justify-center rounded-[4px]">
-            <span className="material-symbols-outlined text-white text-sm">
-              precision_manufacturing
-            </span>
-          </div>
-          <h1 className="text-lg font-black font-headline uppercase leading-none italic">
-            ETHAN MARCUS
-          </h1>
-        </div>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="material-symbols-outlined text-white"
-        >
-          {isSidebarOpen ? "close" : "menu"}
-        </button>
-      </div>
-
-      {/* Sidebar Overlay for Mobile */}
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[65]"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* --- SideNavBar --- */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 z-[70] bg-[#131313] flex flex-col pt-12 pb-6 transition-transform duration-500 ease-in-out border-r border-white/5 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-      >
-        <div className="px-10 mb-16">
-          <h1 className="text-2xl font-black text-[#e5e2e1] font-headline uppercase leading-[0.8] tracking-tighter italic">
-            ETHAN MARCUS
-          </h1>
-          <p className="font-headline uppercase text-[9px] font-black tracking-[0.3em] text-[#C8102E] mt-2">
-            DIECAST ADMIN
-          </p>
-        </div>
-
-        <nav className="flex-1 space-y-0.5">
-          <SidebarLink
-            icon="grid_view"
-            label="OVERVIEW"
-            href="/admin/dashboard"
-          />
-          <SidebarLink
-            icon="inventory_2"
-            label="INVENTORY"
-            href="/admin/inventory"
-          />
-          <SidebarLink
-            icon="event_available"
-            label="RESERVATIONS"
-            href="/admin/reservations"
-          />
-          <SidebarLink
-            icon="analytics"
-            label="ANALYTICS"
-            href="/admin/analytics"
-          />
-          <SidebarLink icon="group" label="CUSTOMERS" href="/admin/customers" />
-          <SidebarLink
-            icon="ios_share"
-            label="EXPORT"
-            active
-            href="/admin/export"
-          />
-        </nav>
-
-        <div className="px-6 pt-6 border-t border-white/5">
-          <div className="flex items-center gap-4 px-4 py-2 bg-white/[0.02] rounded-[4px] border border-white/5 group">
-            <div className="w-9 h-9 rounded bg-surface-container-highest border border-white/10 overflow-hidden">
-              <img
-                src="https://i.pravatar.cc/150?u=ethan"
-                alt="Admin"
-                className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all"
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-tight">
-                Ethan Marcus
-              </p>
-              <p className="text-[8px] opacity-40 uppercase font-black tracking-widest">
-                Super Admin
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* --- TopNavBar --- */}
-      <header className="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#131313]/60 backdrop-blur-md hidden lg:flex justify-between items-center h-16 px-10 border-b border-white/[0.03]">
-        <div className="flex items-center gap-6">
-          <h2 className="font-headline uppercase font-black text-2xl tracking-tighter italic">
-            Export Center
-          </h2>
-          <span className="bg-primary-container/20 text-primary-container px-3 py-1 rounded-[2px] text-[10px] font-black border border-primary-container/30 uppercase tracking-widest leading-none">
-            SYSTEM SERVICES
-          </span>
-        </div>
-        <div className="flex items-center gap-8">
-          <div className="relative group">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-sm group-focus-within:text-primary-container transition-colors">
-              search
-            </span>
-            <input
-              className="bg-[#2a2a2a]/50 border border-white/5 text-[10px] font-headline font-black uppercase tracking-[0.1em] pl-11 pr-4 py-2.5 w-72 focus:ring-1 focus:ring-primary-container/40 rounded-[2px] outline-none transition-all placeholder:opacity-10"
-              placeholder="SEARCH FILES OR LOGS..."
-              type="text"
-            />
-          </div>
-          <div className="flex items-center gap-5">
-            <NavIcon icon="notifications" badge />
-            <NavIcon icon="settings" />
-            <div className="size-8 rounded bg-surface-container-highest border border-white/5 flex items-center justify-center font-mono text-[10px] font-black text-primary-container tracking-tighter italic">
-              ADM
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-24 lg:pt-16 min-h-screen flex flex-col">
-        <div className="flex-1 p-10 lg:p-14 max-w-[1440px] mx-auto w-full">
+      <main className="lg:ml-64 pt-10 lg:pt-10 min-h-screen flex flex-col">
+        <div className="flex-1 px-10 lg:px-10  mx-auto w-full">
           {/* Header Section */}
           <div className="mb-14 reveal-up">
-            <div className="flex items-center gap-3 mb-4">
-              <span
-                className="material-symbols-outlined text-primary-container font-fill"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                download
-              </span>
-              <span className="text-[10px] font-black tracking-[0.3em] text-white/30 uppercase font-headline">
-                System Services
-              </span>
-            </div>
-            <h1 className="text-5xl lg:text-7xl font-black font-headline uppercase leading-none italic tracking-tighter">
+            <h1 className="text-6xl lg:text-6xl font-black font-headline uppercase leading-none italic tracking-tighter">
               Data Export Center
             </h1>
             <p className="text-white/40 mt-6 max-w-2xl border-l-2 border-primary-container pl-6 text-sm lg:text-base leading-relaxed">
@@ -193,7 +57,7 @@ export default function AdminExport() {
 
           <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-12 items-start">
             {/* Export Config Column */}
-            <section className="space-y-8">
+            <section className="space-y-8 ">
               {/* Inventory Report */}
               <ExportCard
                 icon="table_chart"
@@ -321,26 +185,6 @@ export default function AdminExport() {
             </aside>
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="mt-20 border-t border-white/5 bg-[#0e0e0e] p-10 italic">
-          <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-6">
-              <p className="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em] font-black">
-                ©2026 MACHINA CONTROL INDUSTRIAL INTERFACE
-              </p>
-              <div className="h-4 w-px bg-white/10 hidden md:block"></div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-container underline decoration-2 underline-offset-4">
-                System Version 2.4.9-Stable
-              </p>
-            </div>
-            <div className="flex items-center gap-8">
-              <FooterLink label="Security Protocol" />
-              <FooterLink label="API Docs" />
-              <FooterLink label="Compliance" />
-            </div>
-          </div>
-        </footer>
       </main>
 
       <style jsx global>{`
@@ -381,46 +225,6 @@ export default function AdminExport() {
     </div>
   );
 }
-
-const SidebarLink = ({ icon, label, active, href }) => (
-  <a
-    href={href}
-    className={`flex items-center space-x-5 px-10 py-4.5 transition-all group relative ${
-      active ? "bg-white/[0.02]" : "hover:bg-white/[0.01]"
-    }`}
-  >
-    {active && (
-      <div className="absolute left-0 top-0 h-full w-0.5 bg-[#C8102E]" />
-    )}
-    <span
-      className={`material-symbols-outlined transition-all text-xl font-light ${
-        active
-          ? "text-[#C8102E] scale-110"
-          : "opacity-15 group-hover:opacity-100 group-hover:text-white"
-      }`}
-    >
-      {icon}
-    </span>
-    <span
-      className={`text-[10px] font-headline font-black uppercase tracking-[0.35em] transition-all ${
-        active ? "text-white" : "text-[#A8A8A0] group-hover:text-white"
-      }`}
-    >
-      {label}
-    </span>
-  </a>
-);
-
-const NavIcon = ({ icon, badge }) => (
-  <button className="relative hover:text-primary-container transition-colors group">
-    <span className="material-symbols-outlined font-light text-2xl group-hover:rotate-6 transition-transform">
-      {icon}
-    </span>
-    {badge && (
-      <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-primary-container rounded-full ring-2 ring-[#131313]"></span>
-    )}
-  </button>
-);
 
 const ExportCard = ({ icon, title, desc, children }) => (
   <div className="bg-[#161616] border-2 border-[#2a2a2a] p-10 rounded-[2px] relative overflow-hidden group reveal-up">
@@ -541,10 +345,4 @@ const HistoryItem = ({ item }) => (
       </button>
     </div>
   </div>
-);
-
-const FooterLink = ({ label }) => (
-  <a className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 hover:text-primary-container transition-colors cursor-pointer decoration-2 decoration-transparent hover:decoration-primary-container underline underline-offset-4">
-    {label}
-  </a>
 );
