@@ -1,7 +1,8 @@
 import "./globals.css";
+import LandingPageNavbar from "./components/LandingPageNavbar";
 
 export const metadata = {
-  title: "AlloyDiecast Vault",
+  title: "AlloyDash",
   description: "The premier destination for elite diecast collectors.",
 };
 
@@ -24,7 +25,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col custom-cursor-area">
+        <LandingPageNavbar />
+        {children}
+      </body>
     </html>
   );
 }
