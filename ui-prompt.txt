@@ -1,0 +1,5 @@
+Code this (Page name) page into JSX.
+ On every page load, include live animations, transitions, and hovers.
+  It should take inspiration from the (Previous Page JSX). 
+  It should be responsive to different screen sizes without breaking the layout. 
+Here is the code:

@@ -262,7 +262,7 @@
 
 /* Custom Cursor Experience */
 body {
-  cursor: url("/public/red-cursor.png"), auto;
+  cursor: url("red-cursor.png"), auto;
 }
 
 a,
@@ -271,5 +271,5 @@ button {
 }
 
 .custom-cursor-area {
-  cursor: url("/public/red-cursor.png"), auto;
+  cursor: url("red-cursor.png"), auto;
 }
