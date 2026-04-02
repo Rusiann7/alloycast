@@ -52,9 +52,9 @@ export default function AdminAnalytics() {
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-10 lg:pt-10 min-h-screen ">
-        <div className="space-y-4 px-10 lg:flex flex-col md:flex flex-col sm:hidden">
-          <h2 className="text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
+      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen ">
+        <div className="space-y-4 px-10 flex flex-col">
+          <h2 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
             ANALYTICS
           </h2>
           <div className="flex items-center gap-3">
@@ -65,7 +65,7 @@ export default function AdminAnalytics() {
           </div>
         </div>
         {/* Sticky Date Range Control */}
-        <div className="sticky top-35 z-30 bg-[#131313]/90 backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-between gap-6 reveal-up">
+        <div className="sticky top-18 lg:top-0 z-30 bg-[#131313]/90 backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-between gap-6 reveal-up">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container text-lg">
               calendar_today

@@ -41,14 +41,14 @@ export default function AdminExport() {
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-10 lg:pt-10 min-h-screen flex flex-col">
+      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen ">
         <div className="flex-1 px-10 lg:px-10  mx-auto w-full">
           {/* Header Section */}
-          <div className="mb-14 reveal-up">
-            <h1 className="text-6xl lg:text-6xl font-black font-headline uppercase leading-none italic tracking-tighter">
+          <div className="space-y-4 px-10 flex flex-col">
+            <h1 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
               Data Export Center
             </h1>
-            <p className="text-white/40 mt-6 max-w-2xl border-l-2 border-primary-container pl-6 text-sm lg:text-base leading-relaxed">
+            <p className="text-white/40 mt-6 max-w-2xl border-l-2 border-primary-container  text-sm lg:text-base leading-relaxed">
               Generate machine-readable reports for inventory audit, booking
               schedules, and financial projections. All exports are logged for
               compliance.

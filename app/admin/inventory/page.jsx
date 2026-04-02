@@ -62,11 +62,11 @@ export default function AdminInventory() {
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
-      <main className="lg:pl-64 pt-10 lg:pt-10 min-h-screen">
+      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen ">
         <div className="px-10 pb-40">
           {/* Section Header */}
           <div className="mb-14 reveal-up">
-            <h3 className="text-6xl font-black font-headline uppercase tracking-tighter mb-3 italic">
+            <h3 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
               INVENTORY
             </h3>
             <div className="flex items-center gap-4">

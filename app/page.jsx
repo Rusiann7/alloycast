@@ -1,7 +1,9 @@
 import Link from "next/link";
+import LandingPageNavbar from "./components/LandingPageNavbar";
 export default function LandingPage() {
   return (
     <div className="bg-background font-body text-on-surface min-h-screen">
+      <LandingPageNavbar />
       {/* Main Hero Section */}
       <main className="relative h-screen min-h-[700px] sm:min-h-[800px] w-full overflow-hidden radial-brand flex flex-col justify-center custom-cursor-area">
         {/* Background Asset: Nissan Skyline PNG - Optimized positioning */}

@@ -63,10 +63,10 @@ export default function AdminReservations() {
         className={`lg:ml-64 pt-24 lg:pt-10 px-10 pb-12 transition-all duration-500 ${isDrawerOpen ? "lg:mr-[450px]" : ""}`}
       >
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
           <div>
             <div className="flex items-center gap-4 mb-2">
-              <h2 className="text-6xl font-black font-headline tracking-tighter uppercase italic">
+              <h2 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
                 Reservations
               </h2>
               <span className="bg-primary-container text-white px-3 py-1 text-[10px] font-black font-headline uppercase tracking-widest rounded-[2px] shadow-lg shadow-primary-container/20">

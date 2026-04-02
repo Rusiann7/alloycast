@@ -89,11 +89,11 @@ export default function AdminCustomers() {
         className={`lg:ml-64 pt-10 lg:pt-10 min-h-screen flex transition-all duration-500 ${isDrawerOpen ? "lg:mr-[450px]" : ""}`}
       >
         {/* Table Section */}
-        <section className="flex-1 px-10 overflow-y-auto bg-surface-container-lowest/20">
+        <section className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
           {/* Page Header */}
           <div className="flex flex-col lg:flex-row justify-between lg:items-end gap-10 mb-16 reveal-up">
-            <div className="space-y-4">
-              <h2 className="text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
+            <div className="space-y-4 px-10 flex flex-col">
+              <h2 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
                 Customers
               </h2>
               <div className="flex items-center gap-3">
