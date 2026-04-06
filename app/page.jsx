@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
 import LandingPageNavbar from "./components/LandingPageNavbar";
+
 export default function LandingPage() {
   return (
     <div className="bg-background font-body text-on-surface min-h-screen">

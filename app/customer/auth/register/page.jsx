@@ -85,6 +85,16 @@ export default function RegisterPage() {
             </div>
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                Age
+              </label>
+              <input
+                type="number"
+                placeholder="AGE"
+                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
                 Password
               </label>
               <input
