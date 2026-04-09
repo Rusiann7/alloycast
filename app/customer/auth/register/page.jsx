@@ -1,9 +1,160 @@
+"use client";
 import React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { reusableSupabase } from "../../../../lib/supabaseClient";
+import Toast from "../../../components/Toast";
 
 export default function RegisterPage() {
+  const router = useRouter(); // pang navigate to sa login page kung successfull na login
+  // dto muna mastore mga input fields bago mapunta sa Users at Customers Table
+  const [accountForm, setAccountForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    gender: "",
+    dob: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  // UI States
+  const [showPassword, setShowPassword] = useState(false); // eye toggle para makita password
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // eye toggle para makita confirmPassword
+  const [isAgreed, setIsAgreed] = useState(false); // Agreement checkbox state
+  const [toast, setToast] = useState({
+    // toast notification (gawa ni AI) hehehe
+    visible: false,
+    message: "",
+    type: "error",
+  });
+
+  // Function to show toast (gawa ni AI)
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+  };
+
+  // pangkuha ng input value bawat fields at pangupdate ng accountForm useState
+  const getInputValue = (e) => {
+    const { name, value } = e.target; // pange extract ng: e.target.value at name="" sa mga inputs
+    setAccountForm((prevAccountForm) => ({
+      // lumang accountForm (walang value)
+      ...prevAccountForm, // kopya ng bagong accountForm (may values)
+      [name]: value, // [name] = key sa bawat input fields (name="") para malaman ang value
+    }));
+  };
+
+  // INPUT SANITIZATION
+  const inputSanitizerFunction = () => {
+    // panglinis ng input sa firstname, lastname at email
+    const sanitizeForm = {
+      ...accountForm, // kopya ng accountForm={} para d magalaw ung original na accountForm
+      firstName: accountForm.firstName.trim(),
+      lastName: accountForm.lastName.trim(),
+      email: accountForm.email.trim().toLowerCase(),
+    };
+
+    // pang check ng password length (min = 8)
+    if (sanitizeForm.password.length < 8) {
+      return {
+        isValid: false,
+        message: "Password must be at least 8 characters!",
+      };
+    }
+
+    // pangcheck ng symbols sa password field
+    const passwordSymbols = /[!@#$%^&*(),.?":{}|<>]/;
+    if (!passwordSymbols.test(sanitizeForm.password)) {
+      // kailangan gumamit ng symbols sa password
+      return {
+        isValid: false,
+        message: "Password must contain at least one symbol (!@#$ etc.)",
+      };
+    }
+
+    // pangkumpara ng password vs confirmPassword
+    if (sanitizeForm.password !== sanitizeForm.confirmPassword) {
+      return { isValid: false, message: "Passwords do not match!" };
+    }
+
+    // kung ok lahat ng fields
+    return { isValid: true, data: sanitizeForm };
+  };
+
+  // ito ung function para maregister sa Users table muna
+  const registerAccount = async (e) => {
+    e.preventDefault(); // para maiwasan marefresh ung page kapag nagsubmit
+
+    const formValidation = inputSanitizerFunction(); // call ng inputSanitizerFunction()
+    if (!formValidation.isValid) {
+      // kung hindi nakapasa sa input sanitization
+      return showToast(formValidation.message); // return alert para mag stop ung execution ng buong functions
+    }
+
+    const sanitizedData = formValidation.data;
+
+    // pang check if my kaparehas na email nakasatored sa Users Table
+    const { data: existingEmail } = await reusableSupabase
+      .from("Users")
+      .select("email") // select email column
+      .eq("email", sanitizedData.email) // pang check if may kaparehas nang email
+      .maybeSingle(); // pang check kung may kaparehas na email KAHIT ISA
+
+    if (existingEmail) {
+      return showToast("This email is already registered");
+    }
+
+    const { data: accountData, error: accountError } = await reusableSupabase // pagtawag sa supabase
+      .from("Users") // Users Table
+      .insert([
+        // sql insert query sa Users table
+        {
+          email: sanitizedData.email,
+          password: sanitizedData.password,
+          is_admin: false, // matik na false kasi Users => Customers
+        },
+      ])
+      .select(); // para makuha ung id ng user na nainsert sa Users Table
+
+    // error handling
+    if (accountError) {
+      showToast("Error: " + accountError.message);
+    } else {
+      const accountId = accountData[0].id; // kukunin nya ung id ng user na naregister sa Users Table
+      const { error: customerError } = await reusableSupabase // pangtawag sa supabase
+        .from("Customer") // Customers Table
+        .insert([
+          // sql query para mainsert nman sa Customers Table
+          {
+            firstname: sanitizedData.firstName,
+            lastname: sanitizedData.lastName,
+            gender: sanitizedData.gender,
+            dob: sanitizedData.dob,
+            user_id: accountId, // ito ung sa select()
+          },
+        ]);
+      if (customerError) {
+        showToast("Customer Table Error: " + customerError.message);
+      } else {
+        showToast("Account registered successfully!", "success");
+        setTimeout(() => {
+          router.push("/customer/auth/login");
+        }, 1500);
+      }
+    }
+  };
+
   return (
-    <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand">
+    <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
+      {/* Reusable Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
+
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
         {/* Left Side: Branding/Visual */}
         <div className="relative hidden md:flex flex-col justify-between p-12 bg-primary-container text-white overflow-hidden">
@@ -42,27 +193,70 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <form className="space-y-6">
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                placeholder="FIRST NAME"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
-              />
+          <form className="space-y-6" onSubmit={registerAccount}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="FIRST NAME"
+                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  name="firstName"
+                  value={accountForm.firstName}
+                  onChange={getInputValue}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="LAST NAME"
+                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  name="lastName"
+                  value={accountForm.lastName}
+                  onChange={getInputValue}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                placeholder="LAST NAME"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  name="gender"
+                  value={accountForm.gender}
+                  onChange={getInputValue}
+                >
+                  <option value="" disabled hidden>
+                    GENDER
+                  </option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  placeholder="DATE OF BIRTH"
+                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  name="dob"
+                  value={accountForm.dob}
+                  onChange={getInputValue}
+                />
+              </div>
             </div>
+
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
                 Email
@@ -70,48 +264,61 @@ export default function RegisterPage() {
               <input
                 type="email"
                 placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
+                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                name="email"
+                value={accountForm.email}
+                onChange={getInputValue}
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                placeholder="PHONE NUMBER"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                Age
-              </label>
-              <input
-                type="number"
-                placeholder="AGE"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
-              />
-            </div>
+
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  name="password"
+                  value={accountForm.password}
+                  onChange={getInputValue}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A8A8A0] hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {showPassword ? "visibility" : "visibility_off"}
+                  </span>
+                </button>
+              </div>
             </div>
+
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors uppercase tracking-tight"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  name="confirmPassword"
+                  value={accountForm.confirmPassword}
+                  onChange={getInputValue}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A8A8A0] hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {showConfirmPassword ? "visibility" : "visibility_off"}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
