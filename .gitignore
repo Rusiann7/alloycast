@@ -38,3 +38,7 @@ next-env.d.ts
 
 # supabase
 .env.local
+
+#notes
+MVP Weekply Plan.txt
+ui-prompt.txt

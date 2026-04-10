@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
@@ -7,7 +6,7 @@ import { reusableSupabase } from "../../../../lib/supabaseClient";
 import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const router = useRouter();
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -18,14 +17,13 @@ export default function LoginPage() {
     message: "",
     type: "error",
   });
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // false muna para d mapakita password unless i-click ung button
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast({ ...toast, visible: false }), 4000);
   };
 
-  // pangkuha ng input
   const getInputValue = (e) => {
     const { name, value } = e.target;
     setLoginForm((prevLoginForm) => ({
@@ -35,20 +33,16 @@ export default function LoginPage() {
   };
 
   const inputSanitizerFunction = () => {
-    // panglinis ng email input
     const sanitizedForm = {
       ...loginForm,
       email: loginForm.email.trim().toLowerCase(),
     };
 
-    // para icheck ung email format
     const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // kailangan may symbol na "@"
     if (!emailFormat.test(sanitizedForm.email)) {
       return { isValid: false, message: "Invalid email format!" };
     }
 
-    // kung ok lahat
     return { isValid: true, data: sanitizedForm };
   };
 
@@ -60,12 +54,12 @@ export default function LoginPage() {
     }
 
     const sanitizedData = formValidation.data;
-    const { data: accountData, error: accountError } = await reusableSupabase
-      .from("Users") // Users Table
-      .select("*") // select email column
-      .eq("email", sanitizedData.email) // pang check ng email
-      .eq("is_admin", false)
-      .maybeSingle();
+    const { data: accountData } = await reusableSupabase
+      .from("Users")
+      .select("*")
+      .eq("email", sanitizedData.email)
+      .eq("is_admin", true)
+      .single();
 
     const passwordMatch = await bcrypt.compare(
       sanitizedData.password,
@@ -75,7 +69,7 @@ export default function LoginPage() {
     if (passwordMatch) {
       showToast("Login Successful!", "success");
       setTimeout(() => {
-        router.push("/customer/productDetail");
+        router.push("/admin");
       }, 1500);
     } else {
       showToast("Invalid Credentials");
@@ -120,17 +114,17 @@ export default function LoginPage() {
         <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
           <div className="mb-8">
             <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
-              LOGIN YOUR ACCOUNT
+              LOGIN YOUR ADMIN ACCOUNT
             </h2>
             <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
-              Enter your credentials to access the catalog
+              Enter your credentials to access the inventory
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={loginAccount}>
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                Email
+                EMAIL
               </label>
               <input
                 type="email"
@@ -141,7 +135,7 @@ export default function LoginPage() {
                 onChange={getInputValue}
               />
             </div>
-            <div className="relative">
+            <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
                 Password
               </label>
@@ -165,17 +159,15 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-
             <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
               LOGIN
             </button>
           </form>
-
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
             <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
-              Don't have an account?{" "}
+              Add Admin User?{" "}
               <Link
-                href="/customer/auth/register"
+                href="/admin/auth/register"
                 className="text-primary-container hover:underline italic font-bold"
               >
                 SIGN UP

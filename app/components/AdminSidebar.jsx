@@ -7,6 +7,10 @@ export default function AdminSidebar() {
   const [activeSidebar, setActiveSidebar] = useState(false);
 
   const linkName = usePathname(); // pangkuha ng current link path para lagyan ng style
+
+  // itatago nito ung navbar sa register at login page ng admin
+  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
+  if (hideNavbarOn.includes(linkName)) return null;
   console.log("Current Link:", linkName);
 
   const SidebarLink = ({ icon, label, href }) => {
