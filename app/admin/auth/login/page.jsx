@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { reusableSupabase } from "../../../../lib/supabaseClient";
-import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 
 export default function AdminLoginPage() {
@@ -54,25 +53,65 @@ export default function AdminLoginPage() {
     }
 
     const sanitizedData = formValidation.data;
-    const { data: accountData } = await reusableSupabase
+    // binago ko to para gamitin supabase Auth
+    const { data, error } = await reusableSupabase.auth.signInWithPassword({
+      email: sanitizedData.email, // kunin email sa Auth
+      password: sanitizedData.password, // kunin password sa Auth
+    });
+
+    // email verification check kung verified o hindi
+    if (error) {
+      if (
+        error.message.includes("Email not confirmed") ||
+        error.message.includes("Email not verified")
+      ) {
+        return showToast(
+          "Please verify your email before logging in!",
+          "error",
+        );
+      }
+      // kung mali email o password
+      return showToast("Invalid Credentials", "error");
+    }
+
+    // check kung admin ung account
+    const { data: profile, error: profileError } = await reusableSupabase
       .from("Users")
-      .select("*")
-      .eq("email", sanitizedData.email)
-      .eq("is_admin", true)
+      .select("is_admin")
+      .eq("id", data.user.id)
       .single();
 
-    const passwordMatch = await bcrypt.compare(
-      sanitizedData.password,
-      accountData.password,
-    );
+    // layas ka na sa admin page kung d ka admin boi
+    if (profileError || !profile?.is_admin) {
+      await reusableSupabase.auth.signOut();
+      return showToast("Access Denied: You are not an Admin.", "error");
+    }
 
-    if (passwordMatch) {
-      showToast("Login Successful!", "success");
-      setTimeout(() => {
-        router.push("/admin");
-      }, 1500);
+    // okie login ka na sa dashboard boi
+    showToast("Login Successful!", "success");
+    setTimeout(() => {
+      router.push("/admin");
+    }, 1500);
+  };
+
+  // pang resend ng email verification kung kelangan
+  const resendVerification = async () => {
+    if (!loginForm.email) {
+      return showToast("Please enter your email address first");
+    }
+
+    const { error } = await reusableSupabase.auth.resend({
+      type: "signup",
+      email: loginForm.email.trim().toLowerCase(),
+      options: {
+        emailRedirectTo: `${window.location.origin}/admin/auth/login`,
+      },
+    });
+
+    if (error) {
+      showToast(error.message);
     } else {
-      showToast("Invalid Credentials");
+      showToast("Verification email resent! Check your inbox.", "success");
     }
   };
 
@@ -159,9 +198,21 @@ export default function AdminLoginPage() {
                 </button>
               </div>
             </div>
-            <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
-              LOGIN
-            </button>
+            <div className="flex flex-col gap-4">
+              <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+                Didn't receive the email?{" "}
+                <button
+                  type="button"
+                  onClick={resendVerification}
+                  className="text-primary-container hover:underline italic font-bold uppercase cursor-pointer"
+                >
+                  Resend Link
+                </button>
+              </p>
+              <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
+                LOGIN
+              </button>
+            </div>
           </form>
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
             <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">

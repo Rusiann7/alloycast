@@ -3,10 +3,10 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { reusableSupabase } from "../../../../lib/supabaseClient";
 import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 import TermsModal from "../../../components/TermsModal";
+import { reusableSupabase } from "../../../../lib/supabaseClient";
 
 export default function RegisterPage() {
   const router = useRouter(); // pang navigate to sa login page kung successfull na login
@@ -109,10 +109,6 @@ export default function RegisterPage() {
 
     const sanitizedData = formValidation.data;
 
-    const salt = await bcrypt.genSalt(10);
-
-    const hashedPassword = await bcrypt.hash(sanitizedData.password, salt);
-
     // pang check if my kaparehas na email nakasatored sa Users Table
     const { data: existingEmail } = await reusableSupabase
       .from("Users")
@@ -124,44 +120,73 @@ export default function RegisterPage() {
       return showToast("This email is already registered");
     }
 
-    const { data: accountData, error: accountError } = await reusableSupabase // pagtawag sa supabase
-      .from("Users") // Users Table
-      .insert([
-        // sql insert query sa Users table
-        {
-          email: sanitizedData.email,
-          password: hashedPassword,
-          is_admin: false, // matik na false kasi Users => Customers
+    // ok so binago ko na ung pag request kay supabase
+    // gagamit na ito ng supabase auth at Users Table
+    const { data, error } = await reusableSupabase.auth.signUp({
+      // supabase Auth sign up
+      email: sanitizedData.email, // store sa supabase auth at Users Table
+      password: sanitizedData.password, // store sa supabase auth at Users Table
+      options: {
+        data: {
+          first_name: sanitizedData.firstName, // store sa Customers Table
+          last_name: sanitizedData.lastName, // store sa Customers Table
+          gender: sanitizedData.gender, // store sa Customers Table
+          dob: sanitizedData.dob, // store sa Customers Table
+          is_admin: false, // matik false para Customers
         },
-      ])
-      .select(); // para makuha ung id ng user na nainsert sa Users Table
+      },
+    });
 
-    // error handling
-    if (accountError) {
-      showToast("Error: " + accountError.message);
+    if (error) {
+      showToast(error.message);
     } else {
-      const accountId = accountData[0].id; // kukunin nya ung id ng user na naregister sa Users Table
-      const { error: customerError } = await reusableSupabase // pangtawag sa supabase
-        .from("Customer") // Customers Table
-        .insert([
-          // sql query para mainsert nman sa Customers Table
-          {
-            firstname: sanitizedData.firstName,
-            lastname: sanitizedData.lastName,
-            gender: sanitizedData.gender,
-            dob: sanitizedData.dob,
-            user_id: accountId, // ito ung sa select()
-          },
-        ]);
-      if (customerError) {
-        showToast("Customer Table Error: " + customerError.message);
-      } else {
-        showToast("Account registered successfully!", "success");
-        setTimeout(() => {
-          router.push("/customer/auth/login");
-        }, 1500);
-      }
+      showToast(
+        "Registration Success! Please check your email to verify your account.",
+        "success",
+      );
+      setTimeout(() => {
+        router.push("/customer/auth/login");
+      }, 1500);
     }
+
+    // const { data: accountData, error: accountError } = await reusableSupabase // pagtawag sa supabase
+    //   .from("Users") // Users Table
+    //   .insert([
+    //     // sql insert query sa Users table
+    //     {
+    //       email: sanitizedData.email,
+    //       password: hashedPassword,
+    //       is_admin: false, // matik na false kasi Users => Customers
+    //     },
+    //   ])
+    //   .select(); // para makuha ung id ng user na nainsert sa Users Table
+
+    // // error handling
+    // if (accountError) {
+    //   showToast("Error: " + accountError.message);
+    // } else {
+    //   const accountId = accountData[0].id; // kukunin nya ung id ng user na naregister sa Users Table
+    //   const { error: customerError } = await reusableSupabase // pangtawag sa supabase
+    //     .from("Customer") // Customers Table
+    //     .insert([
+    //       // sql query para mainsert nman sa Customers Table
+    //       {
+    //         firstname: sanitizedData.firstName,
+    //         lastname: sanitizedData.lastName,
+    //         gender: sanitizedData.gender,
+    //         dob: sanitizedData.dob,
+    //         user_id: accountId, // ito ung sa select()
+    //       },
+    //     ]);
+    //   if (customerError) {
+    //     showToast("Customer Table Error: " + customerError.message);
+    //   } else {
+    //     showToast("Account registered successfully!", "success");
+    //     setTimeout(() => {
+    //       router.push("/customer/auth/login");
+    //     }, 1500);
+    //   }
+    // }
   };
 
   return (

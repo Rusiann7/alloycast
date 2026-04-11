@@ -3,10 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { reusableSupabase } from "../../../../lib/supabaseClient";
-import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 
-export default function RegisterPage() {
+export default function RegisterAdminPage() {
   const router = useRouter();
   const [accountForm, setAccountForm] = useState({
     firstName: "",
@@ -18,6 +17,7 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -26,7 +26,7 @@ export default function RegisterPage() {
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
   const getInputValue = (e) => {
@@ -76,6 +76,7 @@ export default function RegisterPage() {
     return { isValid: true, data: sanitizeForm };
   };
 
+  // d ko na iexplain to, same lng cla sa registerAccount ni Customer with Auth
   const registerAccount = async (e) => {
     e.preventDefault();
     const formValidation = inputSanitizerFunction();
@@ -83,11 +84,8 @@ export default function RegisterPage() {
       return showToast(formValidation.message);
     }
 
+    setIsLoading(true);
     const sanitizedData = formValidation.data;
-
-    const salt = await bcrypt.genSalt(10); // para sa brcypt random password hashing
-
-    const hashedPassword = await bcrypt.hash(sanitizedData.password, salt); // hashing
 
     const { data: existingEmail } = await reusableSupabase
       .from("Users")
@@ -96,47 +94,39 @@ export default function RegisterPage() {
       .maybeSingle();
 
     if (existingEmail) {
+      setIsLoading(false);
       return showToast("This email is already registered");
     }
 
-    const { data: accountData, error: accountError } = await reusableSupabase
-      .from("Users")
-      .insert([
-        {
-          email: sanitizedData.email,
-          password: hashedPassword,
+    const { data, error } = await reusableSupabase.auth.signUp({
+      email: sanitizedData.email,
+      password: sanitizedData.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/admin/auth/login`,
+        data: {
+          first_name: sanitizedData.firstName,
+          last_name: sanitizedData.lastName,
           is_admin: true,
         },
-      ])
-      .select();
+      },
+    });
 
-    if (accountError) {
-      showToast("Error: " + accountError.message);
+    setIsLoading(false);
+    if (error) {
+      showToast(error.message);
     } else {
-      const accountId = accountData[0].id;
-      const { error: adminError } = await reusableSupabase
-        .from("Admin")
-        .insert([
-          {
-            firstname: sanitizedData.firstName,
-            lastname: sanitizedData.lastName,
-            user_id: accountId,
-          },
-        ]);
-      if (adminError) {
-        showToast("Admin Table Error: " + adminError.message);
-      } else {
-        showToast("Account registered successfully!", "success");
-        setTimeout(() => {
-          router.push("/admin/auth/login");
-        }, 1500);
-      }
+      showToast(
+        "Admin Registration Success! Please verify your email.",
+        "success",
+      );
+      setTimeout(() => {
+        router.push("/admin/auth/login");
+      }, 1500);
     }
   };
 
   return (
     <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
-      {/* Reusable Toast Notification */}
       <Toast
         message={toast.message}
         type={toast.type}
@@ -144,7 +134,6 @@ export default function RegisterPage() {
       />
 
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
-        {/* Left Side: Branding/Visual */}
         <div className="relative hidden md:flex flex-col justify-between p-12 bg-primary-container text-white overflow-hidden">
           <div className="relative z-10">
             <h1 className="font-headline font-black text-4xl uppercase italic leading-none mb-4">
@@ -170,7 +159,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Right Side: Form */}
         <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
           <div className="mb-8">
             <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
@@ -274,11 +262,18 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
-            <button
-              className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] bg-primary-container text-white hover:bg-secondary-container hover:text-black cursor-pointer`}
-            >
-              REGISTER
-            </button>
+            <div className="flex flex-col gap-4">
+              <button
+                disabled={isLoading}
+                className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
+                  isLoading
+                    ? "bg-surface-container-highest text-[#A8A8A0] opacity-50 cursor-not-allowed"
+                    : "bg-primary-container text-white hover:bg-secondary-container hover:text-black cursor-pointer"
+                }`}
+              >
+                {isLoading ? "PROCCESSING..." : "REGISTER ADMIN"}
+              </button>
+            </div>
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
