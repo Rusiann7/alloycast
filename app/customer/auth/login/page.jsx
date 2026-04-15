@@ -3,12 +3,12 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import { reusableSupabase } from "../../../../lib/supabaseClient";
-import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
+import { createClient } from "../../../../lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
     const sanitizedData = formValidation.data;
     // gagamit na tayo ng supabase auth para sa login
-    const { data, error } = await reusableSupabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: sanitizedData.email, // kukunin email sa supabase Auth
       password: sanitizedData.password, // kukunin password sa supabase Auth
     });
@@ -82,26 +82,6 @@ export default function LoginPage() {
     setTimeout(() => {
       router.push("/customer/productDetail");
     }, 1500);
-    // const { data: accountData, error: accountError } = await reusableSupabase
-    //   .from("Users") // Users Table
-    //   .select("*") // select email column
-    //   .eq("email", sanitizedData.email) // pang check ng email
-    //   .eq("is_admin", false)
-    //   .maybeSingle();
-
-    // const passwordMatch = await bcrypt.compare(
-    //   sanitizedData.password,
-    //   accountData.password,
-    // );
-
-    // if (passwordMatch) {
-    //   showToast("Login Successful!", "success");
-    //   setTimeout(() => {
-    //     router.push("/customer/productDetail");
-    //   }, 1500);
-    // } else {
-    //   showToast("Invalid Credentials");
-    // }
   };
 
   // pang resend ng email verification
@@ -111,7 +91,7 @@ export default function LoginPage() {
     }
 
     // isesend nito email verification sa gmail
-    const { error } = await reusableSupabase.auth.resend({
+    const { error } = await supabase.auth.resend({
       type: "signup",
       email: loginForm.email.trim().toLowerCase(),
       options: {
@@ -123,7 +103,22 @@ export default function LoginPage() {
     if (error) {
       showToast(error.message);
     } else {
-      showToast("Verification email resent! Check your inbox.", "success");
+    }
+  };
+
+  const googleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/customer/auth/callback`,
+        data: {
+          is_admin: false,
+        },
+      },
+    });
+
+    if (error) {
+      showToast(error.message);
     }
   };
 
@@ -220,6 +215,21 @@ export default function LoginPage() {
                 Resend Link
               </button>
             </p>
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-6 border border-gray-300"
+              onClick={googleLogin}
+            >
+              <img
+                src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                alt="Google Logo"
+                className="w-5 h-5"
+              />
+              <span className="uppercase text-[10px] tracking-widest font-black">
+                Sign in with Google
+              </span>
+            </button>
+
             <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
               LOGIN
             </button>

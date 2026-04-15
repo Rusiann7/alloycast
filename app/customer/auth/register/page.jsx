@@ -6,9 +6,9 @@ import Link from "next/link";
 import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 import TermsModal from "../../../components/TermsModal";
-import { reusableSupabase } from "../../../../lib/supabaseClient";
-
+import { createClient } from "../../../../lib/supabase/client";
 export default function RegisterPage() {
+  const supabase = createClient();
   const router = useRouter(); // pang navigate to sa login page kung successfull na login
   // dto muna mastore mga input fields bago mapunta sa Users at Customers Table
   const [accountForm, setAccountForm] = useState({
@@ -36,7 +36,7 @@ export default function RegisterPage() {
   // Function to show toast (gawa ni AI)
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
   // pangkuha ng input value bawat fields at pangupdate ng accountForm useState
@@ -110,7 +110,7 @@ export default function RegisterPage() {
     const sanitizedData = formValidation.data;
 
     // pang check if my kaparehas na email nakasatored sa Users Table
-    const { data: existingEmail } = await reusableSupabase
+    const { data: existingEmail } = await supabase
       .from("Users")
       .select("email") // select email column
       .eq("email", sanitizedData.email) // pang check if may kaparehas nang email
@@ -122,7 +122,7 @@ export default function RegisterPage() {
 
     // ok so binago ko na ung pag request kay supabase
     // gagamit na ito ng supabase auth at Users Table
-    const { data, error } = await reusableSupabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       // supabase Auth sign up
       email: sanitizedData.email, // store sa supabase auth at Users Table
       password: sanitizedData.password, // store sa supabase auth at Users Table
@@ -148,45 +148,22 @@ export default function RegisterPage() {
         router.push("/customer/auth/login");
       }, 1500);
     }
+  };
 
-    // const { data: accountData, error: accountError } = await reusableSupabase // pagtawag sa supabase
-    //   .from("Users") // Users Table
-    //   .insert([
-    //     // sql insert query sa Users table
-    //     {
-    //       email: sanitizedData.email,
-    //       password: hashedPassword,
-    //       is_admin: false, // matik na false kasi Users => Customers
-    //     },
-    //   ])
-    //   .select(); // para makuha ung id ng user na nainsert sa Users Table
+  const googleSignUp = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/customer/auth/callback`,
+        data: {
+          is_admin: false,
+        },
+      },
+    });
 
-    // // error handling
-    // if (accountError) {
-    //   showToast("Error: " + accountError.message);
-    // } else {
-    //   const accountId = accountData[0].id; // kukunin nya ung id ng user na naregister sa Users Table
-    //   const { error: customerError } = await reusableSupabase // pangtawag sa supabase
-    //     .from("Customer") // Customers Table
-    //     .insert([
-    //       // sql query para mainsert nman sa Customers Table
-    //       {
-    //         firstname: sanitizedData.firstName,
-    //         lastname: sanitizedData.lastName,
-    //         gender: sanitizedData.gender,
-    //         dob: sanitizedData.dob,
-    //         user_id: accountId, // ito ung sa select()
-    //       },
-    //     ]);
-    //   if (customerError) {
-    //     showToast("Customer Table Error: " + customerError.message);
-    //   } else {
-    //     showToast("Account registered successfully!", "success");
-    //     setTimeout(() => {
-    //       router.push("/customer/auth/login");
-    //     }, 1500);
-    //   }
-    // }
+    if (error) {
+      showToast(error.message);
+    }
   };
 
   return (
@@ -399,16 +376,32 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <button
-              disabled={!isAgreed}
-              className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
-                isAgreed
-                  ? "bg-primary-container text-white hover:bg-secondary-container hover:text-black cursor-pointer"
-                  : "bg-surface-container-highest text-[#A8A8A0] opacity-50 cursor-not-allowed"
-              }`}
-            >
-              REGISTER
-            </button>
+            <div className="flex flex-col gap-4">
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
+                onClick={googleSignUp}
+              >
+                <img
+                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                  alt="Google Logo"
+                  className="w-5 h-5"
+                />
+                <span className="uppercase text-[10px] tracking-widest font-black">
+                  Sign up with Google
+                </span>
+              </button>
+              <button
+                disabled={!isAgreed}
+                className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
+                  isAgreed
+                    ? "bg-primary-container text-white hover:bg-secondary-container hover:text-black cursor-pointer"
+                    : "bg-surface-container-highest text-[#A8A8A0] opacity-50 cursor-not-allowed"
+                }`}
+              >
+                REGISTER
+              </button>
+            </div>
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">

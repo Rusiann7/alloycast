@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { reusableSupabase } from "../../../../lib/supabaseClient";
+import { createClient } from "../../../../lib/supabase/client";
 import Toast from "../../../components/Toast";
 
 export default function RegisterAdminPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [accountForm, setAccountForm] = useState({
     firstName: "",
     lastName: "",
@@ -87,7 +88,7 @@ export default function RegisterAdminPage() {
     setIsLoading(true);
     const sanitizedData = formValidation.data;
 
-    const { data: existingEmail } = await reusableSupabase
+    const { data: existingEmail } = await supabase
       .from("Users")
       .select("email")
       .eq("email", sanitizedData.email)
@@ -98,7 +99,7 @@ export default function RegisterAdminPage() {
       return showToast("This email is already registered");
     }
 
-    const { data, error } = await reusableSupabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: sanitizedData.email,
       password: sanitizedData.password,
       options: {
@@ -122,6 +123,22 @@ export default function RegisterAdminPage() {
       setTimeout(() => {
         router.push("/admin/auth/login");
       }, 1500);
+    }
+  };
+
+  const googleSignUp = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/admin/auth/callback`,
+        data: {
+          is_admin: true,
+        },
+      },
+    });
+
+    if (error) {
+      showToast(error.message);
     }
   };
 
@@ -263,6 +280,20 @@ export default function RegisterAdminPage() {
               </div>
             </div>
             <div className="flex flex-col gap-4">
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
+                onClick={googleSignUp}
+              >
+                <img
+                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                  alt="Google Logo"
+                  className="w-5 h-5"
+                />
+                <span className="uppercase text-[10px] tracking-widest font-black">
+                  Sign up with Google
+                </span>
+              </button>
               <button
                 disabled={isLoading}
                 className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${

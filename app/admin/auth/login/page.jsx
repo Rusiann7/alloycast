@@ -2,11 +2,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import { reusableSupabase } from "../../../../lib/supabaseClient";
+import { createClient } from "../../../../lib/supabase/client";
 import Toast from "../../../components/Toast";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -54,7 +55,7 @@ export default function AdminLoginPage() {
 
     const sanitizedData = formValidation.data;
     // binago ko to para gamitin supabase Auth
-    const { data, error } = await reusableSupabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: sanitizedData.email, // kunin email sa Auth
       password: sanitizedData.password, // kunin password sa Auth
     });
@@ -75,7 +76,7 @@ export default function AdminLoginPage() {
     }
 
     // check kung admin ung account
-    const { data: profile, error: profileError } = await reusableSupabase
+    const { data: profile, error: profileError } = await supabase
       .from("Users")
       .select("is_admin")
       .eq("id", data.user.id)
@@ -83,7 +84,7 @@ export default function AdminLoginPage() {
 
     // layas ka na sa admin page kung d ka admin boi
     if (profileError || !profile?.is_admin) {
-      await reusableSupabase.auth.signOut();
+      await supabase.auth.signOut();
       return showToast("Access Denied: You are not an Admin.", "error");
     }
 
@@ -100,7 +101,7 @@ export default function AdminLoginPage() {
       return showToast("Please enter your email address first");
     }
 
-    const { error } = await reusableSupabase.auth.resend({
+    const { error } = await supabase.auth.resend({
       type: "signup",
       email: loginForm.email.trim().toLowerCase(),
       options: {
@@ -112,6 +113,22 @@ export default function AdminLoginPage() {
       showToast(error.message);
     } else {
       showToast("Verification email resent! Check your inbox.", "success");
+    }
+  };
+
+  const googleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/admin/auth/callback`,
+        data: {
+          is_admin: true,
+        },
+      },
+    });
+
+    if (error) {
+      showToast(error.message);
     }
   };
 
@@ -209,6 +226,20 @@ export default function AdminLoginPage() {
                   Resend Link
                 </button>
               </p>
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
+                onClick={googleLogin}
+              >
+                <img
+                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                  alt="Google Logo"
+                  className="w-5 h-5"
+                />
+                <span className="uppercase text-[10px] tracking-widest font-black">
+                  Sign in with Google
+                </span>
+              </button>
               <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
                 LOGIN
               </button>

@@ -14,7 +14,8 @@ export async function GET(request) {
     const supabase = createServerClient(
       // galing kay .env.local
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
       {
         // read at write ng cookie sa supabase
         cookies: {
@@ -30,9 +31,11 @@ export async function GET(request) {
       },
     );
     // session token masasave sa cookie
-    await supabase.auth.exchangeCodeForSession(code);
+    const {
+      data: { user },
+    } = await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // direkta sa productDetail page
+  // default flow for customers
   return NextResponse.redirect(`${origin}/customer/productDetail`);
 }
