@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
-const AddProductModal = ({ isOpen, onClose, onAdd }) => {
-  const supabase = createClient();
+
+const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
   const [addFormData, setAddFormData] = useState({
     item_name: "",
     item_brand: "",
@@ -11,15 +12,15 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
     item_image: "",
   });
   const [preview, setPreview] = useState(null);
-  const fileInputRef = React.useRef(null); // pnage kuha ng image file
+  const supabase = createClient();
+  const router = useRouter();
+  const fileInputRef = React.useRef(null); // pang kuha ng image file
   if (!isOpen) return null;
 
   const getInputValue = (e) => {
     const { name, value, type, files } = e.target;
-
     // For file inputs, we need to take files[0], not value
     const finalValue = type === "file" ? files[0] : value;
-
     setAddFormData((prevAddFormData) => ({
       ...prevAddFormData,
       [name]: finalValue,
@@ -31,35 +32,37 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
     }
   };
 
+  // function para mag-add product sa Inventory Table
   const addProduct = async (e) => {
     e.preventDefault();
-
-    // ADD EXPLANATION TO IMAGE UPLOAD LATER
-    let imageUrl = ""; // para sa image string
+    let imageUrl = ""; // para sa image string url
 
     //upload muna ung image sa Supabase Storage
     if (addFormData.item_image) {
-      const file = addFormData.item_image;
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `product-images/${fileName}`;
+      const file = addFormData.item_image; // mula sa addFormData state
+      const fileExt = file.name.split(".").pop(); // pang extract ng file extension
+      const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`; // allows duplication of image with unique each
+      const filePath = `product-images/${fileName}`; // storage path
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("Inventory")
-        .upload(filePath, file);
+      const { data: uploadData, error: uploadError } = await supabase.storage //insert sa Supabase Storage Bucket
+        .from("Inventory") // Inventory Table
+        .upload(filePath, file); // img
 
       if (uploadError) {
-        alert("Error uploading image: " + uploadError.message);
+        showToast("Error uploading image: " + uploadError.message);
         return;
       }
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("Inventory").getPublicUrl(filePath);
+      } = supabase.storage
+        .from("Inventory")
+        .getPublicUrl(filePath, file, { upsert: true });
 
       imageUrl = publicUrl;
     }
     const { data, error } = await supabase.from("Inventory").insert([
+      //upload ung inventory sa Inventory Table
       {
         item_name: addFormData.item_name,
         brand: addFormData.item_brand,
@@ -71,9 +74,10 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
     ]);
 
     if (error) {
-      alert("ayaw gumana erp" + error.message);
+      showToast("Error adding product to Inventory");
     } else {
-      alert("OK na ok erp!");
+      showToast("Product successfully added to Inventory", "success");
+      if (onSuccess) onSuccess(); // refresh agad
       onClose();
     }
   };
@@ -127,7 +131,7 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
               value={addFormData.item_name}
               required
               placeholder="e.g. Ferrari F40"
-              className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+              className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
               onChange={getInputValue}
             />
           </div>
@@ -138,15 +142,25 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
               <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-[#C8102E] pl-2">
                 BRAND
               </label>
-              <input
+              <select
+                id="item_brand"
                 name="item_brand"
                 type="text"
                 value={addFormData.item_brand}
                 required
-                placeholder="e.g. Bburago"
-                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
                 onChange={getInputValue}
-              />
+              >
+                <option value="" disabled hidden>
+                  Brand
+                </option>
+                <option value="Hot Wheels">Hot Wheels</option>
+                <option value="Tomica">Tomica</option>
+                <option value="Majorette">Majorette</option>
+                <option value="Bburago">Bburago</option>
+                <option value="Mini GT">Mini GT</option>
+                <option value="Others">Others...</option>
+              </select>
             </div>
             <div className="space-y-3">
               <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-[#C8102E] pl-2">
@@ -158,7 +172,7 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
                 type="text"
                 value={addFormData.category}
                 required
-                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
                 onChange={getInputValue}
               >
                 <option value="" disabled hidden>
@@ -168,6 +182,7 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
                 <option value="Special">Special Series</option>
                 <option value="Premium">Premium Series</option>
                 <option value="Chase">Chase Series</option>
+                <option value="Others">Others...</option>
               </select>
             </div>
           </div>
@@ -185,7 +200,7 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
                 step="0.01"
                 required
                 placeholder="0.00"
-                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/10"
+                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/10"
                 onChange={getInputValue}
               />
             </div>
@@ -198,7 +213,7 @@ const AddProductModal = ({ isOpen, onClose, onAdd }) => {
                 type="number"
                 required
                 placeholder="0"
-                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/10"
+                className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/10"
                 onChange={getInputValue}
               />
             </div>

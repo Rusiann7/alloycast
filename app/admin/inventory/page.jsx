@@ -1,31 +1,52 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import AddProductModal from "../../components/AddProductModal";
+import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 
 export default function AdminInventory() {
-  const supabase = createClient();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
 
-  const addProduct = async (formData) => {
-    const { data, error } = await supabase.from("Inventory").insert([{}]);
+  const supabase = createClient();
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
-  const toggleSelect = (id) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
+  // load products mula sa inventory kada refresh ng page ONCE
+  useEffect(() => {
+    fetchInventoryProduct();
+  }, []);
 
-  const handleEditClick = (item) => {
-    setActiveItem(item);
-    setIsEditDrawerOpen(true);
+  // kunin mga product sa loob ng Inventory Table
+  const fetchInventoryProduct = async () => {
+    try {
+      let { data, error } = await supabase
+        .from("Inventory")
+        .select("*")
+        .order("created_at");
+
+      if (error) throw error;
+      setInventory(data || []); // ilagay sa inventory state ung nafetch na product
+      console.log(data);
+      return showToast("Ok lahat!");
+    } catch (error) {
+      showToast("Error fetching products from Inventory");
+      console.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,7 +88,7 @@ export default function AdminInventory() {
             </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="h-14 px-8 bg-[#C8102E] rounded-[2px] text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
+              className="h-14 px-8 bg-[#C8102E] rounded-[2px] text-[12px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
             >
               ADD PRODUCT
             </button>
@@ -78,94 +99,84 @@ export default function AdminInventory() {
             className="bg-[#111111]/40 border border-white/[0.03] rounded-[2px] overflow-hidden reveal-up"
             style={{ animationDelay: "0.2s" }}
           >
-            <table className="w-full text-left border-collapse">
+            <table className="w-full  text-left border-collapse ">
               <thead>
                 <tr className="border-b border-white/[0.03] bg-[#131313]">
-                  <th className="px-8 py-5 w-16 text-center">
-                    <Checkbox
-                      checked={
-                        selectedItems.length === inventory.length &&
-                        inventory.length > 0
-                      }
-                      onChange={() => {
-                        if (selectedItems.length === inventory.length)
-                          setSelectedItems([]);
-                        else setSelectedItems(inventory.map((i) => i.id));
-                      }}
-                    />
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                    PRODUCT IMAGE
                   </th>
-                  <th className="px-8 py-5 text-[10px] font-black font-headline uppercase tracking-[0.3em] text-white/30">
-                    MEDIA
-                  </th>
-                  <th className="px-8 py-5 text-[10px] font-black font-headline uppercase tracking-[0.3em] text-white/30">
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
                     PRODUCT NAME
                   </th>
-                  <th className="px-8 py-5 text-[10px] font-black font-headline uppercase tracking-[0.3em] text-white/30">
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
                     BRAND
                   </th>
-                  <th className="px-8 py-5 text-[10px] font-black font-headline uppercase tracking-[0.3em] text-white/30">
-                    SERIES
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                    CATEGORY/SERIES
                   </th>
-                  <th className="px-10 py-5 text-center">
-                    <span className="material-symbols-outlined text-sm opacity-10">
-                      more_horiz
-                    </span>
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                    PRICE
+                  </th>
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                    STOCK
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.02]">
-                {inventory.map((item, idx) => (
+                {inventory.map((item) => (
                   <tr
                     key={item.id}
                     className="group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer"
                     onClick={() => handleEditClick(item)}
                   >
-                    <td
-                      className="px-8 py-5 text-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Checkbox
-                        checked={selectedItems.includes(item.id)}
-                        onChange={() => toggleSelect(item.id)}
-                      />
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="w-16 h-10 bg-black/40 rounded-[2px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500">
+                    {/* IMAGE */}
+                    <td className="px-8 py-5 ">
+                      <div className="w-full h-40 bg-black/40 rounded-[2px] overflow-hidden border border-white/5 group-hover:border-[#C8102E]/30 transition-all duration-500">
                         <img
-                          src={item.img}
-                          alt={item.name}
-                          className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
+                          src={item.item_image || "/placeholder-car.png"}
+                          alt={item.item_name}
+                          className="w-full h-40 object-cover  group-hover:scale-110 transition-all duration-700"
                         />
                       </div>
                     </td>
-                    <td className="px-8 py-5">
-                      <p className="text-[11px] font-black font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
-                        {item.name}
+
+                    {/* Product Name Column */}
+                    <td className="px-8 py-5 text-center">
+                      <p className="text-[13px] text-white font-bold font-headline uppercase tracking-tight group-hover:text-[#C8102E] transition-colors duration-300">
+                        {item.item_name}
                       </p>
-                      <p className="text-[8px] font-mono uppercase opacity-20 mt-1 tabular-nums">
-                        SKU: {item.sku}
+                      <p className="text-[13px] text-whitefont-mono uppercase  mt-1 tabular-nums">
+                        ID: {item.id}
                       </p>
                     </td>
-                    <td className="px-8 py-5">
-                      <span
-                        className={`px-2.5 py-1 rounded-[1px] text-[8px] font-black uppercase tracking-[0.1em] ${
-                          item.brand === "Bburago"
-                            ? "bg-[#C8102E]/20 text-[#C8102E] border border-[#C8102E]/30"
-                            : item.brand === "Maisto"
-                              ? "bg-[#0051A8]/20 text-[#4285F4] border border-[#0051A8]/30"
-                              : "bg-surface-container-highest/20 text-white/40 border border-white/10"
-                        }`}
-                      >
+
+                    {/* Brand Column */}
+                    <td className="px-8 py-5 text-center">
+                      <span className="bg-surface-container-highest/20 text-white border border-white/10 px-2.5 py-1 rounded-[1px] text-[12px] font-black  tracking-[0.1em]">
                         {item.brand}
                       </span>
                     </td>
-                    <td className="px-8 py-5">
-                      <p className="text-[10px] font-headline font-bold uppercase tracking-[0.2em] opacity-30 group-hover:opacity-60 transition-opacity">
-                        {item.series}
+
+                    {/* Category / Series Column */}
+                    <td className="px-8 py-5 text-center">
+                      <p className="text-[12px] text-white font-headline font-bold uppercase tracking-[0.2em]  group-hover:opacity-60 transition-opacity">
+                        {item.category}
                       </p>
                     </td>
-                    <td className="px-10 py-5 text-center">
-                      <button className="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 group-hover:text-primary-container transition-all">
+                    <td className="px-8 py-5">
+                      <p className="text-[12px] font-headline font-bold uppercase tracking-[0.2em] opacity-30 group-hover:opacity-60 transition-opacity">
+                        ₱{item.price}
+                      </p>
+                    </td>
+                    <td className="px-8 py-5">
+                      <p className="text-[12px] font-headline font-bold uppercase tracking-[0.2em] opacity-30 group-hover:opacity-60 transition-opacity">
+                        {item.stock}
+                      </p>
+                    </td>
+
+                    {/* Action / Edit Button */}
+                    <td className="px-10 py-5 text-center hidden">
+                      <button className="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 group-hover:text-[#C8102E] transition-all">
                         edit_note
                       </button>
                     </td>
@@ -176,43 +187,6 @@ export default function AdminInventory() {
           </div>
         </div>
       </main>
-
-      {/* --- Bulk Action Bar --- */}
-      {selectedItems.length > 0 && (
-        <div className="fixed bottom-10 left-[calc(50%+128px)] -translate-x-1/2 z-[80] bg-[#161616] border border-white/10 rounded-[2px] px-10 py-5 flex items-center gap-16 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.8)] animate-slide-in-up backdrop-blur-xl">
-          <div className="flex items-center gap-5 border-r border-white/5 pr-12">
-            <span className="text-3xl font-headline italic font-black text-primary-container leading-none tabular-nums">
-              {selectedItems.length.toString().padStart(2, "0")}
-            </span>
-            <div className="flex flex-col">
-              <p className="text-[10px] font-black font-headline uppercase tracking-[0.2em] leading-none">
-                ITEMS
-              </p>
-              <p className="text-[10px] font-black font-headline uppercase tracking-[0.2em] opacity-20 mt-1 leading-none">
-                SELECTED
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-10">
-            <button className="flex items-center gap-4 group">
-              <span className="material-symbols-outlined text-2xl opacity-20 group-hover:text-white transition-all transform group-hover:scale-110">
-                block
-              </span>
-              <span className="text-[10px] font-black font-headline uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100 transition-opacity">
-                SET INACTIVE
-              </span>
-            </button>
-            <button className="flex items-center gap-4 group">
-              <span className="material-symbols-outlined text-2xl opacity-20 group-hover:text-[#C8102E] transition-all transform group-hover:scale-110">
-                delete
-              </span>
-              <span className="text-[10px] font-black font-headline uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100 transition-opacity">
-                DELETE
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* --- Edit Model Drawer --- */}
       {isEditDrawerOpen && (
@@ -238,7 +212,7 @@ export default function AdminInventory() {
 
             <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
               <div className="space-y-3">
-                <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
+                <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
                   PRODUCT NAME
                 </label>
                 <input
@@ -250,7 +224,7 @@ export default function AdminInventory() {
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
+                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
                     BRAND
                   </label>
                   <div className="relative">
@@ -267,7 +241,7 @@ export default function AdminInventory() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
+                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
                     SCALE
                   </label>
                   <div className="relative">
@@ -287,7 +261,7 @@ export default function AdminInventory() {
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
+                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
                     PRICE (₱)
                   </label>
                   <input
@@ -297,7 +271,7 @@ export default function AdminInventory() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
+                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
                     STOCK
                   </label>
                   <input
@@ -309,7 +283,7 @@ export default function AdminInventory() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
+                <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
                   MODEL IMAGE
                 </label>
                 <div className="w-full h-56 bg-black/40 border border-dashed border-white/10 flex flex-col items-center justify-center group cursor-pointer hover:border-primary-container transition-all duration-500 rounded-[2px] relative overflow-hidden">
@@ -323,7 +297,7 @@ export default function AdminInventory() {
                     <span className="material-symbols-outlined text-4xl font-light opacity-20 mb-4 group-hover:text-primary-container group-hover:opacity-100 transition-all duration-500">
                       cloud_upload
                     </span>
-                    <p className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]">
+                    <p className="text-[12px] font-headline font-bold uppercase tracking-[0.3em]">
                       <span className="opacity-20 group-hover:opacity-40 transition-opacity">
                         DRAG & DROP OR
                       </span>{" "}
@@ -340,7 +314,7 @@ export default function AdminInventory() {
 
               <div className="pt-8 border-t border-white/[0.03] flex items-center justify-between">
                 <div className="flex flex-col">
-                  <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] text-white/60">
+                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] text-white/60">
                     ACTIVE LISTING
                   </label>
                   <p className="text-[8px] text-white/10 uppercase tracking-[0.1em] mt-1 italic">
@@ -364,11 +338,11 @@ export default function AdminInventory() {
             <footer className="p-10 border-t border-white/[0.03] grid grid-cols-2 gap-6 bg-black">
               <button
                 onClick={() => setIsEditDrawerOpen(false)}
-                className="h-16 border border-white/5 rounded-[2px] text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:bg-white/[0.03] transition-all opacity-40 hover:opacity-100"
+                className="h-16 border border-white/5 rounded-[2px] text-[12px] font-black font-headline uppercase tracking-[0.3em] hover:bg-white/[0.03] transition-all opacity-40 hover:opacity-100"
               >
                 DISCARD CHANGES
               </button>
-              <button className="h-16 bg-[#C8102E] rounded-[2px] text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20">
+              <button className="h-16 bg-[#C8102E] rounded-[2px] text-[12px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20">
                 SAVE PRODUCT
               </button>
             </footer>
@@ -380,7 +354,14 @@ export default function AdminInventory() {
       <AddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onAdd={addProduct}
+        showToast={showToast}
+        onSuccess={fetchInventoryProduct} // refresh kaagad once na may bagong added na product
+      />
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
       />
 
       <style jsx global>{`
@@ -400,49 +381,3 @@ export default function AdminInventory() {
     </div>
   );
 }
-
-const SidebarLink = ({ icon, label, active, href }) => (
-  <a
-    href={href}
-    className={`flex items-center space-x-5 px-10 py-4.5 transition-all group relative ${
-      active ? "bg-white/[0.02]" : "hover:bg-white/[0.01]"
-    }`}
-  >
-    {active && (
-      <div className="absolute left-0 top-0 h-full w-0.5 bg-[#C8102E]" />
-    )}
-    <span
-      className={`material-symbols-outlined transition-all text-[20px] font-light ${
-        active
-          ? "text-[#C8102E] scale-110"
-          : "opacity-15 group-hover:opacity-100 group-hover:text-white"
-      }`}
-    >
-      {icon}
-    </span>
-    <span
-      className={`text-[10px] font-headline font-black uppercase tracking-[0.35em] transition-all ${
-        active ? "text-white" : "text-[#A8A8A0] group-hover:text-white"
-      }`}
-    >
-      {label}
-    </span>
-  </a>
-);
-
-const Checkbox = ({ checked, onChange }) => (
-  <button
-    onClick={onChange}
-    className={`w-6 h-6 rounded-[1px] border flex items-center justify-center transition-all duration-300 ${
-      checked
-        ? "bg-[#C8102E] border-[#C8102E]"
-        : "border-white/[0.08] hover:border-white/20 bg-white/[0.02]"
-    }`}
-  >
-    {checked && (
-      <span className="material-symbols-outlined text-[16px] text-white font-light">
-        done
-      </span>
-    )}
-  </button>
-);
