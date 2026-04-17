@@ -1,52 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
+import AddProductModal from "../../components/AddProductModal";
+import { createClient } from "../../../lib/supabase/client";
 
 export default function AdminInventory() {
+  const supabase = createClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [inventory, setInventory] = useState([]);
 
-  // Sample Inventory Data
-  const inventory = [
-    {
-      id: "1",
-      name: "Ferrari F40 Competizione",
-      sku: "DF-F40-18-01",
-      brand: "Bburago",
-      series: "Signature Series",
-      price: "4850",
-      stock: 12,
-      scale: "1:18",
-      status: "Active",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAZ4E21lXBurIS_TWCdfOL3rkgZAV8Q_HCvzGktxGs6jRWCzAQMeGTr4aj1eVjl7l_mB8x6M2Ol4jKJk-7ubei34idebYwVoKaf9ZBwpGO7p7nKtweGTsDREJ2RsyqvdHR-Au6iXtJiQXGnXYTXol45bJ4VSK4GPXoup5TXjGLOBiSOsgQhOlmSHBe6XdfpNEqDWUvR7Ay1pcCnaFvM0ZNZ1QULJhZ5As6xOuafgQ3rUICZETKcs1ng_zOfulAipRuvNB1QV7I49hc",
-    },
-    {
-      id: "2",
-      name: "Ford Mustang GT 1967",
-      sku: "MA-MST-67-B",
-      brand: "Maisto",
-      series: "Special Edition",
-      price: "2450",
-      stock: 24,
-      scale: "1:24",
-      status: "Active",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCvnfL0yv-UW2-T7Nabl5WAx9WDhSchBQ2ju9m-HEbEtdIHPDi0Q14U_hR6h0UUvMVeweWdCwTJYKytE9v64ihc0LiP-p5GR-O1ByWLsK3OeAbx-BQ_mwbV8ZJ_q-5E9PQ0tVaBiVbQMbu1rjSMn_7c-9K9o18eA5dkGCUfU2Tmj0Wn_fcGyop9Fb5x8Zn5LirHCBQONOUhSjZ9vcNlKxp775T1Jco_QQ2EpMwEJrdAy5NMQzMm--BnYHOF-I7lEIWlFxqzM5_FYUw",
-    },
-    {
-      id: "3",
-      name: "Porsche 911 GT3 RS",
-      sku: "GT-P911-22-O",
-      brand: "GT Spirit",
-      series: "Resin Collection",
-      price: "6800",
-      stock: 0,
-      scale: "1:18",
-      status: "Inactive",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCaQJvoMAucdYmdAY1MkbvHWsUYYf0TTpqG52izUkcXXZj3E8exiAsky5Bqlza1l101KvZAfbsYe3ztUDaTOuW9sudFSrI_4V-MBhmaKB5amnxNRYQU9cRzKSpHXyaaFy4vZIBOKnxRe-ql3rdHcHA64AYdm5ZbxfUXiPnU95V5sZ_JOeFdL0PQaoi5_6m-Uq8OboqcCKShkkuPX1G2y_2_3nTyvgM1e2KmtkLwmSm1_8rMJO9yMIxDCebPsqiK7Z2crfc7bet-rLU",
-    },
-  ];
+  const addProduct = async (formData) => {
+    const { data, error } = await supabase.from("Inventory").insert([{}]);
+  };
 
   const toggleSelect = (id) => {
     setSelectedItems((prev) =>
@@ -96,6 +65,12 @@ export default function AdminInventory() {
                 className="bg-transparent border-none outline-none text-xs font-headline font-bold uppercase tracking-[0.1em] w-full placeholder:opacity-10 text-white"
               />
             </div>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="h-14 px-8 bg-[#C8102E] rounded-[2px] text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
+            >
+              ADD PRODUCT
+            </button>
           </div>
 
           {/* Inventory Table */}
@@ -400,6 +375,13 @@ export default function AdminInventory() {
           </aside>
         </>
       )}
+
+      {/* --- Add Product Modal --- */}
+      <AddProductModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={addProduct}
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

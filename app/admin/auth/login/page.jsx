@@ -1,12 +1,11 @@
 "use client";
-import React from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
+import Toast from "../../../components/Toast";
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const [loginForm, setLoginForm] = useState({
@@ -18,14 +17,13 @@ export default function LoginPage() {
     message: "",
     type: "error",
   });
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // false muna para d mapakita password unless i-click ung button
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast({ ...toast, visible: false }), 4000);
   };
 
-  // pangkuha ng input
   const getInputValue = (e) => {
     const { name, value } = e.target;
     setLoginForm((prevLoginForm) => ({
@@ -35,20 +33,16 @@ export default function LoginPage() {
   };
 
   const inputSanitizerFunction = () => {
-    // panglinis ng email input
     const sanitizedForm = {
       ...loginForm,
       email: loginForm.email.trim().toLowerCase(),
     };
 
-    // para icheck ung email format
     const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // kailangan may symbol na "@"
     if (!emailFormat.test(sanitizedForm.email)) {
       return { isValid: false, message: "Invalid email format!" };
     }
 
-    // kung ok lahat
     return { isValid: true, data: sanitizedForm };
   };
 
@@ -60,65 +54,89 @@ export default function LoginPage() {
     }
 
     const sanitizedData = formValidation.data;
-    // gagamit na tayo ng supabase auth para sa login
+    // binago ko to para gamitin supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: sanitizedData.email, // kukunin email sa supabase Auth
-      password: sanitizedData.password, // kukunin password sa supabase Auth
+      email: sanitizedData.email, // kunin email sa Auth
+      password: sanitizedData.password, // kunin password sa Auth
     });
 
-    // pang check kung naverify na email o hindi
+    // email verification check kung verified o hindi
     if (error) {
-      if (error.message.includes("Email not verified")) {
+      if (
+        error.message.includes("Email not confirmed") ||
+        error.message.includes("Email not verified")
+      ) {
         return showToast(
           "Please verify your email before logging in!",
           "error",
         );
       }
       // kung mali email o password
-      return showToast("Invalid Email or Password", "error");
+      return showToast("Invalid Credentials", "error");
     }
 
-    showToast("Login Successful", "success");
+    // pang check lng ng logged in account
+    if (data?.user) {
+      console.log("Account: " + data.user.email);
+    }
+
+    // check kung admin ung account
+    const { data: profile, error: profileError } = await supabase
+      .from("Users")
+      .select("is_admin")
+      .eq("id", data.user.id)
+      .single();
+
+    // layas ka na sa admin page kung d ka admin boi
+    if (profileError || !profile?.is_admin) {
+      await supabase.auth.signOut();
+      return showToast("Access Denied: You are not an Admin.", "error");
+    }
+
+    // okie login ka na sa dashboard boi
+    console.log("Account: " + data.user.email);
+    showToast("Login Successful!", "success");
     setTimeout(() => {
-      router.push("/customer/productDetail");
+      router.push("/admin/dashboard");
     }, 1500);
   };
 
-  // pang resend ng email verification
+  // pang resend ng email verification kung kelangan
   const resendVerification = async () => {
     if (!loginForm.email) {
       return showToast("Please enter your email address first");
     }
 
-    // isesend nito email verification sa gmail
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: loginForm.email.trim().toLowerCase(),
       options: {
-        emailRedirectTo: `${window.location.origin}/customer/auth/login`, // direct url kapag clinick email verification
+        emailRedirectTo: `${window.location.origin}/admin/auth/login`,
       },
     });
 
-    // pang check ng email verification resend
     if (error) {
       showToast(error.message);
     } else {
+      showToast("Verification email resent! Check your inbox.", "success");
     }
   };
 
   const googleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/customer/auth/callback`,
+        redirectTo: `${window.location.origin}/admin/auth/callback`,
         data: {
-          is_admin: false,
+          is_admin: true,
         },
       },
     });
 
     if (error) {
       showToast(error.message);
+    } else {
+      showToast("Login Successful!", "success");
     }
   };
 
@@ -160,17 +178,17 @@ export default function LoginPage() {
         <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
           <div className="mb-8">
             <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
-              LOGIN YOUR ACCOUNT
+              LOGIN YOUR ADMIN ACCOUNT
             </h2>
             <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
-              Enter your credentials to access the catalog
+              Enter your credentials to access the inventory
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={loginAccount}>
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                Email
+                EMAIL
               </label>
               <input
                 type="email"
@@ -181,7 +199,7 @@ export default function LoginPage() {
                 onChange={getInputValue}
               />
             </div>
-            <div className="relative">
+            <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
                 Password
               </label>
@@ -205,41 +223,41 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
-              Didn't receive the email?{" "}
+            <div className="flex flex-col gap-4">
+              <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+                Didn't receive the email?{" "}
+                <button
+                  type="button"
+                  onClick={resendVerification}
+                  className="text-primary-container hover:underline italic font-bold uppercase cursor-pointer"
+                >
+                  Resend Link
+                </button>
+              </p>
               <button
                 type="button"
-                onClick={resendVerification}
-                className="text-primary-container hover:underline italic font-bold uppercase cursor-pointer"
+                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
+                onClick={googleLogin}
               >
-                Resend Link
+                <img
+                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                  alt="Google Logo"
+                  className="w-5 h-5"
+                />
+                <span className="uppercase text-[10px] tracking-widest font-black">
+                  Sign in with Google
+                </span>
               </button>
-            </p>
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-6 border border-gray-300"
-              onClick={googleLogin}
-            >
-              <img
-                src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
-                alt="Google Logo"
-                className="w-5 h-5"
-              />
-              <span className="uppercase text-[10px] tracking-widest font-black">
-                Sign in with Google
-              </span>
-            </button>
-
-            <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
-              LOGIN
-            </button>
+              <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
+                LOGIN
+              </button>
+            </div>
           </form>
-
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
             <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
-              Don't have an account?{" "}
+              Add Admin User?{" "}
               <Link
-                href="/customer/auth/register"
+                href="/admin/auth/register"
                 className="text-primary-container hover:underline italic font-bold"
               >
                 SIGN UP

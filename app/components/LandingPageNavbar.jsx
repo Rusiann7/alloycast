@@ -1,9 +1,17 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function LandingPageNavbar() {
+  const pathname = usePathname();
   const [navbarOpen, setNavbarOpen] = useState(false);
+
+  // itatago nito ung navbar sa register at login page
+  const hideNavbarOn = ["/customer/auth/login", "/customer/auth/register"];
+
+  // If the current path is in our hide list, don't render the navbar
+  if (hideNavbarOn.includes(pathname)) return null;
 
   const navLinks = [
     {

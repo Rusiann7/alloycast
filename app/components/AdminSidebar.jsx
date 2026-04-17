@@ -2,11 +2,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { createClient } from "../../lib/supabase/client";
+import SessionModal from "./SessionModal";
 
 export default function AdminSidebar() {
+  const supabase = createClient(); // para sa logout
+  const route = useRouter(); // para sa pang redirect sa admin/auth/login
   const [activeSidebar, setActiveSidebar] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   const linkName = usePathname(); // pangkuha ng current link path para lagyan ng style
+
+  // itatago nito ung navbar sa register at login page ng admin
+  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
+  if (hideNavbarOn.includes(linkName)) return null;
   console.log("Current Link:", linkName);
 
   const SidebarLink = ({ icon, label, href }) => {
@@ -22,6 +32,21 @@ export default function AdminSidebar() {
         </span>
       </Link>
     );
+  };
+
+  const showLogoutModal = async () => {
+    setShowSessionModal(true);
+  };
+  // logout function at session destroy
+  const logoutAccount = async () => {
+    const { error } = await supabase.auth.signOut(); // global signout para sa lahat ng device
+    if (error) {
+      console.log("Error during logout:", error.message);
+    } else {
+      console.log("Logout successful: Session destroyed.");
+      setShowSessionModal(false);
+      route.push("/admin/auth/login");
+    }
   };
 
   return (
@@ -69,7 +94,11 @@ export default function AdminSidebar() {
         </div>
 
         <nav className="flex-1 space-y-0.5 mt-14 lg:mt-0">
-          <SidebarLink icon="grid_view" label="DASHBOARD" href="/admin" />
+          <SidebarLink
+            icon="grid_view"
+            label="DASHBOARD"
+            href="/admin/dashboard"
+          />
           <SidebarLink
             icon="grid_view"
             label="ANALYTICS"
@@ -106,18 +135,23 @@ export default function AdminSidebar() {
                 Settings
               </span>
             </a>
-            <a
+            <button
+              onClick={showLogoutModal}
               className="flex items-center space-x-3 text-[#e5e2e1] px-4 py-2 opacity-60 hover:opacity-100 transition-opacity"
-              href="/"
             >
               <span className="material-symbols-outlined">logout</span>
               <span className="font-headline uppercase text-xs font-bold tracking-widest">
                 Logout
               </span>
-            </a>
+            </button>
           </div>
         </div>
       </aside>
+      <SessionModal
+        isOpen={showSessionModal}
+        onClose={() => setShowSessionModal(false)}
+        onConfirm={logoutAccount}
+      />
     </>
   );
 }

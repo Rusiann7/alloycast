@@ -1,0 +1,7 @@
+Week 1 - Register/Login for Client and Customers
+- Paganahin muna basic Create at Login Account
+- implement email verification
+- implement login/create via google
+Week 2 - Inventory CRUD 
+Week 3 - Reservation functions for Customers
+Week 4 - Analytics for Client
