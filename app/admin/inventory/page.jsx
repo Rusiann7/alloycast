@@ -6,12 +6,11 @@ import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 
 export default function AdminInventory() {
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingProductId, setEditingProductId] = useState(null); // holds the id of EACH product
+  const [editProductForm, setEditProductForm] = useState({}); // holds the temporary form data from editing fields
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -19,10 +18,6 @@ export default function AdminInventory() {
   });
 
   const supabase = createClient();
-  const showToast = (message, type = "error") => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
-  };
 
   // load products mula sa inventory kada refresh ng page ONCE
   useEffect(() => {
@@ -39,8 +34,7 @@ export default function AdminInventory() {
 
       if (error) throw error;
       setInventory(data || []); // ilagay sa inventory state ung nafetch na product
-      console.log(data);
-      return showToast("Ok lahat!");
+      console.log("Product Fetched successfully");
     } catch (error) {
       showToast("Error fetching products from Inventory");
       console.error(error.message);
@@ -49,6 +43,102 @@ export default function AdminInventory() {
     }
   };
 
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  // calculate total stock and inventory count and show in Header
+  const totalProductStock = inventory.reduce(
+    (sum, item) => sum + (Number(item.stock) || 0),
+    0,
+  );
+  const totalProducts = inventory.length;
+
+  // start edit function
+  const startEditProduct = (item) => {
+    setEditingProductId(item.id); // sets the current row selected to edit
+    setEditProductForm({ ...item }); // prefill the inputs with current data (original data)
+  };
+
+  // edit function
+  const editProduct = (e) => {
+    const { name, value, type, files } = e.target;
+
+    // For file inputs, we need to take files[0], not value
+    if (type === "file" && files[0]) {
+      const file = files[0];
+      setEditProductForm((prev) => ({
+        ...prev,
+        [name]: file,
+        preview: URL.createObjectURL(file), // create local preview URL
+      }));
+    } else {
+      setEditProductForm((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // save edit function
+  const saveEditProduct = async () => {
+    try {
+      let imageUrl = editProductForm.item_image;
+
+      // 1. If item_image is a File object, it means a new image was selected
+      if (editProductForm.item_image instanceof File) {
+        const file = editProductForm.item_image;
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `product-images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("Inventory")
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("Inventory").getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
+      // 2. Perform the update
+      const { error } = await supabase
+        .from("Inventory")
+        .update({
+          item_name: editProductForm.item_name,
+          brand: editProductForm.brand,
+          category: editProductForm.category,
+          price: editProductForm.price,
+          stock: editProductForm.stock,
+          item_image: imageUrl,
+        })
+        .eq("id", editingProductId);
+
+      if (error) throw error;
+      showToast("Updated successfully!", "success");
+      setEditingProductId(null);
+      fetchInventoryProduct();
+    } catch (error) {
+      showToast("Update failed: " + error.message);
+    }
+  };
+
+  // delete product
+  const deleteProduct = async (id) => {
+    if (!confirm("Are you sure you want to remove this item?")) return;
+
+    try {
+      const { error } = await supabase.from("Inventory").delete().eq("id", id); // .eq delete only the selected product
+      if (error) throw error;
+      showToast("Product removed!", "success");
+      fetchInventoryProduct(); // reload the page to display updated products
+    } catch (error) {
+      showToast("Failed to remove product");
+      console.error(error.message);
+    }
+  };
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
@@ -60,13 +150,16 @@ export default function AdminInventory() {
               INVENTORY
             </h3>
             <div className="flex items-center gap-4">
-              <p className="text-[11px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
-                TOTAL STOCK: <span className="text-white">1,248</span> UNITS
+              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
+                TOTAL PRODUCTS STOCKS:{" "}
+                <span className="text-white">
+                  {totalProductStock.toLocaleString()}
+                </span>{" "}
               </p>
               <div className="w-1 h-1 bg-white/20 rounded-full" />
-              <p className="text-[11px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
-                ACTIVE LISTINGS:{" "}
-                <span className="text-primary-container">84</span>
+              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
+                TOTAL PRODUCTS LIST:{" "}
+                <span className="text-primary-container">{totalProducts}</span>
               </p>
             </div>
           </div>
@@ -120,65 +213,205 @@ export default function AdminInventory() {
                   <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
                     STOCK
                   </th>
+                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                    ACTIONS
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.02]">
+                {/* TO REVIEW */}
                 {inventory.map((item) => (
                   <tr
                     key={item.id}
-                    className="group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer"
-                    onClick={() => handleEditClick(item)}
+                    className={`group hover:bg-white/[0.01] transition-all duration-300 ${
+                      editingProductId === item.id ? "bg-white/[0.03]" : ""
+                    }`}
                   >
                     {/* IMAGE */}
-                    <td className="px-8 py-5 ">
-                      <div className="w-full h-40 bg-black/40 rounded-[2px] overflow-hidden border border-white/5 group-hover:border-[#C8102E]/30 transition-all duration-500">
+                    <td className="px-8 py-5">
+                      <div
+                        onClick={() =>
+                          editingProductId === item.id &&
+                          document.getElementById(`file-${item.id}`).click()
+                        }
+                        className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-[#C8102E]/30 transition-all duration-500 relative ${
+                          editingProductId === item.id ? "cursor-pointer" : ""
+                        }`}
+                      >
+                        {editingProductId === item.id && (
+                          <input
+                            id={`file-${item.id}`}
+                            type="file"
+                            name="item_image"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={editProduct}
+                          />
+                        )}
                         <img
-                          src={item.item_image || "/placeholder-car.png"}
+                          src={
+                            editingProductId === item.id &&
+                            editProductForm.preview
+                              ? editProductForm.preview
+                              : item.item_image || "/placeholder-car.png"
+                          }
                           alt={item.item_name}
-                          className="w-full h-40 object-cover  group-hover:scale-110 transition-all duration-700"
+                          className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700 ${
+                            editingProductId === item.id ? "opacity-40" : ""
+                          }`}
                         />
+                        {editingProductId === item.id && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
+                            <span className="material-symbols-outlined text-white text-2xl mb-2">
+                              add_a_photo
+                            </span>
+                            <span className="text-[8px] font-headline font-bold uppercase tracking-widest text-white/60">
+                              CHANGE
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </td>
 
-                    {/* Product Name Column */}
+                    {/* Product Name */}
                     <td className="px-8 py-5 text-center">
-                      <p className="text-[13px] text-white font-bold font-headline uppercase tracking-tight group-hover:text-[#C8102E] transition-colors duration-300">
-                        {item.item_name}
-                      </p>
-                      <p className="text-[13px] text-whitefont-mono uppercase  mt-1 tabular-nums">
-                        ID: {item.id}
-                      </p>
+                      {editingProductId === item.id ? (
+                        <input
+                          name="item_name"
+                          value={editProductForm.item_name}
+                          onChange={editProduct}
+                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                        />
+                      ) : (
+                        <p className="text-[13px] text-white font-bold font-headline uppercase tracking-tight group-hover:text-[#C8102E] transition-colors duration-300">
+                          {item.item_name}
+                        </p>
+                      )}
                     </td>
 
-                    {/* Brand Column */}
+                    {/* Brand */}
                     <td className="px-8 py-5 text-center">
-                      <span className="bg-surface-container-highest/20 text-white border border-white/10 px-2.5 py-1 rounded-[1px] text-[12px] font-black  tracking-[0.1em]">
-                        {item.brand}
-                      </span>
+                      {editingProductId === item.id ? (
+                        <select
+                          name="brand"
+                          value={editProductForm.brand}
+                          onChange={editProduct}
+                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                        >
+                          <option value="Hot Wheels">Hot Wheels</option>
+                          <option value="Tomica">Tomica</option>
+                          <option value="Majorette">Majorette</option>
+                          <option value="Auto World">Auto World</option>
+                          <option value="Mini GT">Mini GT</option>
+                          <option value="Bburago">Bburago</option>
+                          <option value="Maisto">Maisto</option>
+                          <option value="Others">Others...</option>
+                        </select>
+                      ) : (
+                        <span className="bg-white/5 text-white border border-white/10 px-2.5 py-1 rounded-[1px] text-[11px] font-black tracking-[0.1em]">
+                          {item.brand}
+                        </span>
+                      )}
                     </td>
 
-                    {/* Category / Series Column */}
+                    {/* Category */}
                     <td className="px-8 py-5 text-center">
-                      <p className="text-[12px] text-white font-headline font-bold uppercase tracking-[0.2em]  group-hover:opacity-60 transition-opacity">
-                        {item.category}
-                      </p>
+                      {editingProductId === item.id ? (
+                        <select
+                          name="category"
+                          value={editProductForm.category}
+                          onChange={editProduct}
+                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                        >
+                          <option value="Mainline">Mainline Series</option>
+                          <option value="Special">Special Series</option>
+                          <option value="Premium">Premium Series</option>
+                          <option value="Chase">Chase Series</option>
+                        </select>
+                      ) : (
+                        <p className="text-[11px] text-white/40 font-headline uppercase tracking-[0.2em]">
+                          {item.category}
+                        </p>
+                      )}
                     </td>
+
+                    {/* Price */}
+                    <td className="px-8 py-5 text-center">
+                      {editingProductId === item.id ? (
+                        <input
+                          name="price"
+                          type="number"
+                          value={editProductForm.price}
+                          onChange={editProduct}
+                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                        />
+                      ) : (
+                        <p className="text-[12px] font-headline font-bold text-[#C8102E]">
+                          ₱{item.price}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Stock */}
+                    <td className="px-8 py-5 text-center">
+                      {editingProductId === item.id ? (
+                        <input
+                          name="stock"
+                          type="number"
+                          value={editProductForm.stock}
+                          onChange={editProduct}
+                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                        />
+                      ) : (
+                        <p className="text-[12px] font-headline font-bold opacity-40">
+                          {item.stock}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Actions */}
                     <td className="px-8 py-5">
-                      <p className="text-[12px] font-headline font-bold uppercase tracking-[0.2em] opacity-30 group-hover:opacity-60 transition-opacity">
-                        ₱{item.price}
-                      </p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-[12px] font-headline font-bold uppercase tracking-[0.2em] opacity-30 group-hover:opacity-60 transition-opacity">
-                        {item.stock}
-                      </p>
-                    </td>
-
-                    {/* Action / Edit Button */}
-                    <td className="px-10 py-5 text-center hidden">
-                      <button className="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 group-hover:text-[#C8102E] transition-all">
-                        edit_note
-                      </button>
+                      <div className="flex items-center justify-center gap-3">
+                        {editingProductId === item.id ? (
+                          <>
+                            <button
+                              onClick={saveEditProduct}
+                              className="w-8 h-8 flex items-center justify-center bg-green-600/20 text-green-500 hover:bg-green-600/40 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                check
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => setEditingProductId(null)}
+                              className="w-8 h-8 flex items-center justify-center bg-white/5 text-white/40 hover:bg-white/10 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                close
+                              </span>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => startEditProduct(item)}
+                              className="w-8 h-8 flex items-center justify-center bg-secondary-container text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                edit
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => deleteProduct(item.id)}
+                              className="w-8 h-8 flex items-center justify-center bg-primary-container text-white hover:bg-primary-container/80 hover:text-white/80 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                delete
+                              </span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -187,168 +420,6 @@ export default function AdminInventory() {
           </div>
         </div>
       </main>
-
-      {/* --- Edit Model Drawer --- */}
-      {isEditDrawerOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[90] animate-fade-in"
-            onClick={() => setIsEditDrawerOpen(false)}
-          />
-          <aside className="fixed top-0 right-0 h-full w-full max-w-xl bg-[#0F0F0F] z-[100] border-l border-white/[0.05] shadow-[0_0_100px_rgba(0,0,0,1)] animate-slide-in-right flex flex-col">
-            <header className="p-10 border-b border-white/[0.03] flex items-center justify-between">
-              <h4 className="text-3xl font-black font-headline uppercase tracking-tighter italic leading-none">
-                EDIT MODEL
-              </h4>
-              <button
-                onClick={() => setIsEditDrawerOpen(false)}
-                className="w-10 h-10 flex items-center justify-center border border-white/5 hover:bg-white/5 transition-colors rounded-[2px] group"
-              >
-                <span className="material-symbols-outlined opacity-40 group-hover:opacity-100 group-hover:rotate-90 transition-all text-xl font-light">
-                  close
-                </span>
-              </button>
-            </header>
-
-            <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
-              <div className="space-y-3">
-                <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
-                  PRODUCT NAME
-                </label>
-                <input
-                  type="text"
-                  defaultValue={activeItem?.name}
-                  className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
-                    BRAND
-                  </label>
-                  <div className="relative">
-                    <select className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest appearance-none outline-none focus:border-primary-container transition-all text-white">
-                      <option>{activeItem?.brand}</option>
-                      <option>Bburago</option>
-                      <option>Maisto</option>
-                      <option>AutoArt</option>
-                      <option>GT Spirit</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 text-xl font-light">
-                      expand_more
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
-                    SCALE
-                  </label>
-                  <div className="relative">
-                    <select className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest appearance-none outline-none focus:border-primary-container transition-all text-white">
-                      <option>{activeItem?.scale}</option>
-                      <option>1:18</option>
-                      <option>1:24</option>
-                      <option>1:43</option>
-                      <option>1:64</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 text-xl font-light">
-                      expand_more
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
-                    PRICE (₱)
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={activeItem?.price}
-                    className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest outline-none focus:border-primary-container transition-all text-white tabular-nums"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
-                    STOCK
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={activeItem?.stock}
-                    className="w-full bg-black/40 border border-white/[0.03] h-14 px-6 text-sm font-headline font-bold uppercase tracking-widest outline-none focus:border-primary-container transition-all text-white tabular-nums"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] opacity-40 inline-block border-l-2 border-[#C8102E] pl-2">
-                  MODEL IMAGE
-                </label>
-                <div className="w-full h-56 bg-black/40 border border-dashed border-white/10 flex flex-col items-center justify-center group cursor-pointer hover:border-primary-container transition-all duration-500 rounded-[2px] relative overflow-hidden">
-                  {activeItem?.img && (
-                    <img
-                      src={activeItem.img}
-                      className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:scale-110 transition-transform duration-1000"
-                    />
-                  )}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <span className="material-symbols-outlined text-4xl font-light opacity-20 mb-4 group-hover:text-primary-container group-hover:opacity-100 transition-all duration-500">
-                      cloud_upload
-                    </span>
-                    <p className="text-[12px] font-headline font-bold uppercase tracking-[0.3em]">
-                      <span className="opacity-20 group-hover:opacity-40 transition-opacity">
-                        DRAG & DROP OR
-                      </span>{" "}
-                      <span className="text-[#C8102E] group-hover:text-primary-container transition-colors">
-                        BROWSE
-                      </span>
-                    </p>
-                    <p className="text-[8px] text-white/10 mt-3 uppercase tracking-[0.1em]">
-                      High-res PNG/JPG preferred.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-8 border-t border-white/[0.03] flex items-center justify-between">
-                <div className="flex flex-col">
-                  <label className="text-[12px] font-headline font-bold uppercase tracking-[0.3em] text-white/60">
-                    ACTIVE LISTING
-                  </label>
-                  <p className="text-[8px] text-white/10 uppercase tracking-[0.1em] mt-1 italic">
-                    Visible to all potential clients
-                  </p>
-                </div>
-                <button
-                  className="w-16 h-8 bg-black border border-white/10 rounded-full relative p-1.5 transition-all hover:border-[#C8102E]/40"
-                  onClick={(e) => {
-                    e.currentTarget.classList.toggle("bg-[#C8102E]");
-                    e.currentTarget.firstChild.classList.toggle(
-                      "translate-x-8",
-                    );
-                  }}
-                >
-                  <div className="w-5 h-5 bg-white rounded-full transition-transform duration-300 pointer-events-none" />
-                </button>
-              </div>
-            </div>
-
-            <footer className="p-10 border-t border-white/[0.03] grid grid-cols-2 gap-6 bg-black">
-              <button
-                onClick={() => setIsEditDrawerOpen(false)}
-                className="h-16 border border-white/5 rounded-[2px] text-[12px] font-black font-headline uppercase tracking-[0.3em] hover:bg-white/[0.03] transition-all opacity-40 hover:opacity-100"
-              >
-                DISCARD CHANGES
-              </button>
-              <button className="h-16 bg-[#C8102E] rounded-[2px] text-[12px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20">
-                SAVE PRODUCT
-              </button>
-            </footer>
-          </aside>
-        </>
-      )}
 
       {/* --- Add Product Modal --- */}
       <AddProductModal

@@ -157,8 +157,10 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
                 <option value="Hot Wheels">Hot Wheels</option>
                 <option value="Tomica">Tomica</option>
                 <option value="Majorette">Majorette</option>
-                <option value="Bburago">Bburago</option>
+                <option value="Auto World">Auto World</option>
                 <option value="Mini GT">Mini GT</option>
+                <option value="Bburago">Bburago</option>
+                <option value="Maisto">Maisto</option>
                 <option value="Others">Others...</option>
               </select>
             </div>
