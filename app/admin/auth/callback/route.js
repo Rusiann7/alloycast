@@ -26,7 +26,6 @@ export async function GET(request) {
       },
     );
 
-    // Exchange code for user session
     const {
       data: { user },
       error: exchangeError,
@@ -49,5 +48,5 @@ export async function GET(request) {
   }
 
   // Success! Go straight to the inventory
-  return NextResponse.redirect(`${origin}/admin/inventory`);
+  return NextResponse.redirect(`${origin}/admin/dashboard`);
 }

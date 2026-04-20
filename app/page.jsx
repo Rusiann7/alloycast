@@ -1,8 +1,34 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import LandingPageNavbar from "./components/LandingPageNavbar";
+import ProductCard from "./components/ProductCard";
+import { createClient } from "../lib/supabase/client";
 
 export default function LandingPage() {
+  const [inventory, setInventory] = useState([]);
+  const supabase = createClient();
+
+  const fetchInventoryProduct = async () => {
+    try {
+      let { data, error } = await supabase
+        .from("Inventory")
+        .select("*")
+        .order("created_at");
+
+      if (error) throw error;
+      setInventory(data || []); // ilagay sa inventory state ung nafetch na product
+      console.log("Product Fetched successfully");
+    } catch (error) {
+      showToast("Error fetching products from Inventory");
+      console.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventoryProduct();
+  }, []);
+
   return (
     <div className="bg-background font-body text-on-surface min-h-screen">
       <LandingPageNavbar />
@@ -94,20 +120,17 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* Featured Specimens */}
+      {/* Top Products */}
       <section className="bg-surface py-20">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>
               <h2 className="font-headline font-black text-4xl uppercase italic tracking-tight mb-2 text-white">
-                Featured Specimens
+                Top Products
               </h2>
-              <p className="text-sm font-light text-[#A8A8A0] uppercase tracking-[0.2em]">
-                The vault is now open
-              </p>
             </div>
             <button className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary-container">
-              View Entire Catalog
+              View More
               <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
                 arrow_forward
               </span>
@@ -115,37 +138,9 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <ProductCard
-              tag="PREMIUM"
-              tagColor="bg-secondary-fixed text-on-secondary-fixed"
-              img="https://lh3.googleusercontent.com/aida-public/AB6AXuBPlw0ExStzaiUbo687oyOL5bIGdtGkg1UiE0rMlapWcERulmZc4uv4zeNqbvkf57riRKM8G_7EjxcvC48a_pp-W9wsqdEPdbwjW6EDx-9b8f6MLTkjJez3VuzoLO8LpehEwWo81DdmBsCBlZI-LZae5AqfgcSOdvwt3hlfy2kx3-8I8ROZoL05i98K4d4CrxcDttehflqiEZt1uUdNCw9GR24srf4zQnlyHNMU8URRT8G_yc5N8WryMu5aK7FSJr68kBDAJ0rtRRw"
-              type="Super Treasure Hunt"
-              name="R34 Skyline GT-R"
-              price="₱650"
-              featured
-            />
-            <ProductCard
-              tag="SPECIAL"
-              tagColor="bg-on-tertiary text-white"
-              img="https://lh3.googleusercontent.com/aida-public/AB6AXuDhDZ0QZV5glkncgbQTEH-B_TzdxQSAmneBZuxk40MdH6LilzZd-0G2QzAh2HeCmWo01O3e80RtnF3Z5Tpv4yUaVHuGMTcZbXCTJAaFTY4vrpA83JjGZo5oRO9SiSpi6dtPwfk9xeWFInoQkR04SfNHjmUyWxATeRMb_wsnHBFxodWYgX537eYMb1boBx1TX1yABXTQY3lYcFa2Ux1PKnHsZ-mwpJ1w71eOIxUElF87M7XVVxFK6flDx2rsF2B4F68Q_bYC7vZGBw4"
-              type="Premium Series"
-              name="'67 Camaro"
-              price="₱350"
-            />
-            <ProductCard
-              img="https://lh3.googleusercontent.com/aida-public/AB6AXuCgnSVC6pF1RqFJSOiNDvjlis5dQPNnxCd4dhF0HWjGUAE0-ohV6BvydL7aIWWgbfCWi13rcAibe753a6UbUkzUQsdaG6HMneQbatVsPq04v8oTTGGXgG8y6SZO2OuDCOkqweCbwwPNAtJSuLoQPp4-65gRcrfGo32zE9tbgcbMDlAhuRgqkv0QhEZWs-v2z5yMHLVFCbJunWO66rIkEHHd16tTmlEsYkWZYd3j8PCdaxQxj61Uaf_5i_CHGgWPb5LyoXDDQ_gpwv0"
-              type="Mainline"
-              name="Porsche 911 GT3"
-              price="₱350"
-            />
-            <ProductCard
-              tag="Limited"
-              tagColor="bg-primary-container text-white"
-              img="https://lh3.googleusercontent.com/aida-public/AB6AXuDwm6G0lhOpkeWmfYMd87v37gpK_3zQeCoiGnJsZtxwfaAUDeEI1W8cLsTEjkzQaW6WYX77PPSdu-EUGaAebx6SDIU5Cw4_gOd4TZbgxUVX7T9cHki5PABDD7Ov9UGJepkQXQCMzTCY3Wc4D7snbowqKtxFwo2lwbTsXrfiIA_Wxqpu3GOyOim7Zrw7hGZ7q9iGIrWUCpzgn1APVWCNYrkt_9ap0CP7p6J9zndLygVCsLEfh45-lOMyBd_k6JmL-189JMGKP1dOe4Y"
-              type="Convention Exclusive"
-              name="Datsun 510"
-              price="₱200"
-            />
+            {inventory.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} featured />
+            ))}
           </div>
         </div>
       </section>
@@ -155,13 +150,13 @@ export default function LandingPage() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
-              "Tomica",
-              "Mini GT",
-              "Pop Race",
-              "Inno64",
-              "Tarmac",
               "Hot Wheels",
-              "Matchbox",
+              "Tomica",
+              "Majorette",
+              "Auto World",
+              "Mini GT",
+              "Bburago",
+              "Maisto",
             ].map((brand) => (
               <div
                 key={brand}
@@ -256,47 +251,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-// Sub-component for Product Cards
-const ProductCard = ({ tag, tagColor, img, type, name, price, featured }) => (
-  <div className="bg-surface-container-high rounded-[4px] overflow-hidden p-1 group">
-    <div className="relative aspect-square bg-surface-container-highest flex items-center justify-center mb-4 overflow-hidden">
-      <img
-        alt={name}
-        className="w-4/5 h-auto object-contain transition-transform duration-500 group-hover:scale-110"
-        src={img}
-      />
-      {tag && (
-        <div className="absolute top-4 left-4">
-          <span
-            className={`${tagColor} text-[10px] font-black uppercase px-2 py-1 shadow-lg`}
-          >
-            {tag}
-          </span>
-        </div>
-      )}
-    </div>
-    <div className="px-4 pb-6">
-      <p
-        className={`text-[10px] font-black uppercase tracking-widest mb-1 ${featured ? "text-primary-container" : "text-[#A8A8A0]"}`}
-      >
-        {type}
-      </p>
-      <h3 className="font-headline font-bold text-xl uppercase mb-2 text-white">
-        {name}
-      </h3>
-      <div className="flex items-center justify-between">
-        <span className="font-headline font-black text-lg text-white">
-          {price}
-        </span>
-        <button className="size-10 flex items-center justify-center bg-surface-container-highest border border-outline-variant hover:border-primary-container transition-colors group/btn">
-          <Link href="/customer/productDetail">
-            <span className="material-symbols-outlined text-on-surface group-hover/btn:text-primary-container">
-              shopping_cart
-            </span>
-          </Link>
-        </button>
-      </div>
-    </div>
-  </div>
-);

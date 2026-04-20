@@ -75,6 +75,11 @@ export default function AdminLoginPage() {
       return showToast("Invalid Credentials", "error");
     }
 
+    // pang check lng ng logged in account
+    if (data?.user) {
+      console.log("Account: " + data.user.email);
+    }
+
     // check kung admin ung account
     const { data: profile, error: profileError } = await supabase
       .from("Users")
@@ -89,9 +94,10 @@ export default function AdminLoginPage() {
     }
 
     // okie login ka na sa dashboard boi
+    console.log("Account: " + data.user.email);
     showToast("Login Successful!", "success");
     setTimeout(() => {
-      router.push("/admin");
+      router.push("/admin/dashboard");
     }, 1500);
   };
 
@@ -117,7 +123,7 @@ export default function AdminLoginPage() {
   };
 
   const googleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/admin/auth/callback`,
@@ -129,6 +135,8 @@ export default function AdminLoginPage() {
 
     if (error) {
       showToast(error.message);
+    } else {
+      showToast("Login Successful!", "success");
     }
   };
 
