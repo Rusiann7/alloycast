@@ -5,10 +5,10 @@ import { useState } from "react";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const supabase = createClient();
+  const [showPassword, setShowPassword] = useState(false);
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -18,7 +18,13 @@ export default function LoginPage() {
     message: "",
     type: "error",
   });
-  const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams(); // for capturing clicked product url and id
+  const supabase = createClient();
+
+  const redirectTo =
+    searchParams.get("redirectTo") || "/customer/productDetail"; // gets the redirect path from capturedCurrentPath in productDetail
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -80,7 +86,7 @@ export default function LoginPage() {
 
     showToast("Login Successful", "success");
     setTimeout(() => {
-      router.push("/customer/productDetail");
+      router.push(redirectTo); // redirects back to clicked productDetail
     }, 1500);
   };
 

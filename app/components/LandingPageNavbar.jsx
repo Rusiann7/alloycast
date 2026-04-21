@@ -1,11 +1,37 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "../../lib/supabase/client";
+import Toast from "./Toast";
 
 export default function LandingPageNavbar() {
+  const router = useRouter();
   const pathname = usePathname();
   const [navbarOpen, setNavbarOpen] = useState(false);
+  const [user, setUser] = useState(null); // user state to track user logged in
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
+  const supabase = createClient();
+
+  // Auth user listener
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe(); // cleanup
+  }, []);
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+  };
 
   // itatago nito ung navbar sa register at login page
   const hideNavbarOn = ["/customer/auth/login", "/customer/auth/register"];
@@ -22,8 +48,25 @@ export default function LandingPageNavbar() {
     { id: 1, label: "New Arrivals", href: "/customer/new-arrivals" },
     { id: 2, label: "Pre-Orders", href: "/customer/pre-orders" },
   ];
+
+  const logoutAccount = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      // logout sucess
+      showToast("Goodbye!", "success");
+      setUser(null); // manually clear user state for instant UI update
+      router.push("/");
+    } else {
+      console.error("Auth: Error logging out", error.message);
+    }
+  };
   return (
     <>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
       {/* Header Navigation */}
       <header className="fixed top-0 left-0 w-full z-[100] bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5">
         <div className="mx-auto flex items-center justify-between px-6 lg:px-12 py-4">
@@ -65,12 +108,33 @@ export default function LandingPageNavbar() {
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <button className="hidden sm:flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors">
-              <span className="material-symbols-outlined">search</span>
-            </button>
-            <button className="hidden lg:block bg-primary-container text-white text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
-              <Link href="/customer/auth/login">Log In</Link>
-            </button>
+
+            {!user ? (
+              <button className="hidden lg:block bg-primary-container text-white text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
+                <Link href="/customer/auth/login">Log In</Link>
+              </button>
+            ) : (
+              <div className="flex items-center gap-6">
+                {/* Link to the user's profile/dashboard */}
+                <Link
+                  href="/customer/account"
+                  className="hidden lg:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] hover:text-white"
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    person
+                  </span>{" "}
+                  Account
+                </Link>
+
+                {/* Trigger the logout function */}
+                <button
+                  onClick={logoutAccount}
+                  className="hidden lg:block text-[10px] font-black uppercase tracking-widest text-primary-container hover:text-white transition-colors"
+                >
+                  Log Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -108,14 +172,37 @@ export default function LandingPageNavbar() {
                 {navLink.label}
               </Link>
             ))}
-            <button className="bg-primary-container text-white text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
-              <Link href="/customer/auth/login">Log In</Link>
-            </button>
-            <div className="h-px w-full bg-white/10 my-4"></div>
-            <button className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-sm">search</span>{" "}
-              Search The Vault
-            </button>
+            {!user ? (
+              <button className="bg-primary-container text-white text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
+                <Link
+                  href="/customer/auth/login"
+                  onClick={() => setNavbarOpen(false)}
+                >
+                  Log In
+                </Link>
+              </button>
+            ) : (
+              <>
+                <Link
+                  href="/customer/account"
+                  className="text-2xl font-headline font-black uppercase italic text-primary-container"
+                  onClick={() => setNavbarOpen(false)}
+                >
+                  My Account
+                </Link>
+
+                {/* Mobile Logout Link */}
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setNavbarOpen(false);
+                  }}
+                  className="text-left text-2xl font-headline font-black uppercase italic text-on-surface hover:text-primary-container transition-colors tracking-tighter"
+                >
+                  Log Out
+                </button>
+              </>
+            )}
           </nav>
         </div>
       </div>

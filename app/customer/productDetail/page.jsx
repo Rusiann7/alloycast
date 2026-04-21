@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Toast from "../../components/Toast";
-import Link from "next/link";
-
+import emailjs from "@emailjs/browser";
 export default function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null); // for checking auth users
   const searchParams = useSearchParams(); // identify the id of the product clicked url
+  const [quantity, setQuantity] = useState(1); // for adding more product reservation
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -78,13 +78,77 @@ export default function ProductDetail() {
     if (!user) {
       // is user is not logged in
       showToast("You must login first to reserve this product", "error");
+      const captureCurrentPath =
+        window.location.pathname + window.location.search; // capture current page url with product id
       setTimeout(() => {
-        router.push("/customer/auth/login");
+        router.push(
+          // pass the captured current path url to login page
+          `/customer/auth/login?redirectTo=${encodeURIComponent(captureCurrentPath)}`,
+        );
       }, 4000);
       return;
     }
     setIsModalOpen(true);
     showToast("Reservation Successful!", "success"); // if user is currently logged
+  };
+
+  // This will insert the reserve product to Reservation Table using the confirmation Modal
+  const insertReservationToTable = async () => {
+    try {
+      const reservationDataInsert = {
+        // these are the data that will be inserted into Reservation Table
+        user_id: user.id, // user_id on Reservation Table
+        inventory_id: product.id, // the reserved product id
+        quantity: quantity, // 1 for now, will add state for more latere
+        discount: 0, // 0 for now since no discount for now
+      };
+
+      // Insert to Reservation Table
+      const { error: reserveError } = await supabase
+        .from("Reservation")
+        .insert([reservationDataInsert]); // inserts the reservationDataInsert items
+      if (reserveError) throw reserveError;
+
+      // Decreases the stock in Inventory Table because a reservation has been made
+      const { error: stockError } = await supabase
+        .from("Inventory")
+        .update({ stock: product.stock - quantity })
+        .eq("id", product.id);
+      if (stockError) throw stockError;
+
+      // fetch admins to send emails
+      const { data: admins } = await supabase
+        .from("Users")
+        .select("email")
+        .eq("is_admin", true);
+      const adminEmailsConcatenated = admins.map((a) => a.email).join(", ");
+
+      // Trigger Email Notification
+      const templateParams = {
+        userName: user.email,
+        productName: product.item_name,
+        quantity: quantity,
+        adminList: adminEmailsConcatenated,
+      };
+
+      await emailjs.send(
+        "service_mu3qrbd", // Found in "Email Services" page
+        "template_do3kcc3", // Found in "Email Templates" page
+        templateParams,
+        "3ilQZwBk_Cxjfohab", // Found in "Account" -> "API Keys"
+      );
+      showToast(
+        "Reservation Completed. An email will be sent to Admins",
+        "success",
+      );
+      setIsModalOpen(false); // closes the confirmation modal
+      setTimeout(() => {
+        window.location.reload(); // refreshes the page to show updated list/stocks
+      }, 3000);
+    } catch (error) {
+      console.error("Reservation Failed: ", error.message);
+      showToast("Failed to process reservation. Try again later", "error");
+    }
   };
 
   // dummy function to destroy user session
@@ -203,9 +267,14 @@ export default function ProductDetail() {
               <div className="space-y-6">
                 <button
                   onClick={productReservation}
-                  className="w-full py-8 bg-[#E8112D] hover:bg-white hover:text-black text-white font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all active:scale-[0.98] shadow-2xl italic sharp-edge"
+                  disabled={product.stock === 0} // disables the button if the stock is 0
+                  className={`w-full py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge shadow-2xl ${
+                    product.stock === 0
+                      ? "bg-gray-600 text-gray-400 cursor-not-allowed grayscale" // 2. "Sold Out" styling
+                      : "bg-[#E8112D] text-white hover:bg-white hover:text-black active:scale-[0.98]" // regular styling
+                  }`}
                 >
-                  Reserve Product
+                  {product.stock === 0 ? "Out of Stock" : "Reserve Product"}
                 </button>
                 <button
                   onClick={handleLogout}
@@ -235,6 +304,21 @@ export default function ProductDetail() {
               </button>
             </div>
 
+            <p className="font-light text-on-surface-variant">
+              How many &nbsp;
+              <span className="text-primary-container font-bold">
+                {product.item_name}
+              </span>
+              &nbsp; you want to reserve?
+            </p>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              max={product.stock}
+              className=" bg-surface p-2 border border-white/10"
+            />
+
             <p className="mb-8 font-light text-on-surface-variant">
               You are about to reserve:{" "}
               <span className="text-primary-container font-bold">
@@ -243,10 +327,7 @@ export default function ProductDetail() {
             </p>
             <button
               className="w-full py-6 bg-primary-container font-headline font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-              onClick={() => {
-                showToast("Reservation successful!", "success");
-                setIsModalOpen(false);
-              }}
+              onClick={insertReservationToTable}
             >
               Confirm My Reservation
             </button>
