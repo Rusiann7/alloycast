@@ -68,21 +68,15 @@ export default function LandingPageNavbar() {
         visible={toast.visible}
       />
       {/* Header Navigation */}
-      <header className="fixed top-0 left-0 w-full z-[100] bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5">
+      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5">
         <div className="mx-auto flex items-center justify-between px-6 lg:px-12 py-4">
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3 text-white">
               <div className="size-6 text-primary-container">
-                <svg
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
-                    fill="currentColor"
-                  ></path>
-                </svg>
+                <img
+                  src="https://scontent.fcrk1-3.fna.fbcdn.net/v/t39.30808-6/644340223_122213082470530419_6615498980518078861_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeEgG4siFoRLWVvtPSEqyZ6C6XgpYHoEoUnpeClgegShSSNn7gW48rNushLosBNvbMtV9T4xvqZNtjSpRd91-iCk&_nc_ohc=rw7XoySkXqEQ7kNvwFojGGX&_nc_oc=AdoC_YfDtQU02H42WKNg7O8T3Qg2mxDYgGPQH7FvU0ARSLe-raddwJhKIg0A4BBXWps&_nc_zt=23&_nc_ht=scontent.fcrk1-3.fna&_nc_gid=Fs9oXNHCX0hKFD6MIjEyOQ&oh=00_Af0UWeeul3blDoNzL_aGqyzpaoZsvj2P9YLoPznYagzRlA&oe=69F0CEC0"
+                  alt="Ethan Marcus Diecast"
+                />
               </div>
               <h2 className="font-headline text-lg font-bold uppercase tracking-tight hover:cursor-pointer">
                 <Link href="/">Ethan Marcus Diecast</Link>
@@ -110,7 +104,7 @@ export default function LandingPageNavbar() {
             </button>
 
             {!user ? (
-              <button className="hidden lg:block bg-primary-container text-white text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
+              <button className="hidden lg:block bg-primary-container text-black/60 text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
                 <Link href="/customer/auth/login">Log In</Link>
               </button>
             ) : (
@@ -173,7 +167,7 @@ export default function LandingPageNavbar() {
               </Link>
             ))}
             {!user ? (
-              <button className="bg-primary-container text-white text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
+              <button className="bg-primary-container text-black text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
                 <Link
                   href="/customer/auth/login"
                   onClick={() => setNavbarOpen(false)}

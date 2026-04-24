@@ -137,10 +137,10 @@ export default function LoginPage() {
       />
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
         {/* Left Side: Branding/Visual */}
-        <div className="relative hidden md:flex flex-col justify-between p-12 bg-primary-container text-white overflow-hidden">
+        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
           <div className="relative z-10">
-            <h1 className="font-headline font-black text-4xl uppercase italic leading-none mb-4">
-              Join the <br /> Hunt.
+            <h1 className="font-headline font-black text-4xl uppercase text-primary-container italic leading-none mb-4">
+              Join the Hunt
             </h1>
             <p className="text-sm font-light uppercase tracking-widest opacity-80">
               The premier destination for elite diecast collectors.
@@ -154,7 +154,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="relative z-10 flex items-center gap-2">
+          <div className="relative z-10 flex items-center gap-2 text-primary-container">
             <span className="material-symbols-outlined">flare</span>
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">
               Diecast Vault established 2026
@@ -165,11 +165,11 @@ export default function LoginPage() {
         {/* Right Side: Form */}
         <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
           <div className="mb-8">
-            <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
+            <h2 className="text-2xl font-headline text-primary-container uppercase italic mb-2">
               LOGIN YOUR ACCOUNT
             </h2>
             <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
-              Enter your credentials to access the catalog
+              To order the product you want
             </p>
           </div>
 
@@ -203,9 +203,9 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-3 text-[#A8A8A0] hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-3 text-[#A8A8A0] hover:text-white transition-colors"
                 >
-                  <span className="material-symbols-outlined text-lg">
+                  <span className="material-symbols-outlined text-md">
                     {showPassword ? "visibility" : "visibility_off"}
                   </span>
                 </button>
@@ -236,7 +236,7 @@ export default function LoginPage() {
               </span>
             </button>
 
-            <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
+            <button className="w-full bg-primary-container rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-white/90 transition-all transform active:scale-[0.98]">
               LOGIN
             </button>
           </form>

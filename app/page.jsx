@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import LandingPageNavbar from "./components/LandingPageNavbar";
 import ProductCard from "./components/ProductCard";
+import HowItWorksModal from "./components/HowItWorksModal";
 import { createClient } from "../lib/supabase/client";
 
 export default function LandingPage() {
   const [inventory, setInventory] = useState([]);
+  const [howItWorksModal, setHowItWorksModal] = useState(false);
   const supabase = createClient();
 
   const fetchInventoryProduct = async () => {
@@ -32,6 +34,10 @@ export default function LandingPage() {
   return (
     <div className="bg-background font-body text-on-surface min-h-screen">
       <LandingPageNavbar />
+      <HowItWorksModal
+        isOpen={howItWorksModal}
+        onClose={() => setHowItWorksModal(false)}
+      />
       {/* Main Hero Section */}
       <main className="relative h-screen min-h-[700px] sm:min-h-[800px] w-full overflow-hidden radial-brand flex flex-col justify-center custom-cursor-area">
         {/* Background Asset: Nissan Skyline PNG - Optimized positioning */}
@@ -52,28 +58,31 @@ export default function LandingPage() {
             style={{ animationDelay: "0.4s" }}
           >
             <h1 className="font-headline font-black uppercase italic leading-[0.92] text-[clamp(44px,12vw,96px)] tracking-tighter">
-              <span className="block">Hunt.</span>
-              <span className="block text-primary-container">Collect.</span>
-              <span className="block">Reserve.</span>
+              <span className="block">Hunt</span>
+              <span className="block text-primary-container">Reserve</span>
+              <span className="block">Collect</span>
             </h1>
           </div>
           {/* Subheadline */}
           <p
-            className="text-[16px] sm:text-[18px] font-light text-[#A8A8A0] max-w-[440px] mb-10 leading-relaxed reveal-up"
+            className="text-[16px] sm:text-[18px] font-light text-white/90 max-w-[440px] mb-10 leading-relaxed reveal-up"
             style={{ animationDelay: "0.6s" }}
           >
-            Your Source For Premium Tomica, Mini GT, and Pop Race Diecast.
-            Exclusive Curation for Elite Collectors.
+            Your Source For Premium Hot Wheels, Tomica, and other Diecast
+            brands. Exclusive for Elite Collectors.
           </p>
           {/* CTA Row */}
           <div
             className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto reveal-up"
             style={{ animationDelay: "0.8s" }}
           >
-            <button className="w-full sm:min-w-[220px] h-[52px] bg-primary-container text-white font-headline font-black uppercase tracking-widest text-sm rounded-[4px] btn-premium">
+            <button className="w-full sm:min-w-[220px] h-[52px] bg-primary-container text-black/60 font-headline font-black uppercase tracking-widest text-sm rounded-[4px] btn-premium">
               <Link href="/customer/product">Browse Products</Link>
             </button>
-            <button className="w-full sm:min-w-[220px] h-[52px] border border-primary-container text-primary-container font-headline font-black uppercase tracking-widest text-sm rounded-[4px] btn-premium hover:bg-primary-container hover:text-white">
+            <button
+              onClick={() => setHowItWorksModal(true)}
+              className="w-full sm:min-w-[220px] h-[52px] border border-primary-container text-primary-container font-headline font-black uppercase tracking-widest text-sm rounded-[4px] btn-premium hover:bg-primary-container hover:text-black/60"
+            >
               How It Works
             </button>
           </div>
@@ -81,7 +90,7 @@ export default function LandingPage() {
           {/* Ticker Section */}
           <div className="mt-16 w-full lg:max-w-[600px] overflow-hidden">
             <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
-              <span className="text-[10px] uppercase tracking-[0.3em] font-black text-[#555555]">
+              <span className="text-[11px] uppercase tracking-[0.3em] font-black text-white/90">
                 THE PRODUCTS WE SELL
               </span>
             </div>
@@ -96,19 +105,23 @@ export default function LandingPage() {
                     <span className="material-symbols-outlined text-[14px]">
                       flare
                     </span>
-                    Mini GT{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
-                    Pop Race{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
                     Tomica{" "}
                     <span className="material-symbols-outlined text-[14px]">
                       flare
                     </span>
-                    Tarmac Works{" "}
+                    Majorette{" "}
+                    <span className="material-symbols-outlined text-[14px]">
+                      flare
+                    </span>
+                    Auto World{" "}
+                    <span className="material-symbols-outlined text-[14px]">
+                      flare
+                    </span>
+                    Mini GT{" "}
+                    <span className="material-symbols-outlined text-[14px]">
+                      flare
+                    </span>
+                    Bburago{" "}
                     <span className="material-symbols-outlined text-[14px]">
                       flare
                     </span>
@@ -180,16 +193,10 @@ export default function LandingPage() {
           <div className="max-w-[300px]">
             <div className="flex items-center gap-3 text-white mb-6">
               <div className="size-6 text-primary-container">
-                <svg
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
-                    fill="currentColor"
-                  ></path>
-                </svg>
+                <img
+                  src="https://scontent.fcrk1-3.fna.fbcdn.net/v/t39.30808-6/644340223_122213082470530419_6615498980518078861_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeEgG4siFoRLWVvtPSEqyZ6C6XgpYHoEoUnpeClgegShSSNn7gW48rNushLosBNvbMtV9T4xvqZNtjSpRd91-iCk&_nc_ohc=rw7XoySkXqEQ7kNvwFojGGX&_nc_oc=AdoC_YfDtQU02H42WKNg7O8T3Qg2mxDYgGPQH7FvU0ARSLe-raddwJhKIg0A4BBXWps&_nc_zt=23&_nc_ht=scontent.fcrk1-3.fna&_nc_gid=Fs9oXNHCX0hKFD6MIjEyOQ&oh=00_Af0UWeeul3blDoNzL_aGqyzpaoZsvj2P9YLoPznYagzRlA&oe=69F0CEC0"
+                  alt="Ethan Marcus Diecast"
+                />
               </div>
               <h2 className="font-headline text-lg font-bold uppercase tracking-tight">
                 Ethan Marcus Diecast
