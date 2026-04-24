@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col custom-cursor-area">
+      <body className="min-h-full flex flex-col custom-cursor-area bg-background">
         {children}
       </body>
     </html>

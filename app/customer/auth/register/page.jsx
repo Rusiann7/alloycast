@@ -187,10 +187,10 @@ export default function RegisterPage() {
 
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
         {/* Left Side: Branding/Visual */}
-        <div className="relative hidden md:flex flex-col justify-between p-12 bg-primary-container text-white overflow-hidden">
+        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
           <div className="relative z-10">
-            <h1 className="font-headline font-black text-4xl uppercase italic leading-none mb-4">
-              Join the <br /> Hunt.
+            <h1 className="font-headline font-black text-4xl text-primary-container uppercase italic leading-none mb-4">
+              Join the Hunt
             </h1>
             <p className="text-sm font-light uppercase tracking-widest opacity-80">
               The premier destination for elite diecast collectors.
@@ -204,7 +204,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="relative z-10 flex items-center gap-2">
+          <div className="relative z-10 flex items-center gap-2 text-primary-container">
             <span className="material-symbols-outlined">flare</span>
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">
               Diecast Vault established 2024
@@ -393,9 +393,9 @@ export default function RegisterPage() {
               </button>
               <button
                 disabled={!isAgreed}
-                className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
+                className={`w-full py-3 px-4 rounded-lg font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
                   isAgreed
-                    ? "bg-primary-container text-white hover:bg-secondary-container hover:text-black cursor-pointer"
+                    ? "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90  cursor-pointer"
                     : "bg-surface-container-highest text-[#A8A8A0] opacity-50 cursor-not-allowed"
                 }`}
               >

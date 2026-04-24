@@ -15,7 +15,7 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
       <div className="bg-surface border border-white/10 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl animate-reveal-up flex flex-col max-h-[80vh]">
         {/* Header */}
         <div className="p-6 border-b border-white/5 bg-primary-container/10 flex justify-between items-center">
-          <h3 className="font-headline font-black uppercase italic tracking-widest text-[#ffb3b1]">
+          <h3 className="font-headline font-black uppercase italic tracking-widest text-primary-container">
             Terms of Service
           </h3>
           <button
@@ -67,13 +67,13 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
         <div className="p-6 border-t border-white/5 bg-surface-container-high flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] border border-white/10 hover:bg-white/5 transition-all"
+            className="flex-1 rounded-lg py-3 text-[10px] font-black uppercase tracking-widest text-white/90 border border-primary-container outline-none hover:bg-primary-container hover:text-black/90 transition-all"
           >
             Close
           </button>
           <button
             onClick={onAgree}
-            className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-primary-container text-white hover:bg-secondary-container hover:text-black transition-all"
+            className="flex-1 rounded-lg py-3 text-[10px] font-black uppercase tracking-widest bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 transition-all"
           >
             I Agree
           </button>

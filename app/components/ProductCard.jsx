@@ -4,16 +4,16 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
   if (!product) return null; // to prevent crash if no hardcoded products
   return (
     <div className="bg-surface-container-high rounded-[4px] overflow-hidden p-1 group">
-      <div className="relative aspect-square bg-surface-container-highest flex items-center justify-center mb-4 overflow-hidden">
+      <div className="relative aspect-video bg-surface-dim flex items-center justify-center mb-4 overflow-hidden border-b border-white/5">
         <img
           alt={product.item_name}
-          className="w-4/5 h-auto object-contain transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           src={product.item_image}
         />
         {(tag || product.category) && (
           <div className="absolute top-4 left-4">
             <span
-              className={`${tagColor || "bg-primary-container"} text-[10px] font-black uppercase px-2 py-1 shadow-lg text-white`}
+              className={`${tagColor || "bg-primary-container"} text-[10px] font-black uppercase px-2 py-1 shadow-lg text-black`}
             >
               {tag || product.category}
             </span>
@@ -31,11 +31,11 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
         </h3>
         <div className="flex items-center justify-between">
           <span className="font-headline font-black text-lg text-white">
-            {product.price}
+            ₱ {product.price}
           </span>
-          <button className="size-10 flex items-center justify-center bg-surface-container-highest border border-outline-variant hover:border-primary-container transition-colors group/btn">
+          <button className="size-10 flex items-center justify-center bg-primary-container border border-primary-container rounded-[4px] p-2 text-black/90 hover:border-primary-container transition-colors group/btn btn-premium">
             <Link href={`/customer/productDetail?id=${product.id}`}>
-              <span className="material-symbols-outlined text-on-surface group-hover/btn:text-primary-container">
+              <span className="material-symbols-outlined text-black/90 group-hover/btn:text-black/90">
                 shopping_cart
               </span>
             </Link>

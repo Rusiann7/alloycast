@@ -14,12 +14,12 @@ export default function Toast({ message, type = "error", visible }) {
   const isSuccess = type === "success";
 
   return (
-    <div className="fixed top-6 right-6 z-[100] animate-reveal-up max-w-[90vw] sm:max-w-sm">
+    <div className="fixed top-6 right-6 z-100 animate-reveal-up max-w-[90vw] sm:max-w-sm">
       <div
         className={`${
           isSuccess
-            ? "bg-secondary-container text-black"
-            : "bg-primary-container text-white"
+            ? "bg-primary-container text-black/90"
+            : "bg-secondary-container text-white"
         } px-5 py-4 rounded-lg shadow-2xl flex items-center gap-3 border border-white/10`}
       >
         {/* Icon */}
