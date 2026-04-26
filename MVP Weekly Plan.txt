@@ -1,14 +1,16 @@
 Week 1 - Register/Login for Client and Customers
-- Paganahin muna basic Create at Login Account
-- implement email verification
-- implement login/create via google
-Week 2 - Inventory CRUD 
-Week 3 - Reservation functions for Customers
+- Paganahin muna basic Create at Login Account - ok
+- implement email verification - ok
+- implement login/create via google - ok
+Week 2 - Inventory CRUD - ok 
+Week 3 - Reservation functions for Customers - ok
 Mga dapat ayusin:
-- UI 
+- UI -ok
 - Email ni Benef
-- Login redirection to user dashboard
+- Login redirection to user dashboard - ok
 - Complete POS
 - Browse, Products, New-Arrivals pages
-
+- Add input sanitization sa lahat
+- display admin first name in AdminSidebar
+- make prompt to make user dashboard and profile
 Week 4 - Analytics for Client

@@ -232,7 +232,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   placeholder="FIRST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="firstName"
                   value={accountForm.firstName}
                   onChange={getInputValue}
@@ -245,7 +245,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   placeholder="LAST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="lastName"
                   value={accountForm.lastName}
                   onChange={getInputValue}
@@ -260,7 +260,7 @@ export default function RegisterPage() {
                 </label>
                 <select
                   id="gender"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="gender"
                   value={accountForm.gender}
                   onChange={getInputValue}
@@ -279,7 +279,7 @@ export default function RegisterPage() {
                 <input
                   type="date"
                   placeholder="DATE OF BIRTH"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="dob"
                   value={accountForm.dob}
                   onChange={getInputValue}
@@ -294,7 +294,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={accountForm.email}
                 onChange={getInputValue}
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={accountForm.password}
                   onChange={getInputValue}
@@ -334,7 +334,7 @@ export default function RegisterPage() {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="confirmPassword"
                   value={accountForm.confirmPassword}
                   onChange={getInputValue}
@@ -351,13 +351,13 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 py-2">
+            <div className="flex items-center gap-3 py-2 ">
               <input
                 type="checkbox"
                 id="terms"
                 checked={isAgreed}
                 onChange={(e) => setIsAgreed(e.target.checked)}
-                className="w-4 h-4 accent-primary-container cursor-pointer"
+                className="w-4 h-4  accent-primary-container cursor-pointer"
               />
               <label
                 htmlFor="terms"

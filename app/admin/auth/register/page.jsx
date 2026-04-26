@@ -150,11 +150,11 @@ export default function RegisterAdminPage() {
         visible={toast.visible}
       />
 
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
-        <div className="relative hidden md:flex flex-col justify-between p-12 bg-primary-container text-white overflow-hidden">
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
+        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
           <div className="relative z-10">
-            <h1 className="font-headline font-black text-4xl uppercase italic leading-none mb-4">
-              Manage the <br /> Hunt.
+            <h1 className="font-headline font-black text-4xl text-primary-container uppercase italic leading-none mb-4">
+              Manage the Hunt
             </h1>
             <p className="text-sm font-light uppercase tracking-widest opacity-80">
               The premier destination for elite diecast collectors.
@@ -168,7 +168,7 @@ export default function RegisterAdminPage() {
             />
           </div>
 
-          <div className="relative z-10 flex items-center gap-2">
+          <div className="relative z-10 flex items-center gap-2 text-primary-container">
             <span className="material-symbols-outlined">flare</span>
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">
               Diecast Vault established 2026
@@ -178,11 +178,11 @@ export default function RegisterAdminPage() {
 
         <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
           <div className="mb-8">
-            <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
+            <h2 className="text-2xl text-primary-container font-headline font-black uppercase  mb-2">
               CREATE YOUR ACCOUNT
             </h2>
             <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
-              Create an account to manage business
+              Create an admin account to manage your business
             </p>
           </div>
 
@@ -195,7 +195,7 @@ export default function RegisterAdminPage() {
                 <input
                   type="text"
                   placeholder="FIRST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="firstName"
                   value={accountForm.firstName}
                   onChange={getInputValue}
@@ -208,7 +208,7 @@ export default function RegisterAdminPage() {
                 <input
                   type="text"
                   placeholder="LAST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="lastName"
                   value={accountForm.lastName}
                   onChange={getInputValue}
@@ -223,7 +223,7 @@ export default function RegisterAdminPage() {
               <input
                 type="email"
                 placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={accountForm.email}
                 onChange={getInputValue}
@@ -238,7 +238,7 @@ export default function RegisterAdminPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={accountForm.password}
                   onChange={getInputValue}
@@ -263,7 +263,7 @@ export default function RegisterAdminPage() {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="confirmPassword"
                   value={accountForm.confirmPassword}
                   onChange={getInputValue}
@@ -296,10 +296,10 @@ export default function RegisterAdminPage() {
               </button>
               <button
                 disabled={isLoading}
-                className={`w-full py-4 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
+                className={`w-full rounded-lg px-4 py-3 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
                   isLoading
-                    ? "bg-surface-container-highest text-[#A8A8A0] opacity-50 cursor-not-allowed"
-                    : "bg-primary-container text-white hover:bg-secondary-container hover:text-black cursor-pointer"
+                    ? "bg-primary-container text-black/90  cursor-not-allowed"
+                    : "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 cursor-pointer"
                 }`}
               >
                 {isLoading ? "PROCCESSING..." : "REGISTER ADMIN"}

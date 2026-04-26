@@ -146,7 +146,7 @@ export default function AdminInventory() {
         <div className="px-10 pb-40">
           {/* Section Header */}
           <div className="mb-14 reveal-up">
-            <h3 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
+            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
               INVENTORY
             </h3>
             <div className="flex items-center gap-4">
@@ -166,22 +166,22 @@ export default function AdminInventory() {
 
           {/* Search/Filter Bar */}
           <div
-            className="bg-[#111111] border border-white/[0.03] p-5 rounded-[2px] mb-10 flex items-center gap-5 reveal-up shadow-xl"
+            className="bg-[#111111] border border-white/[0.03] p-5 rounded-lg mb-10 flex items-center gap-5 reveal-up shadow-xl"
             style={{ animationDelay: "0.1s" }}
           >
-            <div className="flex-1 flex items-center gap-5 bg-black/40 border border-white/[0.02] px-6 h-14 rounded-[2px]">
-              <span className="material-symbols-outlined text-on-surface/20 text-xl font-light">
+            <div className="flex-1 flex items-center gap-5  border border-white/[0.1] px-6 h-14 rounded-lg">
+              <span className="material-symbols-outlined  text-xl font-light">
                 search
               </span>
               <input
                 type="text"
                 placeholder="FILTER BY BRAND, SCALE, OR SKU..."
-                className="bg-transparent border-none outline-none text-xs font-headline font-bold uppercase tracking-[0.1em] w-full placeholder:opacity-10 text-white"
+                className="bg-transparent border-none outline-none text-md font-headline font-bold tracking-[0.1em] w-full placeholder:opacity-10 text-white"
               />
             </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="h-14 px-8 bg-[#C8102E] rounded-[2px] text-[12px] font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
+              className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
             >
               ADD PRODUCT
             </button>
@@ -189,31 +189,31 @@ export default function AdminInventory() {
 
           {/* Inventory Table */}
           <div
-            className="bg-[#111111]/40 border border-white/[0.03] rounded-[2px] overflow-hidden reveal-up"
+            className="bg-[#111111]/40 border border-white/[0.03] rounded-lg overflow-hidden reveal-up"
             style={{ animationDelay: "0.2s" }}
           >
             <table className="w-full  text-left border-collapse ">
               <thead>
                 <tr className="border-b border-white/[0.03] bg-[#131313]">
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     PRODUCT IMAGE
                   </th>
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     PRODUCT NAME
                   </th>
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     BRAND
                   </th>
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     CATEGORY/SERIES
                   </th>
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     PRICE
                   </th>
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     STOCK
                   </th>
-                  <th className="px-8 py-5 text-center text-[12px] font-black font-headline uppercase tracking-[0.3em] text-white">
+                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     ACTIONS
                   </th>
                 </tr>
@@ -234,7 +234,7 @@ export default function AdminInventory() {
                           editingProductId === item.id &&
                           document.getElementById(`file-${item.id}`).click()
                         }
-                        className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-[#C8102E]/30 transition-all duration-500 relative ${
+                        className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative ${
                           editingProductId === item.id ? "cursor-pointer" : ""
                         }`}
                       >
@@ -280,10 +280,10 @@ export default function AdminInventory() {
                           name="item_name"
                           value={editProductForm.item_name}
                           onChange={editProduct}
-                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                         />
                       ) : (
-                        <p className="text-[13px] text-white font-bold font-headline uppercase tracking-tight group-hover:text-[#C8102E] transition-colors duration-300">
+                        <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
                           {item.item_name}
                         </p>
                       )}
@@ -296,7 +296,7 @@ export default function AdminInventory() {
                           name="brand"
                           value={editProductForm.brand}
                           onChange={editProduct}
-                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                          className="w-full bg-black/60 border border-primary-container rounded/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                         >
                           <option value="Hot Wheels">Hot Wheels</option>
                           <option value="Tomica">Tomica</option>
@@ -308,7 +308,7 @@ export default function AdminInventory() {
                           <option value="Others">Others...</option>
                         </select>
                       ) : (
-                        <span className="bg-white/5 text-white border border-white/10 px-2.5 py-1 rounded-[1px] text-[11px] font-black tracking-[0.1em]">
+                        <span className="bg-white/5  border border-white/10 rounded-lg text-primary-color px-2.5 py-1 rounded-[1px] text-sm font-black tracking-[0.1em]">
                           {item.brand}
                         </span>
                       )}
@@ -321,7 +321,7 @@ export default function AdminInventory() {
                           name="category"
                           value={editProductForm.category}
                           onChange={editProduct}
-                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                         >
                           <option value="Mainline">Mainline Series</option>
                           <option value="Special">Special Series</option>
@@ -329,7 +329,7 @@ export default function AdminInventory() {
                           <option value="Chase">Chase Series</option>
                         </select>
                       ) : (
-                        <p className="text-[11px] text-white/40 font-headline uppercase tracking-[0.2em]">
+                        <p className="text-md text-white  font-headline uppercase tracking-[0.2em]">
                           {item.category}
                         </p>
                       )}
@@ -343,10 +343,10 @@ export default function AdminInventory() {
                           type="number"
                           value={editProductForm.price}
                           onChange={editProduct}
-                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                         />
                       ) : (
-                        <p className="text-[12px] font-headline font-bold text-[#C8102E]">
+                        <p className="text-md font-headline font-bold text-primary-container">
                           ₱{item.price}
                         </p>
                       )}
@@ -360,10 +360,10 @@ export default function AdminInventory() {
                           type="number"
                           value={editProductForm.stock}
                           onChange={editProduct}
-                          className="w-full bg-black/60 border border-[#C8102E]/30 p-2 text-xs font-headline uppercase outline-none focus:border-[#C8102E] text-white"
+                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                         />
                       ) : (
-                        <p className="text-[12px] font-headline font-bold opacity-40">
+                        <p className="text-md text-white font-headline font-bold">
                           {item.stock}
                         </p>
                       )}
@@ -395,7 +395,7 @@ export default function AdminInventory() {
                           <>
                             <button
                               onClick={() => startEditProduct(item)}
-                              className="w-8 h-8 flex items-center justify-center bg-secondary-container text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
+                              className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
                             >
                               <span className="material-symbols-outlined text-sm">
                                 edit
@@ -403,7 +403,7 @@ export default function AdminInventory() {
                             </button>
                             <button
                               onClick={() => deleteProduct(item.id)}
-                              className="w-8 h-8 flex items-center justify-center bg-primary-container text-white hover:bg-primary-container/80 hover:text-white/80 transition-all"
+                              className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                             >
                               <span className="material-symbols-outlined text-sm">
                                 delete

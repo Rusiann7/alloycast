@@ -151,18 +151,6 @@ export default function ProductDetail() {
     }
   };
 
-  // dummy function to destroy user session
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setUser(null); // Clear the local state
-      showToast("Signed Out: Session Destroyed", "success");
-      console.log("Session cleared successfully.");
-    } else {
-      console.error("Logout Error:", error.message);
-    }
-  };
-
   // for loading product
   if (loading) {
     return (
@@ -224,7 +212,7 @@ export default function ProductDetail() {
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
             <div className="space-y-12">
               <div>
-                <span className="inline-block bg-[#E8112D]/10 text-[#E8112D] font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2 border border-[#E8112D]/20 mb-8 uppercase italic">
+                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2 border border-[#E8112D]/20 mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
                 </span>
                 <h1 className="text-[60px] lg:text-[80px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
@@ -248,7 +236,7 @@ export default function ProductDetail() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-headline font-black text-[#E8112D] uppercase tracking-tight animate-pulse">
+                    <p className="text-xl font-headline font-black text-[#fa7a02] uppercase tracking-tight animate-pulse">
                       {product.stock} STOCKS LEFT
                     </p>
                   </div>
@@ -265,22 +253,17 @@ export default function ProductDetail() {
                 </div>
               </div>
               <div className="space-y-6">
+                <p>Product Details: AI TO BE IMPLEMENTED</p>
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
                   className={`w-full py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge shadow-2xl ${
                     product.stock === 0
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed grayscale" // 2. "Sold Out" styling
-                      : "bg-[#E8112D] text-white hover:bg-white hover:text-black active:scale-[0.98]" // regular styling
+                      : "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 active:scale-[0.98]" // regular styling
                   }`}
                 >
                   {product.stock === 0 ? "Out of Stock" : "Reserve Product"}
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="text-[10px] text-on-surface-variant hover:text-white uppercase tracking-widest font-black mb-4 block underline"
-                >
-                  [TEST] Destroy Session
                 </button>
               </div>
             </div>

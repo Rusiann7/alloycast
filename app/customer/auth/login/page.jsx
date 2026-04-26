@@ -1,11 +1,10 @@
 "use client";
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
-import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,8 +22,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams(); // for capturing clicked product url and id
   const supabase = createClient();
 
-  const redirectTo =
-    searchParams.get("redirectTo") || "/customer/productDetail"; // gets the redirect path from capturedCurrentPath in productDetail
+  // const redirectTo = searchParams.get("redirectTo") || "/customer/dashboard"; // gets the redirect path from capturedCurrentPath in productDetail
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -84,10 +82,16 @@ export default function LoginPage() {
       return showToast("Invalid Email or Password", "error");
     }
 
-    showToast("Login Successful", "success");
-    setTimeout(() => {
-      router.push(redirectTo); // redirects back to clicked productDetail
-    }, 1500);
+    if (!error) {
+      const redirectTo = searchParams.get("redirectTo"); // kinukuha ung specific productDetail url (if meron)
+      const destination = redirectTo || "/customer/account"; // kung meron, balik, kung wla, punta sa account
+      showToast("Login Successful", "success");
+      setTimeout(() => {
+        router.push(destination); // redirects back to clicked productDetail
+      }, 1500);
+    } else {
+      showToast(error.message, "error");
+    }
   };
 
   // pang resend ng email verification
@@ -181,7 +185,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={loginForm.email}
                 onChange={getInputValue}
@@ -195,7 +199,7 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lgI px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={loginForm.password}
                   onChange={getInputValue}

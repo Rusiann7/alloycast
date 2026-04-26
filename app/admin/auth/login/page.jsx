@@ -149,10 +149,10 @@ export default function AdminLoginPage() {
       />
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
         {/* Left Side: Branding/Visual */}
-        <div className="relative hidden md:flex flex-col justify-between p-12 bg-primary-container text-white overflow-hidden">
+        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
           <div className="relative z-10">
-            <h1 className="font-headline font-black text-4xl uppercase italic leading-none mb-4">
-              Join the <br /> Hunt.
+            <h1 className="font-headline font-black text-4xl text-primary-container uppercase italic leading-none mb-4">
+              Join the Hunt
             </h1>
             <p className="text-sm font-light uppercase tracking-widest opacity-80">
               The premier destination for elite diecast collectors.
@@ -166,7 +166,7 @@ export default function AdminLoginPage() {
             />
           </div>
 
-          <div className="relative z-10 flex items-center gap-2">
+          <div className="relative z-10 flex items-center gap-2 text-primary-container">
             <span className="material-symbols-outlined">flare</span>
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">
               Diecast Vault established 2026
@@ -193,7 +193,7 @@ export default function AdminLoginPage() {
               <input
                 type="email"
                 placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg  px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={loginForm.email}
                 onChange={getInputValue}
@@ -207,7 +207,7 @@ export default function AdminLoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={loginForm.password}
                   onChange={getInputValue}
@@ -248,7 +248,7 @@ export default function AdminLoginPage() {
                   Sign in with Google
                 </span>
               </button>
-              <button className="w-full bg-primary-container text-white py-4 font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-black transition-all transform active:scale-[0.98]">
+              <button className="w-full rounded-lg bg-primary-container text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-white/90 transition-all transform active:scale-[0.98]">
                 LOGIN
               </button>
             </div>

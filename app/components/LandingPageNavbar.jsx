@@ -42,11 +42,11 @@ export default function LandingPageNavbar() {
   const navLinks = [
     {
       id: 0,
-      label: "Browse",
+      label: "Browse Products",
       href: "/customer/product",
     },
-    { id: 1, label: "New Arrivals", href: "/customer/new-arrivals" },
-    { id: 2, label: "Pre-Orders", href: "/customer/pre-orders" },
+    // { id: 1, label: "New Arrivals", href: "/customer/new-arrivals" },
+    // { id: 2, label: "Pre-Orders", href: "/customer/pre-orders" },
   ];
 
   const logoutAccount = async () => {
