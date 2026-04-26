@@ -10,6 +10,7 @@
   --primary-container: #f8e408;
   --secondary-container: #61510b;
   --on-primary: #680011;
+  --error-container: #93000a;
   /* --on-primary-container: #ffdad8;
   --primary-fixed: #ffdad8;
   --primary-fixed-dim: #ffb3b1;
@@ -34,7 +35,7 @@
   --on-tertiary-fixed-variant: #464742;
 
   --error: #ffb4ab;
-  --error-container: #93000a;
+
   --on-error: #690005;
   --on-error-container: #ffdad6;
 

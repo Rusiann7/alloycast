@@ -6,46 +6,8 @@ export default function AdminDashboard() {
   );
   return (
     <div className="bg-background text-on-surface font-body min-h-screen overflow-x-hidden select-none">
-      {/* --- TopNavBar (Desktop Only) --- */}
-      <header className="fixed top-0 right-0 left-64 h-16 z-40 bg-[#131313]/60 backdrop-blur-xl hidden lg:flex justify-between items-center px-8 border-b border-white/5">
-        <div className="flex items-center flex-1">
-          <div className="relative w-96">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface/40 text-sm">
-              search
-            </span>
-            <input
-              className="bg-surface-container-highest/50 border-none rounded-[4px] pl-10 pr-4 py-2 w-full text-xs font-headline tracking-widest focus:ring-1 focus:ring-primary-container placeholder:text-on-surface/30 outline-none"
-              placeholder="SEARCH SYSTEM ARCHIVE..."
-              type="text"
-            />
-          </div>
-        </div>
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-4">
-            <HeaderAction icon="notifications" />
-            <HeaderAction icon="settings" />
-            <HeaderAction icon="help" />
-          </div>
-          <div className="h-8 w-px bg-surface-container-highest"></div>
-          <div className="flex items-center space-x-3">
-            <div className="text-right">
-              <p className="text-[10px] font-headline font-bold uppercase tracking-widest text-[#e5e2e1]">
-                Admin User
-              </p>
-              <p className="text-[8px] font-headline text-[#C8102E] font-black italic uppercase">
-                System Root
-              </p>
-            </div>
-            <img
-              alt="Admin Profile"
-              className="w-10 h-10 rounded-full border border-surface-container-highest object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8qtkW3P0OKqkDjFOjp2vG2xmjlHUu6WmI5xIPnqNARcDjcOfeG70XrEwnke3AFkwdVJMMuTJn92fuwKJo37rUispAJdhXUHdBKHGq-F0woedW9QtsVkHQSvqzdvHfhUCwinQR9DTdDuZ4GY44rbeCO-u367G6PopeheGm-Bs-qGPcjHWYoariDmeyUOfPeA7H-uA8f1vt27-v5hAwUNRF95I7g9BrfkEX-pQhUrBWZ7vDwd7KBJm43yB8W4EDFXYGcUfESweUGYg"
-            />
-          </div>
-        </div>
-      </header>
       {/* --- Main Content Canvas --- */}
-      <main className="lg:ml-64 pt-24 lg:pt-24 px-6 lg:px-8 pb-12 min-h-screen">
+      <main className="lg:ml-64 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 reveal-up">
           <div>
@@ -63,7 +25,7 @@ export default function AdminDashboard() {
               </span>
               <span>Last 30 Days</span>
             </button>
-            <button className="flex-1 md:flex-none bg-primary-container px-4 py-2 rounded-[4px] text-[10px] font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform">
+            <button className="flex-1 md:flex-none bg-primary-container text-black/90 px-4 py-2 rounded-[4px] text-[10px] font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform">
               <span className="material-symbols-outlined text-sm">
                 download
               </span>
@@ -305,9 +267,9 @@ export default function AdminDashboard() {
       </main>
 
       {/* Contextual FAB */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-primary-container text-white rounded-[4px] shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+      <button className="fixed bottom-8 right-8 w-14 h-14 bg-primary-container text-black/90 rounded-[4px] shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
         <span className="material-symbols-outlined text-3xl">add</span>
-        <span className="absolute right-full mr-4 bg-primary-container text-white text-[10px] font-headline font-bold uppercase tracking-widest px-3 py-1 rounded-[2px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="absolute right-full mr-4 bg-primary-container text-black/90 text-[10px] font-headline font-bold uppercase tracking-widest px-3 py-1 rounded-[2px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
           Launch New Batch Listing
         </span>
       </button>
