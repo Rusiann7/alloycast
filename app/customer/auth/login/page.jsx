@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
