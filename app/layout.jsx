@@ -1,4 +1,5 @@
 import "./globals.css";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 
 export const metadata = {
   title: "AlloyDash",
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-full flex flex-col custom-cursor-area bg-background">
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
