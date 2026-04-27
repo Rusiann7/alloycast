@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Toast from "../../components/Toast";
+import ProductCard from "../../components/ProductCard";
+import CustomerFooter from "../../components/CustomerFooter";
 import emailjs from "@emailjs/browser";
 export default function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,6 +14,7 @@ export default function ProductDetail() {
   const [user, setUser] = useState(null); // for checking auth users
   const searchParams = useSearchParams(); // identify the id of the product clicked url
   const [quantity, setQuantity] = useState(1); // for adding more product reservation
+  const [similarProducts, setSimilarProducts] = useState([]); // for similar products analytics
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -38,12 +41,26 @@ export default function ProductDetail() {
           .eq("id", productId) // equals to product id clicked
           .single(); // returns single product only
 
-        if (!error) {
+        if (!error && data) {
           setProduct(data);
+          fetchSimilarProducts(data);
         } else {
           console.error("Error fetching product: ", error.message);
         }
         setLoading(false);
+      };
+
+      const fetchSimilarProducts = async (currentProduct) => {
+        const { data, error } = await supabase
+          .from("Inventory")
+          .select("*")
+          // Logic: Same brand OR same category, but NOT the current product
+          .or(
+            `brand.eq."${currentProduct.brand}",category.eq."${currentProduct.category}"`,
+          )
+          .neq("id", currentProduct.id)
+          .limit(8);
+        if (!error) setSimilarProducts(data);
       };
       fetchProduct();
     }
@@ -75,6 +92,11 @@ export default function ProductDetail() {
 
   // for product reservation
   const productReservation = () => {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "reserve_click", {
+        product_name: product.item_name,
+      });
+    }
     if (!user) {
       // is user is not logged in
       showToast("You must login first to reserve this product", "error");
@@ -196,7 +218,7 @@ export default function ProductDetail() {
               />
               {/* Dynamic Tag based on category */}
               <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
-                <span className="bg-[#FFDB3C] text-black font-headline font-black text-[10px] px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
+                <span className="bg-[#FFDB3C] text-black font-headline font-black text-[12px] px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
                   {product.category || "PREMIUM SELECTION"}
                 </span>
                 {product.stock < 5 && (
@@ -269,8 +291,24 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+        {/* Similar Products */}
+        <div className="space-y-6 px-6 pt-5  border-white/5">
+          <h3 className="font-headline font-black text-2xl uppercase tracking-tighter italic">
+            Similar Products
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {similarProducts.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+            {similarProducts.length === 0 && (
+              <p className="text-[10px] text-white/20 uppercase tracking-widest font-headline">
+                No similar items found.
+              </p>
+            )}
+          </div>
+        </div>
+        <CustomerFooter />
       </main>
-      {/* TO BE CONTINUE */}
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">

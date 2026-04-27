@@ -15,11 +15,38 @@ export default function AdminSidebar() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adminName, setAdminName] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
     type: "error",
   });
+
+  // display admin firstname after every reload
+  useEffect(() => {
+    getAdminName();
+  }, []);
+
+  // get firstname from auth and Admin table
+  const getAdminName = async (userId) => {
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase
+        .from("Admin")
+        .select("firstname")
+        .eq("user_id", user.id)
+        .single();
+
+      setAdminName(data.firstname || "Admin");
+      console.log("Admin Firstname: ", data.firstname);
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   useEffect(() => {
     fetchInventoryProduct();
@@ -97,7 +124,7 @@ export default function AdminSidebar() {
             </span>
           </div>
           <h1 className="text-lg font-black font-headline uppercase leading-none italic">
-            ETHAN MARCUS
+            {adminName ? adminName : "Admin"}
           </h1>
         </div>
         <button
@@ -122,7 +149,7 @@ export default function AdminSidebar() {
             </div>
             <div>
               <h1 className="text-xl font-black text-[#e5e2e1] font-headline uppercase leading-none ">
-                ETHAN MARCUS
+                {adminName}
               </h1>
               <p className="font-headline uppercase text-[10px] font-black tracking-[0.3em] text-primary-container/98 mt-1">
                 SHOP ADMIN

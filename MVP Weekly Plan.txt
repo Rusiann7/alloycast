@@ -9,8 +9,11 @@ Mga dapat ayusin:
 - Email ni Benef
 - Login redirection to user dashboard - ok
 - Complete POS
-- Browse, Products, New-Arrivals pages
-- Add input sanitization sa lahat
+- Browse, Products, New-Arrivals pages - ok
+- Add input sanitization sa lahat - ok
 - display admin first name in AdminSidebar
-- make prompt to make user dashboard and profile
-Week 4 - Analytics for Client
+- make prompt to make user dashboard and profile - ok
+Week 4 - Analytics for Client and Admin & AI Integration
+- Customer Analytics - ok
+- Admin Analytics 
+- Admin Dashboard and Analytics page
