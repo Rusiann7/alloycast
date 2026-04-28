@@ -4,7 +4,7 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
   if (!product) return null; // to prevent crash if no hardcoded products
 
   const reservationAnalytics = () => {
-    if (window.gtag) {
+    if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "similar_product_click", {
         to_product: product.item_name,
       });
@@ -42,16 +42,16 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
           <span className="font-headline font-black text-lg text-white">
             ₱ {product.price}
           </span>
-          <button
+          <Link
+            href={`/customer/productDetail?id=${product.id}`}
             onClick={reservationAnalytics}
-            className="size-10 flex items-center justify-center bg-primary-container border border-primary-container rounded-[4px] p-2 text-black/90 hover:border-primary-container transition-colors group/btn"
           >
-            <Link href={`/customer/productDetail?id=${product.id}`}>
+            <button className="size-10 flex items-center justify-center bg-primary-container border border-primary-container rounded-[4px] p-2 text-black/90 hover:border-primary-container transition-colors group/btn">
               <span className="material-symbols-outlined text-black/90 group-hover/btn:text-black/90">
                 shopping_cart
               </span>
-            </Link>
-          </button>
+            </button>
+          </Link>
         </div>
       </div>
     </div>

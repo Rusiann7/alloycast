@@ -11,6 +11,8 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(true);
   const [editingProductId, setEditingProductId] = useState(null); // holds the id of EACH product
   const [editProductForm, setEditProductForm] = useState({}); // holds the temporary form data from editing fields
+  const [estimiatedRevenue, setEstimatedRevenue] = useState(0);
+  const [confirmedRevenue, setConfirmedRevenue] = useState(0);
   const [toast, setToast] = useState({
     visible: false,
     message: "",

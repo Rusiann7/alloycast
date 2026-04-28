@@ -1,9 +1,100 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createClient } from "../../../lib/supabase/client";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
+
+  const [criticalStock, setCriticalStock] = useState([]);
+  const [topBrands, setTopBrands] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [estimatedRevenue, setEstimatedRevenue] = useState(0);
+  const [confirmedRevenue, setConfirmedRevenue] = useState(0);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      // fetch Inventory for Critical Stock & Brands
+      const { data: inventory } = await supabase.from("Inventory").select("*");
+
+      if (inventory) {
+        // find low stock below 5
+        const lowStock = inventory
+          .filter((item) => item.stock < 5)
+          .map((item) => ({
+            name: item.item_name,
+            sku: `ID-${item.id}`,
+            base: 50, // base stock
+            current: item.stock,
+            reserved: 0, // cam be calculated if Join Reservation Table
+            urgency: item.stock === 0 ? "High" : "Medium",
+          }));
+        setCriticalStock(lowStock);
+
+        // calculate brand market share
+        const brandCounts = {};
+        inventory.forEach((item) => {
+          brandCounts[item.brand] = (brandCounts[item.brand] || 0) + 1;
+        });
+
+        // convert to array and calculate percentage
+        const totalItems = inventory.length;
+        const brandData = Object.keys(brandCounts)
+          .map((brand) => ({
+            name: brand,
+            count: brandCounts[brand],
+            percentage: Math.round((brandCounts[brand] / totalItems) * 100),
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6);
+        setTopBrands(brandData);
+      }
+
+      // Fetch Reservations for Revenue
+      const { data: reservation } = await supabase
+        .from("Reservation")
+        .select("*, Inventory(price)");
+
+      if (reservation) {
+        let estSum = 0;
+        let confSum = 0;
+        reservation.forEach((res) => {
+          // calculates quantity x price
+          if (res.Inventory?.price) {
+            const itemTotal = res.quantity * res.Inventory.price;
+            estSum += itemTotal;
+
+            const discount = res.discount || 0;
+
+            confSum = itemTotal - discount;
+          }
+        });
+
+        setEstimatedRevenue(estSum);
+        setConfirmedRevenue(confSum);
+
+        // Dummy historical data (will change later)
+        setRevenueData([
+          { name: "Mar 01", revenue: confSum * 0.2 },
+          { name: "Mar 10", revenue: confSum * 0.5 },
+          { name: "Mar 20", revenue: confSum * 0.8 },
+          { name: "Today", revenue: confSum },
+        ]);
+      }
+    };
+    fetchAnalytics();
+  }, []);
 
   const topModels = [
     { name: "Nissan Skyline GT-R R34 (Z-Tune)", units: 48, percentage: 92 },
@@ -12,41 +103,6 @@ export default function AdminAnalytics() {
     { name: "Lamborghini Countach LPI 800-4", units: 31, percentage: 58 },
     { name: "Ford Bronco Wildtrak (Area 51)", units: 28, percentage: 52 },
     { name: "Mazda RX-7 FD (Spirit R)", units: 24, percentage: 45 },
-  ];
-
-  const criticalStock = [
-    {
-      name: "LB-Works Lamborghini Aventador",
-      sku: "MINI-GT-248",
-      base: 120,
-      current: 12,
-      reserved: 108,
-      urgency: "High",
-    },
-    {
-      name: "BMW M3 GTR (E46) Most Wanted",
-      sku: "HW-RLC-993",
-      base: 50,
-      current: 3,
-      reserved: 47,
-      urgency: "High",
-    },
-    {
-      name: "Mercedes-Benz 190E 2.5-16 Evo II",
-      sku: "TARMAC-821",
-      base: 80,
-      current: 24,
-      reserved: 56,
-      urgency: "Medium",
-    },
-    {
-      name: "Shelby Cobra 427 S/C (Guardsman Blue)",
-      sku: "AW-202-BL",
-      base: 60,
-      current: 45,
-      reserved: 15,
-      urgency: "Low",
-    },
   ];
 
   return (
@@ -119,98 +175,60 @@ export default function AdminAnalytics() {
                 <LegendItem
                   dotColor="bg-secondary-container"
                   label="ESTIMATED"
-                  value="₱412,850.00"
+                  value={`₱${estimatedRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   valueColor="text-secondary-container"
                 />
                 <LegendItem
                   dotColor="bg-green-500"
                   label="CONFIRMED"
-                  value="₱284,120.00"
+                  value={`₱${confirmedRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   valueColor="text-green-500"
                 />
               </div>
             </div>
 
-            <div className="h-[350px] w-full relative">
-              <svg
-                className="w-full h-full"
-                preserveAspectRatio="none"
-                viewBox="0 0 1000 300"
-              >
-                <defs>
-                  <linearGradient id="grad-green" x1="0" x2="0" y1="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="#22C55E"
-                      stopOpacity="0.2"
-                    ></stop>
-                    <stop
-                      offset="100%"
-                      stopColor="#22C55E"
-                      stopOpacity="0"
-                    ></stop>
-                  </linearGradient>
-                  <linearGradient id="grad-yellow" x1="0" x2="0" y1="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="#FFD700"
-                      stopOpacity="0.1"
-                    ></stop>
-                    <stop
-                      offset="100%"
-                      stopColor="#FFD700"
-                      stopOpacity="0"
-                    ></stop>
-                  </linearGradient>
-                </defs>
-                {/* Grid Lines */}
-                {[60, 120, 180, 240].map((y) => (
-                  <line
-                    key={y}
-                    x1="0"
-                    x2="1000"
-                    y1={y}
-                    y2={y}
-                    className="stroke-white/[0.05]"
-                    strokeWidth="1"
+            <div className="h-[350px] w-full relative mt-8">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={revenueData}
+                  margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="name"
+                    stroke="#ffffff30"
+                    fontSize={10}
+                    tickMargin={10}
                   />
-                ))}
-                {/* Estimated Line (Yellow) */}
-                <path
-                  d="M0,220 L100,180 L200,240 L300,140 L400,160 L500,80 L600,100 L700,40 L800,60 L900,20 L1000,30"
-                  fill="none"
-                  stroke="#FFD700"
-                  strokeDasharray="8,4"
-                  strokeWidth="2"
-                  strokeOpacity="0.4"
-                />
-                <path
-                  d="M0,220 L100,180 L200,240 L300,140 L400,160 L500,80 L600,100 L700,40 L800,60 L900,20 L1000,30 L1000,300 L0,300 Z"
-                  fill="url(#grad-yellow)"
-                />
-                {/* Confirmed Line (Green) */}
-                <path
-                  d="M0,250 L100,210 L200,270 L300,190 L400,210 L500,130 L600,150 L700,90 L800,110 L900,70 L1000,80"
-                  fill="none"
-                  stroke="#22C55E"
-                  strokeWidth="3"
-                  className="drop-shadow-[0_0_10px_rgba(34,197,94,0.3)]"
-                />
-                <path
-                  d="M0,250 L100,210 L200,270 L300,190 L400,210 L500,130 L600,150 L700,90 L800,110 L900,70 L1000,80 L1000,300 L0,300 Z"
-                  fill="url(#grad-green)"
-                />
-              </svg>
-
-              <div className="absolute left-0 h-full flex flex-col justify-between text-[9px] font-mono text-on-surface/20 pointer-events-none py-1">
-                <span>₱15k</span>
-                <span>₱12k</span>
-                <span>₱9k</span>
-                <span>₱6k</span>
-                <span>₱3k</span>
-                <span>₱0</span>
-              </div>
+                  <YAxis
+                    stroke="#ffffff30"
+                    fontSize={10}
+                    tickFormatter={(value) => `₱${value}`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#131313",
+                      borderColor: "#333",
+                    }}
+                    itemStyle={{ color: "#22C55E" }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#22C55E"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorRev)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
+
             <div className="flex justify-between mt-6 px-4 text-[9px] font-mono text-on-surface/30 uppercase tracking-[0.3em]">
               <span>MAR 01</span>
               <span>MAR 05</span>
