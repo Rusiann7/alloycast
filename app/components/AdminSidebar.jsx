@@ -180,6 +180,12 @@ export default function AdminSidebar() {
             href="/admin/reservations"
           />
 
+          <SidebarLink
+            icon="calendar_today"
+            label="POINT OF SALES"
+            href="/admin/store"
+          />
+
           <SidebarLink icon="group" label="CUSTOMERS" href="/admin/customers" />
           <SidebarLink icon="ios_share" label="EXPORT" href="/admin/export" />
         </nav>
