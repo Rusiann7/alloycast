@@ -18,79 +18,47 @@ export default function AdminAnalytics() {
   const [topBrands, setTopBrands] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
-  const [estimatedRevenue, setEstimatedRevenue] = useState(0);
-  const [confirmedRevenue, setConfirmedRevenue] = useState(0);
 
   const supabase = createClient();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      // fetch Inventory for Critical Stock & Brands
-      const { data: inventory } = await supabase.from("Inventory").select("*");
-
-      if (inventory) {
-        // find low stock below 5
-        const lowStock = inventory
-          .filter((item) => item.stock < 5)
-          .map((item) => ({
-            name: item.item_name,
-            sku: `ID-${item.id}`,
-            base: 50, // base stock
-            current: item.stock,
-            reserved: 0, // cam be calculated if Join Reservation Table
-            urgency: item.stock === 0 ? "High" : "Medium",
-          }));
-        setCriticalStock(lowStock);
-
-        // calculate brand market share
-        const brandCounts = {};
-        inventory.forEach((item) => {
-          brandCounts[item.brand] = (brandCounts[item.brand] || 0) + 1;
-        });
-
-        // convert to array and calculate percentage
-        const totalItems = inventory.length;
-        const brandData = Object.keys(brandCounts)
-          .map((brand) => ({
-            name: brand,
-            count: brandCounts[brand],
-            percentage: Math.round((brandCounts[brand] / totalItems) * 100),
-          }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 6);
-        setTopBrands(brandData);
-      }
-
-      // Fetch Reservations for Revenue
       const { data: reservation } = await supabase
         .from("Reservation")
-        .select("*, Inventory(price)");
+        .select("*, Inventory(price)"); // joins Reservation and Inventory Table
 
       if (reservation) {
-        let estSum = 0;
-        let confSum = 0;
-        reservation.forEach((res) => {
-          // calculates quantity x price
-          if (res.Inventory?.price) {
-            const itemTotal = res.quantity * res.Inventory.price;
-            estSum += itemTotal;
+        let sum = 0; // total revenue calculation
+        const dailyRevenue = {}; // objet to group by date
+        reservation.forEach((eachReservation) => {
+          if (eachReservation.Inventory?.price) {
+            // products sold x price per product
+            const rev =
+              eachReservation.quantity * eachReservation.Inventory.price;
+            sum += rev; // add to overall total
 
-            const discount = res.discount || 0;
+            // extracts date
+            const dateStr = res.created_at.split("T")[0];
 
-            confSum = itemTotal - discount;
+            dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
           }
         });
 
-        setEstimatedRevenue(estSum);
-        setConfirmedRevenue(confSum);
-
-        // Dummy historical data (will change later)
-        setRevenueData([
-          { name: "Mar 01", revenue: confSum * 0.2 },
-          { name: "Mar 10", revenue: confSum * 0.5 },
-          { name: "Mar 20", revenue: confSum * 0.8 },
-          { name: "Today", revenue: confSum },
-        ]);
+        setTotalRevenue(sum); // total revenue
+        const chartData = Object.keys(dailyRevenue)
+          .sort((a, b) => new Date(a) - new Date(b))
+          .map((dateStr) => {
+            const dateObj = new Date(dateStr);
+            return {
+              // convert to mm dd format
+              name: dateObj.toLocaleDateString("en-US", {
+                month: "short",
+                day: "2-digit",
+              }),
+              revenue: dailyRevenue[dateStr],
+            };
+          });
+        setRevenueData(chartData);
       }
     };
     fetchAnalytics();
@@ -125,9 +93,6 @@ export default function AdminAnalytics() {
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container text-lg">
               calendar_today
-            </span>
-            <span className="font-headline font-black text-xl uppercase tracking-tighter italic">
-              Mar 1 – Mar 23, 2026
             </span>
           </div>
 
@@ -167,27 +132,18 @@ export default function AdminAnalytics() {
                 <h3 className="font-headline font-black text-3xl uppercase tracking-tighter italic">
                   Revenue Analysis
                 </h3>
-                <p className="text-[10px] font-black uppercase text-on-surface/20 tracking-[0.3em] mt-2 border-l-2 border-primary-container pl-3">
-                  Aggregate financial performance across all channels
-                </p>
               </div>
               <div className="flex gap-10">
                 <LegendItem
-                  dotColor="bg-secondary-container"
-                  label="ESTIMATED"
-                  value={`₱${estimatedRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  valueColor="text-secondary-container"
-                />
-                <LegendItem
                   dotColor="bg-green-500"
-                  label="CONFIRMED"
-                  value={`₱${confirmedRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  label="TOTAL REVENUE"
+                  value={`₱${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   valueColor="text-green-500"
                 />
               </div>
             </div>
 
-            <div className="h-[350px] w-full relative mt-8">
+            <div className="h-[350px] w-full relative mt-8 ">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={revenueData}
@@ -201,12 +157,12 @@ export default function AdminAnalytics() {
                   </defs>
                   <XAxis
                     dataKey="name"
-                    stroke="#ffffff30"
+                    stroke="#ffffff"
                     fontSize={10}
                     tickMargin={10}
                   />
                   <YAxis
-                    stroke="#ffffff30"
+                    stroke="#ffffff"
                     fontSize={10}
                     tickFormatter={(value) => `₱${value}`}
                   />
@@ -216,6 +172,7 @@ export default function AdminAnalytics() {
                       borderColor: "#333",
                     }}
                     itemStyle={{ color: "#22C55E" }}
+                    formatter={(value) => `₱${Number(value).toFixed(2)}`}
                   />
                   <Area
                     type="monotone"
@@ -227,15 +184,6 @@ export default function AdminAnalytics() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-
-            <div className="flex justify-between mt-6 px-4 text-[9px] font-mono text-on-surface/30 uppercase tracking-[0.3em]">
-              <span>MAR 01</span>
-              <span>MAR 05</span>
-              <span>MAR 10</span>
-              <span>MAR 15</span>
-              <span>MAR 20</span>
-              <span>MAR 23</span>
             </div>
           </section>
 
