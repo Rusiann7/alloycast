@@ -121,7 +121,7 @@ export default function ProductDetail() {
         // these are the data that will be inserted into Reservation Table
         user_id: user.id, // user_id on Reservation Table
         inventory_id: product.id, // the reserved product id
-        quantity: quantity, // 1 for now, will add state for more latere
+        // quantity: quantity, // 1 for now, will add state for more latere
         discount: 0, // 0 for now since no discount for now
       };
 
@@ -134,7 +134,7 @@ export default function ProductDetail() {
       // Decreases the stock in Inventory Table because a reservation has been made
       const { error: stockError } = await supabase
         .from("Inventory")
-        .update({ stock: product.stock - quantity })
+        .update({ stock: product.stock })
         .eq("id", product.id);
       if (stockError) throw stockError;
 

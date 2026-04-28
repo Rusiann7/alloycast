@@ -1,12 +1,54 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createClient } from "../../../lib/supabase/client";
 
 export default function AdminReservations() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All Items");
   const [activeReservation, setActiveReservation] = useState(null);
+  const [userFullName, setUserFullname] = useState([]);
+  const [userEmail, setUserEmail] = useState([]);
+  const [itemName, setItemName] = useState([]);
+  const [itemImage, setItemImage] = useState("");
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchMultipleColumns = async () => {
+      const { data, error } = await supabase
+        .from("Reservation")
+        .select(
+          "*, Users(id, email),  Inventory(item_name, item_image, brand, stock, created_at) ",
+        );
+
+      if (error) {
+        alert("Oh shit!");
+        console.error("Error fetching data:", error);
+      } else {
+        alert("OK erp!");
+        console.log(data);
+      }
+    };
+    fetchMultipleColumns();
+  }, []);
+
+  useEffect(() => {
+    const fetchCustomerDetails = async () => {
+      const { data, error } = await supabase
+        .from("Customer")
+        .select("firstname, lastname");
+
+      if (error) {
+        alert("Hello shitty!");
+      } else {
+        alert("Ok gagi!");
+      }
+    };
+
+    fetchCustomerDetails();
+  }, []);
 
   const reservations = [
     {

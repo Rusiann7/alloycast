@@ -38,7 +38,7 @@ export default function AdminAnalytics() {
             sum += rev; // add to overall total
 
             // extracts date
-            const dateStr = res.created_at.split("T")[0];
+            const dateStr = eachReservation.created_at.split("T")[0];
 
             dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
           }
