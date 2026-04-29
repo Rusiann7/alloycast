@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import {
@@ -9,18 +8,33 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
-
   const [criticalStock, setCriticalStock] = useState([]);
-  const [topBrands, setTopBrands] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [topProducts, setTopProducts] = useState([]);
+  const [lowProducts, setLowProducts] = useState([]);
+  const [topBrands, setTopBrands] = useState([]);
+
+  // for market share by brands
+  const BRAND_COLORS = [
+    "#C8102E",
+    "#1446A0",
+    "#2D6A4F",
+    "#6B21A8",
+    "#92400E",
+    "#333333",
+  ];
 
   const supabase = createClient();
 
+  // revenue chart
   useEffect(() => {
     const fetchAnalytics = async () => {
       const { data: reservation } = await supabase
@@ -64,14 +78,131 @@ export default function AdminAnalytics() {
     fetchAnalytics();
   }, []);
 
-  const topModels = [
-    { name: "Nissan Skyline GT-R R34 (Z-Tune)", units: 48, percentage: 92 },
-    { name: "Porsche 911 GT3 RS (992)", units: 42, percentage: 80 },
-    { name: "Toyota Supra MK4 (Quicksilver)", units: 35, percentage: 65 },
-    { name: "Lamborghini Countach LPI 800-4", units: 31, percentage: 58 },
-    { name: "Ford Bronco Wildtrak (Area 51)", units: 28, percentage: 52 },
-    { name: "Mazda RX-7 FD (Spirit R)", units: 24, percentage: 45 },
-  ];
+  // top products
+  useEffect(() => {
+    const getTopProducts = async () => {
+      const { data, error } = await supabase
+        .from("Reservation")
+        .select("quantity, Inventory(item_name) ");
+
+      if (data) {
+        const productCounts = {};
+        let totalReserved = 0;
+
+        // merges all same reserved products into a single row
+        data.forEach((res) => {
+          const name = res.Inventory?.item_name;
+          if (name) {
+            productCounts[name] = (productCounts[name] || 0) + 1;
+            totalReserved += 1;
+          }
+        });
+
+        const sortedProducts = Object.keys(productCounts)
+          .map((name) => ({
+            name: name,
+            units: productCounts[name],
+            percentage: Math.round((productCounts[name] / totalReserved) * 100),
+          }))
+          .sort((a, b) => b.units - a.units) // sort highest to lowest
+          .slice(0, 6); // only display top 6
+        setTopProducts(sortedProducts);
+      } else {
+        console.error(error.message);
+      }
+    };
+
+    getTopProducts();
+  }, []);
+
+  // low selling products
+  useEffect(() => {
+    const getLowProducts = async () => {
+      const { data, error } = await supabase
+        .from("Reservation")
+        .select("quantity, Inventory(item_name) ");
+
+      if (data) {
+        const productCounts = {};
+        let totalReserved = 0;
+
+        // merges all same reserved products into a single row
+        data.forEach((res) => {
+          const name = res.Inventory?.item_name;
+          if (name) {
+            productCounts[name] = (productCounts[name] || 0) + 1;
+            totalReserved += 1;
+          }
+        });
+
+        const sortedProducts = Object.keys(productCounts)
+          .map((name) => ({
+            name: name,
+            units: productCounts[name],
+            percentage: Math.round((productCounts[name] / totalReserved) * 100),
+          }))
+          .sort((a, b) => a.units - b.units) // sort lowest to highest
+          .slice(0, 6); // only display top 6
+        setLowProducts(sortedProducts);
+      } else {
+        console.error(error.message);
+      }
+    };
+
+    getLowProducts();
+  }, []);
+
+  // for market share by brands
+  useEffect(() => {
+    const getTopProductsforBrand = async () => {
+      const { data, error } = await supabase
+        .from("Reservation")
+        .select("quantity, Inventory(item_name, brand)");
+
+      if (data) {
+        const productCounts = {};
+        const brandCounts = {};
+
+        let totalReserved = 0;
+        data.forEach((res) => {
+          const name = res.Inventory?.item_name;
+          const brand = res.Inventory?.brand;
+
+          if (name) {
+            productCounts[name] = (productCounts[name] || 0) + 1;
+            totalReserved += 1;
+          }
+
+          if (brand) {
+            brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+          }
+        });
+
+        const sortedProducts = Object.keys(productCounts)
+          .map((name) => ({
+            name: name,
+            units: productCounts[name],
+            percentage: Math.round((productCounts[name] / totalReserved) * 100),
+          }))
+          .sort((a, b) => b.units - a.units)
+          .slice(0, 6);
+
+        setTopProducts(sortedProducts);
+
+        const sortedBrands = Object.keys(brandCounts)
+          .map((brand) => ({
+            name: brand,
+            value: brandCounts[brand],
+            percentage: Math.round((brandCounts[brand] / totalReserved) * 100),
+          }))
+          .sort((a, b) => b.value - a.value);
+        setTopBrands(sortedBrands);
+      } else {
+        console.error(error.message);
+      }
+    };
+    getTopProductsforBrand();
+  }, []);
 
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
@@ -188,31 +319,66 @@ export default function AdminAnalytics() {
           </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Top Reserved Models */}
+            {/* Top Reserved Products */}
             <section
               className="bg-surface-container-low/40 border border-white/[0.03] rounded-[2px] p-10 reveal-up"
               style={{ animationDelay: "0.1s" }}
             >
               <h3 className="font-headline font-black text-2xl uppercase tracking-tighter mb-10 italic">
-                Top Reserved Models
+                Top Selling Products
               </h3>
               <div className="space-y-6">
-                {topModels.map((model, i) => (
-                  <div key={model.name} className="space-y-3 group">
+                {topProducts.map((topProduct, index) => (
+                  <div key={topProduct.name} className="space-y-3 group">
                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                       <span className="group-hover:text-primary-container transition-colors">
-                        {model.name}
+                        {topProduct.name}
                       </span>
                       <span className="font-mono text-primary-container tabular-nums">
-                        {model.units} UNITS
+                        {topProduct.units} ORDERS
                       </span>
                     </div>
                     <div className="h-2 w-full bg-white/[0.02] rounded-full overflow-hidden border border-white/5 relative">
                       <div
                         className="h-full bg-primary-container transition-all duration-1000"
                         style={{
-                          width: `${model.percentage}%`,
-                          transitionDelay: `${i * 100}ms`,
+                          width: `${topProduct.percentage}%`,
+                          transitionDelay: `${index * 100}ms`,
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Low Selling Products */}
+            <section
+              className="bg-surface-container-low/40 border border-white/[0.03] rounded-[2px] p-10 reveal-up"
+              style={{ animationDelay: "0.1s" }}
+            >
+              <h3 className="font-headline font-black text-2xl uppercase tracking-tighter mb-10 italic">
+                Low Selling Products
+              </h3>
+              <div className="space-y-6">
+                {lowProducts.map((lowProducts, index) => (
+                  <div key={lowProducts.name} className="space-y-3 group">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                      <span className="group-hover:text-primary-container transition-colors">
+                        {lowProducts.name}
+                      </span>
+                      <span className="font-mono text-primary-container tabular-nums">
+                        {lowProducts.units} ORDERS
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-white/[0.02] rounded-full overflow-hidden border border-white/5 relative">
+                      <div
+                        className="h-full bg-red-500 transition-all duration-1000"
+                        style={{
+                          width: `${lowProducts.percentage}%`,
+                          transitionDelay: `${index * 100}ms`,
                         }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-pulse" />
@@ -231,112 +397,58 @@ export default function AdminAnalytics() {
               <h3 className="font-headline font-black text-2xl uppercase tracking-tighter mb-10 italic">
                 Market Share by Brand
               </h3>
-              <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-                <div className="relative w-56 h-56 group">
-                  <svg
-                    className="w-full h-full transform -rotate-90"
-                    viewBox="0 0 100 100"
-                  >
-                    <circle
-                      cx="50"
-                      cy="50"
-                      fill="transparent"
-                      r="40"
-                      stroke="rgba(255,255,255,0.03)"
-                      strokeWidth="10"
-                    ></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      fill="transparent"
-                      r="40"
-                      stroke="#C8102E"
-                      strokeDasharray="251.2"
-                      strokeDashoffset="62.8"
-                      strokeWidth="12"
-                      className="transition-all duration-1000 hover:stroke-width-15 cursor-pointer"
-                    ></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      fill="transparent"
-                      r="40"
-                      stroke="#1446A0"
-                      strokeDasharray="251.2"
-                      strokeDashoffset="150.7"
-                      strokeWidth="12"
-                    ></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      fill="transparent"
-                      r="40"
-                      stroke="#2D6A4F"
-                      strokeDasharray="251.2"
-                      strokeDashoffset="188.4"
-                      strokeWidth="12"
-                    ></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      fill="transparent"
-                      r="40"
-                      stroke="#6B21A8"
-                      strokeDasharray="251.2"
-                      strokeDashoffset="213.5"
-                      strokeWidth="12"
-                    ></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      fill="transparent"
-                      r="40"
-                      stroke="#92400E"
-                      strokeDasharray="251.2"
-                      strokeDashoffset="238.6"
-                      strokeWidth="12"
-                    ></circle>
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-5xl font-headline font-black text-white italic tracking-tighter">
-                      412
+              <div className="flex flex-col md:flex-row items-center gap-12">
+                <div className="relative w-72 h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={topBrands}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={90}
+                        outerRadius={120}
+                        paddingAngle={5}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {topBrands.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={BRAND_COLORS[index % BRAND_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#131313",
+                          borderColor: "#333",
+                          color: "white",
+                        }}
+                        itemStyle={{ color: "white" }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-7xl  font-headline font-black text-white tracking-tighter">
+                      {topBrands.reduce((sum, brand) => sum + brand.value, 0)}
                     </span>
-                    <span className="text-[10px] font-black text-on-surface/20 uppercase tracking-[0.2em] leading-none mt-2">
-                      TOTAL UNITS
+                    <span className="text-xs font-black text-on-surface/20 uppercase tracking-[0.2em] leading-none mt-2">
+                      TOTAL ORDERS
                     </span>
                   </div>
                 </div>
+
+                {/* Dynamic Legend List */}
                 <div className="flex-1 w-full space-y-4">
-                  <BrandLegendItem
-                    color="#C8102E"
-                    label="Hot Wheels"
-                    percentage="35%"
-                  />
-                  <BrandLegendItem
-                    color="#1446A0"
-                    label="Matchbox"
-                    percentage="25%"
-                  />
-                  <BrandLegendItem
-                    color="#2D6A4F"
-                    label="Greenlight"
-                    percentage="15%"
-                  />
-                  <BrandLegendItem
-                    color="#6B21A8"
-                    label="AutoWorld"
-                    percentage="10%"
-                  />
-                  <BrandLegendItem
-                    color="#92400E"
-                    label="M2 Machines"
-                    percentage="10%"
-                  />
-                  <BrandLegendItem
-                    color="rgba(255,255,255,0.05)"
-                    label="Jada"
-                    percentage="5%"
-                  />
+                  {topBrands.map((brand, index) => (
+                    <BrandLegendItem
+                      key={brand.name}
+                      color={BRAND_COLORS[index % BRAND_COLORS.length]}
+                      label={brand.name}
+                      percentage={`${brand.percentage}%`}
+                    />
+                  ))}
                 </div>
               </div>
             </section>
@@ -611,15 +723,15 @@ const LegendItem = ({ dotColor, label, value, valueColor }) => (
 );
 
 const BrandLegendItem = ({ color, label, percentage }) => (
-  <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest group cursor-pointer">
+  <div className="flex items-center gap-4 text-sm font-black uppercase tracking-widest group cursor-pointer">
     <div
-      className="w-2.5 h-2.5 rounded-[1px] shadow-sm transition-transform group-hover:scale-125"
+      className="w-4 h-4 rounded-[2px] shadow-sm transition-transform group-hover:scale-125"
       style={{ backgroundColor: color }}
     ></div>
     <span className="flex-1 text-on-surface/40 group-hover:text-white transition-colors">
       {label}
     </span>
-    <span className="font-mono text-on-surface/40 group-hover:text-primary-container tabular-nums transition-colors">
+    <span className="font-mono text-on-surface/60 group-hover:text-primary-container tabular-nums transition-colors">
       {percentage}
     </span>
   </div>
