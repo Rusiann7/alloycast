@@ -142,10 +142,7 @@ export default function AdminSidebar() {
         <div className="px-6 mb-10 hidden lg:block">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary-container flex items-center justify-center rounded-[4px]">
-              <img
-                src="https://scontent.fcrk1-3.fna.fbcdn.net/v/t39.30808-6/644340223_122213082470530419_6615498980518078861_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeEgG4siFoRLWVvtPSEqyZ6C6XgpYHoEoUnpeClgegShSSNn7gW48rNushLosBNvbMtV9T4xvqZNtjSpRd91-iCk&_nc_ohc=rw7XoySkXqEQ7kNvwEscFdL&_nc_oc=Ado_Oykcz5kfRBM_PxkuZXW5iQHsBmEBhjvb377AIBS0lM6ZkZuYIaocvaXSPe-rO-I&_nc_zt=23&_nc_ht=scontent.fcrk1-3.fna&_nc_gid=HPpaE6w69JKlmvXtrZ1LCg&oh=00_Af33v1xOLcjbX-rbAny887Un3pORz46IUS-k6uSQsfGnJQ&oe=69F13F40"
-                alt="Logo"
-              />
+              <img src="/logo.jpg" alt="Logo" />
             </div>
             <div>
               <h1 className="text-xl font-black text-[#e5e2e1] font-headline uppercase leading-none ">

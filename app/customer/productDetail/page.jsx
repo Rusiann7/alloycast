@@ -121,7 +121,7 @@ export default function ProductDetail() {
         // these are the data that will be inserted into Reservation Table
         user_id: user.id, // user_id on Reservation Table
         inventory_id: product.id, // the reserved product id
-        // quantity: quantity, // 1 for now, will add state for more latere
+        quantity: quantity, // 1 for now, will add state for more latere
         discount: 0, // 0 for now since no discount for now
       };
 

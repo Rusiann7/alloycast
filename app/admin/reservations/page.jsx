@@ -1,105 +1,211 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { createClient } from "../../../lib/supabase/client";
+import emailjs from "@emailjs/browser";
+import Toast from "../../components/Toast";
+import OrderStatusConfirmationModal from "../../components/OrderStatusConfirmationModal";
 
 export default function AdminReservations() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All Items");
   const [activeReservation, setActiveReservation] = useState(null);
-  const [userFullName, setUserFullname] = useState([]);
-  const [userEmail, setUserEmail] = useState([]);
-  const [itemName, setItemName] = useState([]);
-  const [itemImage, setItemImage] = useState("");
+  const [reservation, setReservation] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    reservationId: null,
+    newStatus: null,
+    customerEmail: null,
+    customerName: null,
+    productName: null,
+  });
 
   const supabase = createClient();
 
+  const itemsPerPage = 5;
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+  };
+
   useEffect(() => {
-    const fetchMultipleColumns = async () => {
-      const { data, error } = await supabase
+    const fetchTableData = async () => {
+      const { data: reservationData, error: reservationError } = await supabase
         .from("Reservation")
-        .select(
-          "*, Users(id, email),  Inventory(item_name, item_image, brand, stock, created_at) ",
-        );
+        .select("*, Users(id, email), Inventory(item_name, item_image, brand)")
+        .order("created_at", { ascending: false });
 
-      if (error) {
-        alert("Oh shit!");
-        console.error("Error fetching data:", error);
-      } else {
-        alert("OK erp!");
-        console.log(data);
-      }
-    };
-    fetchMultipleColumns();
-  }, []);
-
-  useEffect(() => {
-    const fetchCustomerDetails = async () => {
-      const { data, error } = await supabase
+      const { data: customerData, error: customerError } = await supabase
         .from("Customer")
-        .select("firstname, lastname");
+        .select("user_id, firstname, lastname");
 
-      if (error) {
-        alert("Hello shitty!");
-      } else {
-        alert("Ok gagi!");
+      if (reservationData && customerData) {
+        const mergedTables = reservationData.map((reservation) => {
+          const matchCustomer = customerData.find(
+            (customer) => customer.user_id === reservation.user_id,
+          );
+
+          return {
+            id: reservation.id,
+            customer: matchCustomer
+              ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
+              : "Unknown Customer",
+            customer_email: reservation.Users?.email,
+            item_name: reservation.Inventory?.item_name,
+            brand: reservation.Inventory?.brand || "Unkownd Brand",
+            qty: (reservation.quantity || 0).toString().padStart(2, "0"),
+            date: new Date(reservation.created_at).toLocaleDateString(),
+            status: reservation.status || "Pending",
+            statusColor:
+              reservation.status === "Approved"
+                ? "bg-green-500/10 text-green-400 border-green-500/20"
+                : reservation.status === "Rejected"
+                  ? "bg-red-500/10 text-red-400 border-red-500/20"
+                  : "bg-secondary-container/10 text-secondary-container border-secondary-container/20",
+            statusDot:
+              reservation.status === "Approved"
+                ? "bg-green-500"
+                : reservation.status === "Rejected"
+                  ? "bg-red-500"
+                  : "bg-secondary-container",
+
+            img: reservation.Inventory?.item_image || "/logo.jpg",
+          };
+        });
+        setReservation(mergedTables);
       }
     };
-
-    fetchCustomerDetails();
+    fetchTableData();
   }, []);
 
-  const reservations = [
-    {
-      id: "RES-8820-K",
-      customer: "Julian Thorne",
-      email: "j.thorne@collector.io",
-      model: "Porsche 911 GT3 RS",
-      brand: "AUTOART",
-      qty: "01",
-      date: "2 Hours Ago",
-      status: "Pending",
-      statusColor:
-        "bg-secondary-container/10 text-secondary-container border-secondary-container/20",
-      statusDot: "bg-secondary-container",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB4Rl2nAenIRwanibZAlksY_LXmxUg640gGWANtomYbgv4wXmu3QdttMrAG7dOU-OYBwh8IarQOZK0e6zMPAHBlX16M_LNVkC5-GUI8Ldm2vKx1ypUc0LlJsLUN78NGYaT6SR2YvgTmCovfpfVlPt2CGpMoOSocZoTC_FK_hIOQDAw-sjHvlH7y46ZbO5uG-M9wYfXa0IERNZU_FbBwUZC2yw-8r_urHeympVFTvHnQvUVbwufHypZE1VXraDuM3YP3-xk11z8NzE0",
-    },
-    {
-      id: "RES-8821-K",
-      customer: "Marcus Sterling",
-      email: "m.sterling@vault.net",
-      model: "Ferrari F40 Competizione",
-      brand: "KYOSHO",
-      qty: "02",
-      date: "Today, 09:14",
-      status: "Confirmed",
-      statusColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-      statusDot: "bg-blue-500",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8przAME5P8n5WlkkRKv-DiD0d8L8RlDGkgpHt0Izx2dctiAsFXgUTqZNDUcpisyDJOTGfSmW5l_DRnMdBYmd2VcmXVBrqQUXRyNWLIyPbWBCP7i_JLI-OTn3Ty62tV01Fw5iGWlLKgLU3qE75oc-X6Le1gvPAdDtucPdQzhOBUyPT5N3zI2bMD_cB32IswADCquEl3boZuMxJHiNd0n9dtqujJAXAfUvFZYbZt4wVW2DlWjYs9_g2PQ9yKKqsvuOrXeTAGOdk1P8",
-    },
-    {
-      id: "RES-8822-K",
-      customer: "Elena Rossi",
-      email: "e.rossi@milano.it",
-      model: "Lambo Countach LP500S",
-      brand: "HOT WHEELS RLC",
-      qty: "01",
-      date: "Yesterday",
-      status: "Ready",
-      statusColor: "bg-green-500/10 text-green-400 border-green-500/20",
-      statusDot: "bg-green-500",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCRnlXTFevWjcMaHUhT4pXS7RRsz0k27Jmfol1vmJPctEB7S0JPNdtFaydjd7RADfzohTxtVGUYSUjQ-R4cm_9DtlfBLz5a2DSVOd2Wxx3yklqtVTvotLBEK0POqyR-DI6IYRXszuP2j6uIu3Sk5JhuCCNevnD-FyIr6oybLAQRlA673ojdflHEVam819Azz3Cof6hd0nGJPLt_z6RSJISIDBrD0_8zC4kfB4tt_JJ7kf1ddL8WFyuRFEy9IJWyV69Ed8fClOUhr5o",
-    },
-  ];
+  const handleActionClick = (
+    reservationId,
+    newStatus,
+    customerEmail,
+    customerName,
+    productName,
+  ) => {
+    setConfirmModal({
+      isOpen: true,
+      reservationId,
+      newStatus,
+      customerEmail,
+      customerName,
+      productName,
+    });
+  };
 
-  const handleRowClick = (res) => {
-    setActiveReservation(res);
-    setIsDrawerOpen(true);
+  const handleConfirm = () => {
+    const {
+      reservationId,
+      newStatus,
+      customerEmail,
+      customerName,
+      productName,
+    } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
+    statusUpdate(
+      reservationId,
+      newStatus,
+      customerEmail,
+      customerName,
+      productName,
+    );
+  };
+
+  const handleCancel = () => {
+    setConfirmModal({ ...confirmModal, isOpen: false });
+  };
+
+  const statusUpdate = async (
+    reservationId,
+    newStatus,
+    customerEmail,
+    customerName,
+    productName,
+  ) => {
+    const { error } = await supabase
+      .from("Reservation")
+      .update({ status: newStatus })
+      .eq("id", reservationId);
+
+    if (error) {
+      showToast("Failed to update status. Try again later", "error");
+      return;
+    }
+
+    try {
+      await emailjs.send(
+        "service_mu3qrbd",
+        "template_uhrasxf",
+        {
+          to_email: customerEmail,
+          customerName: customerName,
+          productName: productName,
+          status: newStatus,
+          message:
+            newStatus === "Approved"
+              ? "Great news! Your order is approved. Please visit the store to complete your pickup."
+              : "Unfortunately, your reservation could not be accommodated at this time.",
+        },
+        "3ilQZwBk_Cxjfohab",
+      );
+
+      showToast(
+        "An email will be sent to customer about the order status",
+        "success",
+      );
+    } catch (emailError) {
+      showToast("Failed to send email to customer. Try again later", "error");
+    }
+
+    setReservation((prevReservations) =>
+      prevReservations.map((res) => {
+        if (res.id === reservationId) {
+          const isApproved = newStatus === "Approved";
+          const isRejected = newStatus === "Rejected";
+          let statusColor =
+            "bg-secondary-container/10 text-secondary-container border-secondary-container/20";
+          let statusDot = "bg-secondary-container";
+          if (isApproved) {
+            statusColor = "bg-green-500/10 text-green-400 border-green-500/20";
+            statusDot = "bg-green-500";
+          } else if (isRejected) {
+            statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
+            statusDot = "bg-red-500";
+          }
+          return { ...res, status: newStatus, statusColor, statusDot };
+        }
+        return res;
+      }),
+    );
   };
 
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
+      <OrderStatusConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        status={confirmModal.newStatus}
+        customerName={confirmModal.customerName}
+        productName={confirmModal.productName}
+      />
+
       {/* --- Main Content --- */}
       <main
         className={`lg:ml-64 pt-24 lg:pt-10 px-10 pb-12 transition-all duration-500 ${isDrawerOpen ? "lg:mr-[450px]" : ""}`}
@@ -108,20 +214,17 @@ export default function AdminReservations() {
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
           <div>
             <div className="flex items-center gap-4 mb-2">
-              <h2 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
+              <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
                 Reservations
-              </h2>
-              <span className="bg-primary-container text-white px-3 py-1 text-[10px] font-black font-headline uppercase tracking-widest rounded-[2px] shadow-lg shadow-primary-container/20">
-                128 TOTAL
+              </h3>
+              <span className="bg-primary-container text-black/90 px-3 py-1 text-[13px] font-black  uppercase tracking-widest rounded-[2px] shadow-lg shadow-primary-container/20">
+                {reservation.length} TOTAL
               </span>
             </div>
-            <p className="text-on-surface/40 text-sm font-body italic">
-              Processing incoming requests for the Q4 collection cycle.
-            </p>
           </div>
 
           <div className="relative group">
-            <button className="flex items-center gap-3 bg-surface-container-high/40 px-6 py-3 border border-white/5 font-headline font-bold text-[10px] uppercase tracking-widest hover:bg-surface-container-highest transition-all rounded-[2px] group relative overflow-hidden">
+            <button className="flex items-center gap-3 bg-surface-container-high/40 px-6 py-3 border border-white/5  font-bold text-md uppercase tracking-widest hover:bg-surface-container-highest transition-all rounded-[2px] group relative overflow-hidden">
               <span className="material-symbols-outlined text-lg opacity-40">
                 download
               </span>
@@ -139,17 +242,14 @@ export default function AdminReservations() {
           className="flex items-center gap-10 border-b border-white/5 mb-10 overflow-x-auto scrollbar-hide reveal-up"
           style={{ animationDelay: "0.1s" }}
         >
-          {[
-            "All Items",
-            "Pending",
-            "Confirmed",
-            "Ready for Pickup",
-            "Cancelled",
-          ].map((tab) => (
+          {["All Items", "Pending", "Approved", "Rejected"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-5 text-[10px] font-headline font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
+              onClick={() => {
+                setActiveTab(tab);
+                setCurrentPage(1);
+              }}
+              className={`pb-5 text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
                 activeTab === tab
                   ? "text-primary-container"
                   : "text-on-surface/30 hover:text-white"
@@ -167,7 +267,7 @@ export default function AdminReservations() {
         </div>
 
         {/* Filter Bar */}
-        <div
+        {/* <div
           className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 reveal-up"
           style={{ animationDelay: "0.2s" }}
         >
@@ -176,7 +276,7 @@ export default function AdminReservations() {
               search
             </span>
             <input
-              className="bg-transparent border-none focus:ring-0 text-xs font-headline font-bold uppercase tracking-widest w-full py-4 text-white placeholder:opacity-10"
+              className="bg-transparent border-none focus:ring-0 text-xs  font-bold uppercase tracking-widest w-full py-4 text-white placeholder:opacity-10"
               placeholder="Search customer, SKU, or model name..."
               type="text"
             />
@@ -185,7 +285,7 @@ export default function AdminReservations() {
             <span className="material-symbols-outlined px-5 text-on-surface/20">
               calendar_month
             </span>
-            <select className="bg-transparent border-none focus:ring-0 text-[10px] font-headline font-black uppercase tracking-widest w-full py-4 appearance-none text-white/60">
+            <select className="bg-transparent border-none focus:ring-0 text-md  font-black uppercase tracking-widest w-full py-4 appearance-none text-white/60">
               <option>Last 30 Days</option>
               <option>This Quarter</option>
               <option>Custom Range</option>
@@ -198,7 +298,7 @@ export default function AdminReservations() {
             <span className="material-symbols-outlined px-5 text-on-surface/20">
               filter_list
             </span>
-            <select className="bg-transparent border-none focus:ring-0 text-[10px] font-headline font-black uppercase tracking-widest w-full py-4 appearance-none text-white/60">
+            <select className="bg-transparent border-none focus:ring-0 text-md  font-black uppercase tracking-widest w-full py-4 appearance-none text-white/60">
               <option>All Brands</option>
               <option>Hot Wheels</option>
               <option>AutoArt</option>
@@ -208,7 +308,7 @@ export default function AdminReservations() {
               expand_more
             </span>
           </div>
-        </div>
+        </div> */}
 
         {/* Reservations Table */}
         <div
@@ -217,120 +317,183 @@ export default function AdminReservations() {
         >
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="text-center">
                 <tr className="bg-[#131313] border-b border-white/[0.03]">
-                  <th className="p-6 w-16 text-center">
+                  {/* <th className="p-6 w-16 text-center">
                     <Checkbox />
-                  </th>
-                  <th className="p-6 font-headline text-[10px] font-black tracking-[0.3em] uppercase text-white/30">
+                  </th> */}
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                     Customer Details
                   </th>
-                  <th className="p-6 font-headline text-[10px] font-black tracking-[0.3em] uppercase text-white/30">
-                    Product Model
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                    Product Image
                   </th>
-                  <th className="p-6 font-headline text-[10px] font-black tracking-[0.3em] uppercase text-white/30 text-center">
-                    Qty
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                    Product Name
                   </th>
-                  <th className="p-6 font-headline text-[10px] font-black tracking-[0.3em] uppercase text-white/30">
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                    Product Brand
+                  </th>
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                    Quantity
+                  </th>
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                     Date Reserved
                   </th>
-                  <th className="p-6 font-headline text-[10px] font-black tracking-[0.3em] uppercase text-white/30">
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                     Status
                   </th>
-                  <th className="p-6 font-headline text-[10px] font-black tracking-[0.3em] uppercase text-white/30 text-right">
-                    Actions
+                  <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                    Action
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.02]">
-                {reservations.map((res) => (
-                  <tr
-                    key={res.id}
-                    className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer ${activeReservation?.id === res.id ? "bg-primary-container/[0.03] border-l-4 border-l-primary-container" : "border-l-4 border-l-transparent"}`}
-                    onClick={() => handleRowClick(res)}
-                  >
-                    <td
-                      className="p-6 text-center"
-                      onClick={(e) => e.stopPropagation()}
+                {reservation
+                  .filter((res) =>
+                    activeTab === "All Items" ? true : res.status === activeTab,
+                  )
+                  .slice(
+                    (currentPage - 1) * itemsPerPage,
+                    currentPage * itemsPerPage,
+                  )
+                  .map((res) => (
+                    <tr
+                      key={res.id}
+                      className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer ${activeReservation?.id === res.id ? "bg-primary-container/[0.03] border-l-4 border-l-primary-container" : "border-l-4 border-l-transparent"}`}
                     >
-                      <Checkbox />
-                    </td>
-                    <td className="p-6">
-                      <p className="font-headline font-black text-sm tracking-tight uppercase group-hover:text-primary-container transition-colors">
-                        {res.customer}
-                      </p>
-                      <p className="font-body text-[10px] text-white/30 mt-1 tabular-nums italic">
-                        {res.email}
-                      </p>
-                    </td>
-                    <td className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-10 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
-                          <img
-                            src={res.img}
-                            alt={res.model}
-                            className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
-                          />
+                      <td className="p-6">
+                        <p className="font-black text-md tracking-tight uppercase group-hover:text-primary-container transition-colors">
+                          {res.customer}
+                        </p>
+                        <p className="font-body text-md text-white mt-1 tabular-nums italic">
+                          {res.email}
+                        </p>
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center  gap-4">
+                          <div className="w-auto h-30 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
+                            <img
+                              src={res.img}
+                              alt={res.model}
+                              className="w-xs h-full object-cover filter group-hover:scale-110 transition-all duration-700"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-headline font-bold text-xs tracking-tight uppercase">
-                            {res.model}
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center  gap-4">
+                          <p className=" font-bold text-md tracking-tight uppercase">
+                            {res.item_name}
                           </p>
-                          <span className="inline-block px-2 py-0.5 bg-white/[0.03] text-[8px] font-black border border-white/[0.05] text-white/40 mt-1.5 uppercase tracking-widest">
+                        </div>
+                      </td>
+                      <td className="p-6">
+                        <div>
+                          <span className="inline-block px-2 py-0.5 bg-white/[0.03] text-md font-black border border-white/[0.05] text-white mt-1.5 uppercase tracking-widest">
                             {res.brand}
                           </span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-6 text-center font-black text-xs tabular-nums opacity-60 group-hover:opacity-100 transition-opacity">
-                      {res.qty}
-                    </td>
-                    <td className="p-6 text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors uppercase">
-                      {res.date}
-                    </td>
-                    <td className="p-6">
-                      <span
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 ${res.statusColor} text-[9px] font-black uppercase tracking-widest rounded-[1px] border`}
-                      >
+                      </td>
+                      <td className="p-6 text-center font-black text-md tabular-nums  ">
+                        {res.qty}
+                      </td>
+                      <td className="p-6 text-md font-black text-white uppercase tracking-widest  transition-colors ">
+                        {res.date}
+                      </td>
+                      <td className="p-6">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${res.statusDot} animate-pulse`}
-                        ></span>
-                        {res.status}
-                      </span>
-                    </td>
-                    <td
-                      className="p-6 text-right space-x-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button className="w-9 h-9 flex items-center justify-center hover:bg-white/[0.03] transition-colors rounded-[2px] group/btn">
-                        <span className="material-symbols-outlined text-lg opacity-20 group-hover/btn:opacity-100 transition-opacity">
-                          visibility
+                          className={`inline-flex items-center gap-3 px-4 py-2 ${res.statusColor} text-md font-black uppercase tracking-widest rounded-[1px] border`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${res.statusDot} animate-pulse`}
+                          ></span>
+                          {res.status}
                         </span>
-                      </button>
-                      <button
-                        className="w-9 h-9 flex items-center justify-center hover:bg-primary-container/10 transition-colors rounded-[2px] text-primary-container group/btn"
-                        onClick={() => setIsEmailModalOpen(true)}
+                      </td>
+                      {/* --- ACTION COLUMN --- */}
+                      <td
+                        className="p-6 text-right"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <span className="material-symbols-outlined text-lg opacity-40 group-hover/btn:opacity-100 transition-opacity">
-                          mail
-                        </span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                        <div className="flex items-center justify-center gap-2">
+                          {/* Status Update Action Dropdown */}
+                          <div className="flex text-center">
+                            {/* --- Approve Button --- */}
+                            <button
+                              className="w-9 h-9 flex items-center justify-center hover:bg-green-500/10 transition-colors rounded-[2px] text-green-500 group/btn"
+                              onClick={() =>
+                                handleActionClick(
+                                  res.id,
+                                  "Approved",
+                                  res.customer_email,
+                                  res.customer,
+                                  res.item_name,
+                                )
+                              }
+                              title="Approve Reservation"
+                            >
+                              <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
+                                check
+                              </span>
+                            </button>
+
+                            {/* --- Reject Button --- */}
+                            <button
+                              className="w-9 h-9 flex items-center justify-center hover:bg-red-500/10 transition-colors rounded-[2px] text-red-500 group/btn"
+                              onClick={() =>
+                                handleActionClick(
+                                  res.id,
+                                  "Rejected",
+                                  res.customer_email,
+                                  res.customer,
+                                  res.item_name,
+                                )
+                              }
+                              title="Reject Reservation"
+                            >
+                              <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
+                                front_hand
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between p-8 bg-[#131313]/50 border-t border-white/[0.03]">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">
-              Showing 3 of 128 items
-            </p>
+          <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
             <div className="flex items-center gap-3">
-              <PaginationButton icon="chevron_left" disabled />
-              <PaginationButton label="1" active />
-              <PaginationButton label="2" />
-              <PaginationButton label="3" />
-              <PaginationButton icon="chevron_right" />
+              {/* Pagination Controls */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                >
+                  <span className="material-symbols-outlined text-md">
+                    chevron_left
+                  </span>
+                </button>
+
+                {/* Page Indicator */}
+                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
+                  {currentPage}
+                </button>
+
+                <button
+                  onClick={() => setCurrentPage((prev) => prev + 1)} // (Add check for total pages if you want)
+                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-md">
+                    chevron_right
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -341,10 +504,10 @@ export default function AdminReservations() {
         <aside className="fixed top-0 right-0 w-full max-w-[450px] h-screen bg-[#0F0F0F] z-[100] border-l border-white/[0.05] flex flex-col shadow-[0_0_100px_rgba(0,0,0,1)] animate-slide-in-right">
           <div className="p-10 border-b border-white/[0.03] flex justify-between items-center bg-[#131313]">
             <div>
-              <h3 className="font-headline font-black text-3xl tracking-tighter uppercase italic leading-none">
+              <h3 className=" font-black text-3xl tracking-tighter uppercase italic leading-none">
                 #7729
               </h3>
-              <p className="text-[10px] font-black text-[#C8102E] tracking-[0.3em] uppercase mt-2">
+              <p className="text-md font-black text-[#C8102E] tracking-[0.3em] uppercase mt-2">
                 ID: RES-8820-K
               </p>
             </div>
@@ -362,10 +525,10 @@ export default function AdminReservations() {
             {/* Summary Card */}
             <div className="bg-surface-container-high/40 p-6 rounded-[2px] border-l-[3px] border-secondary-container relative group overflow-hidden">
               <div className="flex justify-between items-start mb-6 relative z-10">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary-container">
+                <span className="text-md font-black uppercase tracking-[0.2em] text-secondary-container">
                   STATUS: PENDING VERIFICATION
                 </span>
-                <button className="text-primary-container font-headline text-[10px] font-black uppercase tracking-widest hover:underline underline-offset-4">
+                <button className="text-primary-container  text-md font-black uppercase tracking-widest hover:underline underline-offset-4">
                   EDIT STATUS
                 </button>
               </div>
@@ -373,18 +536,18 @@ export default function AdminReservations() {
                 <div className="w-24 h-24 bg-black/40 border border-white/5 rounded-[1px] overflow-hidden">
                   <img
                     src={activeReservation?.img}
-                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 hover:scale-110"
+                    className="w-full h-full object-cover  hover:-0 transition-all duration-700 hover:scale-110"
                     alt=""
                   />
                 </div>
                 <div>
-                  <p className="font-headline font-black text-lg uppercase leading-tight mb-2 italic">
+                  <p className=" font-black text-lg uppercase leading-tight mb-2 italic">
                     Porsche 911 GT3 RS (992)
                   </p>
-                  <p className="text-[10px] font-medium text-white/40 mb-4 uppercase tracking-widest">
+                  <p className="text-md font-medium text-white/40 mb-4 uppercase tracking-widest">
                     Scale: 1:18 • Finish: Chalk Gray
                   </p>
-                  <p className="font-headline font-black text-2xl text-secondary-fixed italic">
+                  <p className=" font-black text-2xl text-secondary-fixed italic">
                     $289.00
                   </p>
                 </div>
@@ -394,7 +557,7 @@ export default function AdminReservations() {
 
             {/* Customer Info */}
             <section>
-              <h4 className="font-headline font-black text-[10px] uppercase tracking-[0.35em] mb-6 flex items-center gap-4 text-white/60">
+              <h4 className=" font-black text-md uppercase tracking-[0.35em] mb-6 flex items-center gap-4 text-white/60">
                 <span className="material-symbols-outlined text-lg text-primary-container">
                   person
                 </span>
@@ -418,7 +581,7 @@ export default function AdminReservations() {
             {/* Notes */}
             <section className="space-y-8">
               <div>
-                <label className="block font-headline font-black text-[9px] uppercase tracking-[0.3em] mb-4 opacity-30">
+                <label className="block  font-black text-[9px] uppercase tracking-[0.3em] mb-4 opacity-30">
                   Customer Notes
                 </label>
                 <div className="p-5 bg-[#161616] border border-white/[0.03] text-sm italic text-white/70 rounded-[2px] border-l-2 border-white/10">
@@ -427,7 +590,7 @@ export default function AdminReservations() {
                 </div>
               </div>
               <div>
-                <label className="block font-headline font-black text-[9px] uppercase tracking-[0.3em] mb-4 opacity-30">
+                <label className="block  font-black text-[9px] uppercase tracking-[0.3em] mb-4 opacity-30">
                   Internal Admin Notes (Autosave)
                 </label>
                 <textarea
@@ -437,7 +600,7 @@ export default function AdminReservations() {
                 ></textarea>
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-[8px] font-black uppercase tracking-widest text-green-500/60 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[12px]">
+                    <span className="material-symbols-outlined text-md">
                       check_circle
                     </span>{" "}
                     Changes Saved
@@ -451,7 +614,7 @@ export default function AdminReservations() {
 
             {/* Timeline */}
             <section>
-              <h4 className="font-headline font-black text-[10px] uppercase tracking-[0.35em] mb-8 flex items-center gap-4 text-white/60">
+              <h4 className=" font-black text-md uppercase tracking-[0.35em] mb-8 flex items-center gap-4 text-white/60">
                 <span className="material-symbols-outlined text-lg text-primary-container">
                   history
                 </span>
@@ -476,7 +639,7 @@ export default function AdminReservations() {
           </div>
 
           <div className="p-10 bg-[#131313] flex gap-4 border-t border-white/[0.05]">
-            <button className="flex-1 bg-primary-container text-white py-4 font-headline font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all active:scale-[0.98] shadow-lg shadow-primary-container/20 rounded-[2px]">
+            <button className="flex-1 bg-primary-container text-white py-4  font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all active:scale-[0.98] shadow-lg shadow-primary-container/20 rounded-[2px]">
               Confirm Order
             </button>
             <button className="w-16 h-14 flex items-center justify-center bg-white/[0.02] border border-white/[0.05] hover:text-[#C8102E] hover:border-[#C8102E]/40 transition-all rounded-[2px] group">
@@ -497,7 +660,7 @@ export default function AdminReservations() {
           ></div>
           <div className="relative w-full max-w-2xl bg-[#0F0F0F] border border-white/[0.08] shadow-[0_0_100px_rgba(0,0,0,1)] p-12 rounded-[2px] animate-scale-in">
             <div className="flex justify-between items-center mb-10">
-              <h3 className="font-headline font-black text-3xl tracking-tighter uppercase italic">
+              <h3 className=" font-black text-3xl tracking-tighter uppercase italic">
                 Send Notification
               </h3>
               <button
@@ -509,28 +672,28 @@ export default function AdminReservations() {
             </div>
             <form className="space-y-8">
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/30 border-l-2 border-[#C8102E] pl-3">
+                <label className="block text-md font-black uppercase tracking-[0.3em] text-white/30 border-l-2 border-[#C8102E] pl-3">
                   Recipient
                 </label>
                 <input
-                  className="w-full bg-white/[0.02] border border-white/5 text-white/50 text-sm py-4 px-6 font-headline font-bold uppercase tracking-widest rounded-[1px] outline-none"
+                  className="w-full bg-white/[0.02] border border-white/5 text-white/50 text-sm py-4 px-6  font-bold uppercase tracking-widest rounded-[1px] outline-none"
                   readOnly
                   type="text"
                   value={activeReservation?.email}
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/30 border-l-2 border-[#C8102E] pl-3">
+                <label className="block text-md font-black uppercase tracking-[0.3em] text-white/30 border-l-2 border-[#C8102E] pl-3">
                   Subject
                 </label>
                 <input
-                  className="w-full bg-black/40 border border-white/[0.05] focus:ring-1 focus:ring-primary-container/40 text-sm py-4 px-6 font-headline font-black uppercase tracking-widest rounded-[1px] outline-none focus:border-primary-container/40 transition-all"
+                  className="w-full bg-black/40 border border-white/[0.05] focus:ring-1 focus:ring-primary-container/40 text-sm py-4 px-6  font-black uppercase tracking-widest rounded-[1px] outline-none focus:border-primary-container/40 transition-all"
                   type="text"
                   defaultValue={`Reservation Update: ${activeReservation?.model}`}
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/30 border-l-2 border-[#C8102E] pl-3">
+                <label className="block text-md font-black uppercase tracking-[0.3em] text-white/30 border-l-2 border-[#C8102E] pl-3">
                   Message Body
                 </label>
                 <textarea
@@ -541,14 +704,14 @@ export default function AdminReservations() {
               </div>
               <div className="flex justify-end gap-5 pt-4">
                 <button
-                  className="px-8 py-4 font-headline font-black text-[10px] uppercase tracking-[0.3em] border border-white/5 hover:bg-white/[0.03] transition-all rounded-[1px] opacity-40 hover:opacity-100"
+                  className="px-8 py-4  font-black text-md uppercase tracking-[0.3em] border border-white/5 hover:bg-white/[0.03] transition-all rounded-[1px] opacity-40 hover:opacity-100"
                   type="button"
                   onClick={() => setIsEmailModalOpen(false)}
                 >
                   Discard
                 </button>
                 <button
-                  className="px-12 py-4 bg-primary-container text-white font-headline font-black text-[10px] uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary-container/20 rounded-[1px]"
+                  className="px-12 py-4 bg-primary-container text-white  font-black text-md uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary-container/20 rounded-[1px]"
                   type="button"
                 >
                   Transmit Email
@@ -610,7 +773,7 @@ const SidebarLink = ({ icon, label, active, href }) => (
       {icon}
     </span>
     <span
-      className={`text-[10px] font-headline font-black uppercase tracking-[0.35em] transition-all ${
+      className={`text-md  font-black uppercase tracking-[0.35em] transition-all ${
         active ? "text-white" : "text-[#A8A8A0] group-hover:text-white"
       }`}
     >
@@ -627,7 +790,7 @@ const SidebarItemSmall = ({ icon, label }) => (
     <span className="material-symbols-outlined text-[18px] font-light group-hover:rotate-12 transition-transform">
       {icon}
     </span>
-    <span className="text-[9px] font-headline font-black uppercase tracking-widest">
+    <span className="text-[9px]  font-black uppercase tracking-widest">
       {label}
     </span>
   </a>
@@ -652,7 +815,7 @@ const Checkbox = ({ checked, onChange }) => (
 
 const PaginationButton = ({ label, icon, active, disabled }) => (
   <button
-    className={`w-10 h-10 flex items-center justify-center transition-all rounded-[1px] text-[10px] font-black ${
+    className={`w-10 h-10 flex items-center justify-center transition-all rounded-[1px] text-md font-black ${
       active
         ? "bg-primary-container text-white shadow-lg shadow-primary-container/20"
         : disabled
@@ -674,7 +837,7 @@ const DetailEntry = ({
   value,
   valueClass = "text-white font-black uppercase",
 }) => (
-  <div className="flex justify-between items-center text-[10px] font-headline">
+  <div className="flex justify-between items-center text-md ">
     <span className="text-white/30 uppercase tracking-[0.1em]">{label}</span>
     <span className={`${valueClass} tracking-widest`}>{value}</span>
   </div>
@@ -686,7 +849,7 @@ const TimelineEvent = ({ title, meta, active }) => (
       className={`absolute -left-[29px] top-1 w-2.5 h-2.5 rounded-full ring-4 ring-[#0F0F0F] ${active ? "bg-secondary-container shadow-[0_0_15px_rgba(255,219,60,0.5)]" : "bg-white/10"}`}
     ></span>
     <p
-      className={`text-[10px] font-black uppercase tracking-widest mb-1 ${active ? "text-white" : "text-white/30"}`}
+      className={`text-md font-black uppercase tracking-widest mb-1 ${active ? "text-white" : "text-white/30"}`}
     >
       {title}
     </p>
