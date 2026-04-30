@@ -11,6 +11,8 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(true);
   const [editingProductId, setEditingProductId] = useState(null); // holds the id of EACH product
   const [editProductForm, setEditProductForm] = useState({}); // holds the temporary form data from editing fields
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -220,203 +222,248 @@ export default function AdminInventory() {
               </thead>
               <tbody className="divide-y divide-white/[0.02]">
                 {/* TO REVIEW */}
-                {inventory.map((item) => (
-                  <tr
-                    key={item.id}
-                    className={`group hover:bg-white/[0.01] transition-all duration-300 ${
-                      editingProductId === item.id ? "bg-white/[0.03]" : ""
-                    }`}
-                  >
-                    {/* IMAGE */}
-                    <td className="px-8 py-5">
-                      <div
-                        onClick={() =>
-                          editingProductId === item.id &&
-                          document.getElementById(`file-${item.id}`).click()
-                        }
-                        className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative ${
-                          editingProductId === item.id ? "cursor-pointer" : ""
-                        }`}
-                      >
-                        {editingProductId === item.id && (
-                          <input
-                            id={`file-${item.id}`}
-                            type="file"
-                            name="item_image"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={editProduct}
-                          />
-                        )}
-                        <img
-                          src={
+                {inventory
+                  .slice(
+                    (currentPage - 1) * itemsPerPage,
+                    currentPage * itemsPerPage,
+                  )
+                  .map((item) => (
+                    <tr
+                      key={item.id}
+                      className={`group hover:bg-white/[0.01] transition-all duration-300 ${
+                        editingProductId === item.id ? "bg-white/[0.03]" : ""
+                      }`}
+                    >
+                      {/* IMAGE */}
+                      <td className="px-8 py-5">
+                        <div
+                          onClick={() =>
                             editingProductId === item.id &&
-                            editProductForm.preview
-                              ? editProductForm.preview
-                              : item.item_image || "/placeholder-car.png"
+                            document.getElementById(`file-${item.id}`).click()
                           }
-                          alt={item.item_name}
-                          className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700 ${
-                            editingProductId === item.id ? "opacity-40" : ""
+                          className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative ${
+                            editingProductId === item.id ? "cursor-pointer" : ""
                           }`}
-                        />
-                        {editingProductId === item.id && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
-                            <span className="material-symbols-outlined text-white text-2xl mb-2">
-                              add_a_photo
-                            </span>
-                            <span className="text-[8px] font-headline font-bold uppercase tracking-widest text-white/60">
-                              CHANGE
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Product Name */}
-                    <td className="px-8 py-5 text-center">
-                      {editingProductId === item.id ? (
-                        <input
-                          name="item_name"
-                          value={editProductForm.item_name}
-                          onChange={editProduct}
-                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                        />
-                      ) : (
-                        <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
-                          {item.item_name}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Brand */}
-                    <td className="px-8 py-5 text-center">
-                      {editingProductId === item.id ? (
-                        <select
-                          name="brand"
-                          value={editProductForm.brand}
-                          onChange={editProduct}
-                          className="w-full bg-black/60 border border-primary-container rounded/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                         >
-                          <option value="Hot Wheels">Hot Wheels</option>
-                          <option value="Tomica">Tomica</option>
-                          <option value="Majorette">Majorette</option>
-                          <option value="Auto World">Auto World</option>
-                          <option value="Mini GT">Mini GT</option>
-                          <option value="Bburago">Bburago</option>
-                          <option value="Maisto">Maisto</option>
-                          <option value="Others">Others...</option>
-                        </select>
-                      ) : (
-                        <span className="bg-white/5  border border-white/10 rounded-lg text-primary-color px-2.5 py-1 rounded-[1px] text-sm font-black tracking-[0.1em]">
-                          {item.brand}
-                        </span>
-                      )}
-                    </td>
+                          {editingProductId === item.id && (
+                            <input
+                              id={`file-${item.id}`}
+                              type="file"
+                              name="item_image"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={editProduct}
+                            />
+                          )}
+                          <img
+                            src={
+                              editingProductId === item.id &&
+                              editProductForm.preview
+                                ? editProductForm.preview
+                                : item.item_image || "/placeholder-car.png"
+                            }
+                            alt={item.item_name}
+                            className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700 ${
+                              editingProductId === item.id ? "opacity-40" : ""
+                            }`}
+                          />
+                          {editingProductId === item.id && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
+                              <span className="material-symbols-outlined text-white text-2xl mb-2">
+                                add_a_photo
+                              </span>
+                              <span className="text-[8px] font-headline font-bold uppercase tracking-widest text-white/60">
+                                CHANGE
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
-                    {/* Category */}
-                    <td className="px-8 py-5 text-center">
-                      {editingProductId === item.id ? (
-                        <select
-                          name="category"
-                          value={editProductForm.category}
-                          onChange={editProduct}
-                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                        >
-                          <option value="Mainline">Mainline Series</option>
-                          <option value="Special">Special Series</option>
-                          <option value="Premium">Premium Series</option>
-                          <option value="Chase">Chase Series</option>
-                        </select>
-                      ) : (
-                        <p className="text-md text-white  font-headline uppercase tracking-[0.2em]">
-                          {item.category}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Price */}
-                    <td className="px-8 py-5 text-center">
-                      {editingProductId === item.id ? (
-                        <input
-                          name="price"
-                          type="number"
-                          value={editProductForm.price}
-                          onChange={editProduct}
-                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                        />
-                      ) : (
-                        <p className="text-md font-headline font-bold text-primary-container">
-                          ₱{item.price}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Stock */}
-                    <td className="px-8 py-5 text-center">
-                      {editingProductId === item.id ? (
-                        <input
-                          name="stock"
-                          type="number"
-                          value={editProductForm.stock}
-                          onChange={editProduct}
-                          className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                        />
-                      ) : (
-                        <p className="text-md text-white font-headline font-bold">
-                          {item.stock}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-center gap-3">
+                      {/* Product Name */}
+                      <td className="px-8 py-5 text-center">
                         {editingProductId === item.id ? (
-                          <>
-                            <button
-                              onClick={saveEditProduct}
-                              className="w-8 h-8 flex items-center justify-center bg-green-600/20 text-green-500 hover:bg-green-600/40 transition-all"
-                            >
-                              <span className="material-symbols-outlined text-sm">
-                                check
-                              </span>
-                            </button>
-                            <button
-                              onClick={() => setEditingProductId(null)}
-                              className="w-8 h-8 flex items-center justify-center bg-white/5 text-white/40 hover:bg-white/10 transition-all"
-                            >
-                              <span className="material-symbols-outlined text-sm">
-                                close
-                              </span>
-                            </button>
-                          </>
+                          <input
+                            name="item_name"
+                            value={editProductForm.item_name}
+                            onChange={editProduct}
+                            className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                          />
                         ) : (
-                          <>
-                            <button
-                              onClick={() => startEditProduct(item)}
-                              className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
-                            >
-                              <span className="material-symbols-outlined text-sm">
-                                edit
-                              </span>
-                            </button>
-                            <button
-                              onClick={() => deleteProduct(item.id)}
-                              className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
-                            >
-                              <span className="material-symbols-outlined text-sm">
-                                delete
-                              </span>
-                            </button>
-                          </>
+                          <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                            {item.item_name}
+                          </p>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* Brand */}
+                      <td className="px-8 py-5 text-center">
+                        {editingProductId === item.id ? (
+                          <select
+                            name="brand"
+                            value={editProductForm.brand}
+                            onChange={editProduct}
+                            className="w-full bg-black/60 border border-primary-container rounded/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                          >
+                            <option value="Hot Wheels">Hot Wheels</option>
+                            <option value="Tomica">Tomica</option>
+                            <option value="Majorette">Majorette</option>
+                            <option value="Auto World">Auto World</option>
+                            <option value="Mini GT">Mini GT</option>
+                            <option value="Bburago">Bburago</option>
+                            <option value="Maisto">Maisto</option>
+                            <option value="Others">Others...</option>
+                          </select>
+                        ) : (
+                          <span className="bg-white/5  border border-white/10 rounded-lg text-primary-color px-2.5 py-1 rounded-[1px] text-sm font-black tracking-[0.1em]">
+                            {item.brand}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Category */}
+                      <td className="px-8 py-5 text-center">
+                        {editingProductId === item.id ? (
+                          <select
+                            name="category"
+                            value={editProductForm.category}
+                            onChange={editProduct}
+                            className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                          >
+                            <option value="Mainline">Mainline Series</option>
+                            <option value="Special">Special Series</option>
+                            <option value="Premium">Premium Series</option>
+                            <option value="Chase">Chase Series</option>
+                          </select>
+                        ) : (
+                          <p className="text-md text-white  font-headline uppercase tracking-[0.2em]">
+                            {item.category}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Price */}
+                      <td className="px-8 py-5 text-center">
+                        {editingProductId === item.id ? (
+                          <input
+                            name="price"
+                            type="number"
+                            value={editProductForm.price}
+                            onChange={editProduct}
+                            className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                          />
+                        ) : (
+                          <p className="text-md font-headline font-bold text-primary-container">
+                            ₱{item.price}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Stock */}
+                      <td className="px-8 py-5 text-center">
+                        {editingProductId === item.id ? (
+                          <input
+                            name="stock"
+                            type="number"
+                            value={editProductForm.stock}
+                            onChange={editProduct}
+                            className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                          />
+                        ) : (
+                          <p className="text-md text-white font-headline font-bold">
+                            {item.stock}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-8 py-5">
+                        <div className="flex items-center justify-center gap-3">
+                          {editingProductId === item.id ? (
+                            <>
+                              <button
+                                onClick={saveEditProduct}
+                                className="w-8 h-8 flex items-center justify-center bg-green-600/20 text-green-500 hover:bg-green-600/40 transition-all"
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  check
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => setEditingProductId(null)}
+                                className="w-8 h-8 flex items-center justify-center bg-white/5 text-white/40 hover:bg-white/10 transition-all"
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  close
+                                </span>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEditProduct(item)}
+                                className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  edit
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => deleteProduct(item.id)}
+                                className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  delete
+                                </span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
+            {/* Pagination */}
+            <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
+              <div className="flex items-center gap-3">
+                {/* Previous */}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                >
+                  <span className="material-symbols-outlined text-md">
+                    chevron_left
+                  </span>
+                </button>
+
+                {/* Current Page Indicator */}
+                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
+                  {currentPage}
+                </button>
+
+                {/* Next */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) =>
+                      Math.min(
+                        p + 1,
+                        Math.ceil(inventory.length / itemsPerPage),
+                      ),
+                    )
+                  }
+                  disabled={
+                    currentPage >= Math.ceil(inventory.length / itemsPerPage)
+                  }
+                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-md">
+                    chevron_right
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </main>

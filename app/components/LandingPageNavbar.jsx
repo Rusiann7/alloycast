@@ -73,10 +73,7 @@ export default function LandingPageNavbar() {
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3 text-white">
               <div className="size-6 text-primary-container">
-                <img
-                  src="https://scontent.fcrk1-3.fna.fbcdn.net/v/t39.30808-6/644340223_122213082470530419_6615498980518078861_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeEgG4siFoRLWVvtPSEqyZ6C6XgpYHoEoUnpeClgegShSSNn7gW48rNushLosBNvbMtV9T4xvqZNtjSpRd91-iCk&_nc_ohc=rw7XoySkXqEQ7kNvwFojGGX&_nc_oc=AdoC_YfDtQU02H42WKNg7O8T3Qg2mxDYgGPQH7FvU0ARSLe-raddwJhKIg0A4BBXWps&_nc_zt=23&_nc_ht=scontent.fcrk1-3.fna&_nc_gid=Fs9oXNHCX0hKFD6MIjEyOQ&oh=00_Af0UWeeul3blDoNzL_aGqyzpaoZsvj2P9YLoPznYagzRlA&oe=69F0CEC0"
-                  alt="Ethan Marcus Diecast"
-                />
+                <img src="/logo.jpg" alt="Ethan Marcus Diecast" />
               </div>
               <h2 className="font-headline text-lg font-bold uppercase tracking-tight hover:cursor-pointer">
                 <Link href="/">Ethan Marcus Diecast</Link>

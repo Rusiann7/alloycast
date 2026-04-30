@@ -134,7 +134,7 @@ export default function ProductDetail() {
       // Decreases the stock in Inventory Table because a reservation has been made
       const { error: stockError } = await supabase
         .from("Inventory")
-        .update({ stock: product.stock - quantity })
+        .update({ stock: product.stock })
         .eq("id", product.id);
       if (stockError) throw stockError;
 
