@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
@@ -7,7 +8,8 @@ import Toast from "../../components/Toast";
 import ProductCard from "../../components/ProductCard";
 import CustomerFooter from "../../components/CustomerFooter";
 import emailjs from "@emailjs/browser";
-export default function ProductDetail() {
+
+function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -356,5 +358,13 @@ export default function ProductDetail() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductDetail />
+    </Suspense>
   );
 }
