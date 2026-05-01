@@ -1,26 +1,24 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
 export default function Scanner({ scannerOpen, scannerClose }) {
+  const [barcodeItem, setBarcode] = useState(null);
+
   useEffect(() => {
     if (!scannerOpen) return;
 
     const html5QrcodeScanner = new Html5QrcodeScanner(
       "reader",
       { fps: 10, qrbox: { width: 250, height: 250 } },
-      /* verbose= */ false
+      /* verbose= */ false,
     );
 
-    function onScanSuccess(decodedText, decodedResult) {
-      console.log(`Code matched = ${decodedText}`, decodedResult);
+    function onScanSuccess(decodedText) {
+      setBarcode(decodedText);
     }
 
-    function onScanFailure(error) {
-      // handle scan failure, usually better to ignore and keep scanning.
-    }
-
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    html5QrcodeScanner.render(onScanSuccess);
 
     return () => {
       html5QrcodeScanner.clear().catch((err) => {
@@ -28,6 +26,11 @@ export default function Scanner({ scannerOpen, scannerClose }) {
       });
     };
   }, [scannerOpen]);
+
+  useEffect(() => {
+    if (!barcodeItem) return;
+    console.log("Barcode updated:", barcodeItem);
+  }, [barcodeItem]);
 
   if (!scannerOpen) return null;
 

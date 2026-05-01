@@ -1,12 +1,12 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
 
-export default function LoginPage() {
+function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -216,7 +216,7 @@ export default function LoginPage() {
               </div>
             </div>
             <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
-              Didn't receive the email?{" "}
+              Didn&apos;t receive the email?{" "}
               <button
                 type="button"
                 onClick={resendVerification}
@@ -247,7 +247,7 @@ export default function LoginPage() {
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
             <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/customer/auth/register"
                 className="text-primary-container hover:underline italic font-bold"
@@ -259,5 +259,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

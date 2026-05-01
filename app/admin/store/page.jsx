@@ -12,7 +12,6 @@ export default function StorePage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modalPOS, setPOS] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
