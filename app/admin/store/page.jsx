@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 import POSModal from "../../components/POSModal";
+import Scanner from "../../components/Scanner";
 
 export default function StorePage() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,10 @@ export default function StorePage() {
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  const scannerModal = () => {
+    setScannerOpen(true);
   };
 
   const confirmItems = (item) => {
@@ -114,7 +120,10 @@ export default function StorePage() {
                 className="bg-transparent border-none outline-none text-md font-headline font-bold tracking-[0.1em] w-full placeholder:opacity-10 text-white"
               />
 
-              <button className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block">
+              <button
+                className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
+                onClick={() => scannerModal()}
+              >
                 SCAN
               </button>
             </div>
@@ -236,6 +245,11 @@ export default function StorePage() {
         isClose={() => setIsOpen(false)}
         selectedItem={selectedItem}
         onPurchase={() => purchaseItems(selectedItem?.id)}
+      />
+
+      <Scanner
+        scannerOpen={scannerOpen}
+        scannerClose={() => setScannerOpen(false)}
       />
     </div>
   );

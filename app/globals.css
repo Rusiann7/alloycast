@@ -130,6 +130,8 @@
     forwards;
   --animate-reveal-up: reveal-up 0.8s cubic-bezier(0, 0, 0.2, 1) forwards;
   --animate-glow: glow 2s ease-in-out infinite;
+  --animate-scan: scan 2.5s ease-in-out infinite;
+  --animate-shimmer: shimmer 3s infinite linear;
 }
 
 /* Custom Utilities & Animations */
@@ -273,4 +275,14 @@ button {
 
 .custom-cursor-area {
   cursor: url("red-cursor.png"), auto;
+}
+
+@keyframes scan {
+  0%, 100% { top: 5%; }
+  50% { top: 95%; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

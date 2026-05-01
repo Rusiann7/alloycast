@@ -27,8 +27,11 @@ export default function POSModal({
               Stock: <span className="text-white">{selectedItem?.stock}</span>
             </p>
 
-            <label htmlFor=""></label>
+            <label htmlFor="">Name (Optional):</label>
             <input type="text" placeholder="Name" />
+
+            <label htmlFor="">Email (Optional):</label>
+            <input type="email" placeholder="Email" />
           </div>
           <div className="flex gap-3 mt-2">
             <button
