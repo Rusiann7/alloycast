@@ -178,7 +178,7 @@ export default function AdminSidebar() {
           />
 
           <SidebarLink
-            icon="calendar_today"
+            icon="shopping_cart"
             label="POINT OF SALES"
             href="/admin/store"
           />
