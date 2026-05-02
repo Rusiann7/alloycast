@@ -12,6 +12,7 @@ export default function StorePage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scannedBarCode, setScannedBarCode] = useState(null);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -62,19 +63,47 @@ export default function StorePage() {
     setIsOpen(true);
   };
 
+  const handelScannedBarCode = (decodedText) => {
+    setScannedBarCode(decodedText);
+    setScannerOpen(false);
+    console.log("Scanned Items: ", decodedText);
+    purchaseBarCode(decodedText);
+  };
+
+  const purchaseBarCode = async (scannedBarCode) => {
+    try {
+      const matchedItem = inventory.find(
+        (item) => item.barcode === parseInt(scannedBarCode),
+      );
+
+      const { error } = await supabase
+        .from("Inventory")
+        .update({ stock: matchedItem.stock - 1 })
+        .eq("barcode", parseInt(scannedBarCode));
+
+      if (error) throw error;
+
+      showToast("Confirms", "success");
+      fetchInventoryProduct();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const purchaseItems = async (id) => {
     try {
       const { error } = await supabase
-        .from("Inventory") // target the Inventory table
-        .update({ stock: selectedItem.stock - 1 }) // take current stock, minus 1
-        .eq("id", selectedItem.id); // only update the row where id matches the selected item
+        .from("Inventory")
+        .update({ stock: selectedItem.stock - 1 }) // minus 1
+        .eq("id", selectedItem.id);
 
       if (error) throw error;
 
       setIsOpen(false);
 
       fetchInventoryProduct();
-      setToast("Confirms", "success");
+      showToast("Confirms", "success");
+      console.log("It works");
     } catch (error) {
       console.log(error);
     }
@@ -120,9 +149,12 @@ export default function StorePage() {
               />
 
               <button
-                className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
+                className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-xl hover:shadow-primary-container/20 hidden sm:flex items-center gap-3"
                 onClick={() => scannerModal()}
               >
+                <span className="material-symbols-outlined text-xl">
+                  barcode_scanner
+                </span>
                 SCAN
               </button>
             </div>
@@ -249,6 +281,7 @@ export default function StorePage() {
       <Scanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}
+        onScan={handelScannedBarCode}
       />
     </div>
   );

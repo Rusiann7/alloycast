@@ -1,66 +1,94 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { useEffect, useRef } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
-export default function Scanner({ scannerOpen, scannerClose }) {
-  const [barcodeItem, setBarcode] = useState(null);
+export default function Scanner({ scannerOpen, scannerClose, onScan }) {
+  const scannerRef = useRef(null);
 
   useEffect(() => {
     if (!scannerOpen) return;
 
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      /* verbose= */ false,
-    );
+    // barcode
+    const html5QrCode = new Html5Qrcode("reader");
+    scannerRef.current = html5QrCode;
 
-    function onScanSuccess(decodedText) {
-      setBarcode(decodedText);
-    }
-
-    html5QrcodeScanner.render(onScanSuccess);
-
-    return () => {
-      html5QrcodeScanner.clear().catch((err) => {
-        console.error("Failed to clear scanner:", err);
-      });
+    const config = {
+      fps: 10,
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0,
     };
-  }, [scannerOpen]);
 
-  useEffect(() => {
-    if (!barcodeItem) return;
-    console.log("Barcode updated:", barcodeItem);
-  }, [barcodeItem]);
+    //scanning
+    const startScanner = async () => {
+      try {
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText) => {
+            if (onScan) onScan(decodedText);
+          },
+        );
+      } catch (err) {
+        console.error("Scanner error:", err);
+      }
+    };
+
+    startScanner();
+
+    //fail
+    return () => {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current
+          .stop()
+          .then(() => scannerRef.current.clear())
+          .catch((err) => console.error("Failed to stop scanner:", err));
+      }
+    };
+  }, [scannerOpen, onScan]);
 
   if (!scannerOpen) return null;
 
-  const toggleScanner = scannerClose;
-
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-8"
       onClick={scannerClose}
     >
       <div
-        className="relative w-full max-w-[500px] h-[400px] bg-black rounded-lg overflow-hidden flex flex-col items-center justify-center border border-white/10 shadow-2xl"
+        className="relative w-full max-w-md aspect-square bg-zinc-950 rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <div id="reader" width="600px"></div>
+        {/* scanner camera */}
+        <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
 
-        <div className="absolute top-5 px-4 py-2 bg-black/60 backdrop-blur-md text-white text-sm rounded-full z-20">
-          Align barcode within the frame
+        {/* Scanning Overlay */}
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <div className="mt-10 px-6 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-xl">
+            <p className="text-[10px] font-headline font-black uppercase tracking-[0.3em] text-white/70">
+              Align Barcode in Frame
+            </p>
+          </div>
         </div>
-        <button
-          className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full z-30 transition-colors"
-          onClick={toggleScanner}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-        <div className="relative w-[250px] h-[250px] border-2 border-white/30 rounded-[20px] shadow-[0_0_0_1000px_rgba(0,0,0,0.5)] z-10 flex items-center justify-center">
-          <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl" />
-          <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl" />
-          <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl" />
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl" />
+
+        {/* Header/Close */}
+        <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-30">
+          <div className="flex items-center gap-2"></div>
+          <button
+            onClick={scannerClose}
+            className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-full transition-all border border-white/5 active:scale-90"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
         </div>
       </div>
     </div>

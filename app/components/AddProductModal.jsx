@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
+import Scanner from "./Scanner";
 
 const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
   const [addFormData, setAddFormData] = useState({
@@ -13,6 +14,7 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
     item_image: "",
   });
   const [preview, setPreview] = useState(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
@@ -327,6 +329,13 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
             CANCEL
           </button>
           <button
+            type="button"
+            onClick={() => setScannerOpen(true)}
+            className="px-8 h-12 border border-white/5 rounded-lg text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:bg-white/[0.03] transition-all  hover:opacity-100"
+          >
+            SCAN PRODUCT
+          </button>
+          <button
             type="submit"
             className="px-8 h-12 bg-primary-container rounded-lg text-[10px] text-black/80 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20"
           >
@@ -334,6 +343,11 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
           </button>
         </footer>
       </form>
+
+      <Scanner
+        scannerOpen={scannerOpen}
+        scannerClose={() => setScannerOpen(false)}
+      />
     </div>
   );
 };
