@@ -15,6 +15,7 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
   });
   const [preview, setPreview] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannedBarCode, setScannedBarCode] = useState(null);
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
@@ -42,6 +43,30 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
       .trim()
       .replace(/<[^>]*>?/gm, "")
       .substring(0, 100);
+  };
+
+  const handelScannedBarCode = async (decodedText) => {
+    setScannedBarCode(decodedText);
+    setScannerOpen(false);
+    console.log("Scanned Items: ", decodedText);
+
+    try {
+      const response = await fetch(`/api/barcode?upc=${decodedText}`);
+
+      const result = await response.json();
+      const item = result.items?.[0];
+
+      if (item) {
+        setAddFormData((prev) => ({
+          ...prev,
+          item_name: item.title || "",
+        }));
+      } else {
+        showToast("Product not found", "error");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   // function para mag-add product sa Inventory Table
@@ -120,6 +145,7 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
         price: sanitizedInput.price,
         stock: sanitizedInput.stock,
         item_image: imageUrl,
+        barcode: scannedBarCode,
       },
     ]);
 
@@ -347,6 +373,7 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
       <Scanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}
+        onScan={handelScannedBarCode}
       />
     </div>
   );
