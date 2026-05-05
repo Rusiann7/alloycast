@@ -1,9 +1,20 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import Toast from "./Toast";
 
 export default function Scanner({ scannerOpen, scannerClose, onScan }) {
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
   const scannerRef = useRef(null);
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
 
   useEffect(() => {
     if (!scannerOpen) return;
@@ -30,6 +41,7 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
         );
       } catch (err) {
         console.error("Scanner error:", err);
+        showToast("Scanner error. Please try again.", "error");
       }
     };
 
@@ -41,7 +53,7 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
         scannerRef.current
           .stop()
           .then(() => scannerRef.current.clear())
-          .catch((err) => console.error("Failed to stop scanner:", err));
+          .catch((err) => showToast("Failed to stop scanner:", "error"));
       }
     };
   }, [scannerOpen, onScan]);
@@ -73,8 +85,8 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
           <br />
           <br />
           <br />
-          <div className="mt-10 px-6 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-xl">
-            <p className="text-[10px] font-headline font-black uppercase tracking-[0.3em] text-white/70">
+          <div className="mt-75 px-6 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-xl">
+            <p className="text-[12px] font-headline font-black uppercase tracking-[0.3em] text-white/70">
               Align Barcode in Frame
             </p>
           </div>
@@ -91,6 +103,11 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
           </button>
         </div>
       </div>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
     </div>
   );
 }
