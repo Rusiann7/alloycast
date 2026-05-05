@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import Scanner from "./Scanner";
+import Toast from "./Toast";
 
-const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
+const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   const [addFormData, setAddFormData] = useState({
     item_name: "",
     item_brand: "",
@@ -12,6 +13,7 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
     price: 0,
     stock: 0,
     item_image: "",
+    barcode: "",
   });
   const [preview, setPreview] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -20,6 +22,11 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
   if (!isOpen) return null;
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
 
   const getInputValue = (e) => {
     const { name, value, type, files } = e.target;
@@ -153,12 +160,21 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
       alert("SUPABASE ERROR:", error.message);
       showToast("Error adding product to Inventory");
     } else {
-      showToast("Product successfully added to Inventory", "success");
-      if (onSuccess) onSuccess(); // refresh agad
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 2000);
-      onClose();
+      showToast("Product Added!", "success");
+      setAddFormData({
+        item_name: "",
+        item_brand: "",
+        category: "",
+        price: 0,
+        stock: 0,
+        item_image: " ",
+        barcode: "",
+      });
+
+      setTimeout(() => {
+        if (onSuccess) onSuccess(); // refresh agad
+        onClose();
+      }, 3000);
     }
   };
 
@@ -188,15 +204,24 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center border border-white/5 hover:bg-white/5 rounded-lg transition-colors rounded-[2px] group"
-          >
-            <span className="material-symbols-outlined  group-hover:opacity-100 group-hover:rotate-90 transition-all text-xl font-light">
-              close
-            </span>
-          </button>
+          <div className="flex gap-10 items-center">
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              className="px-8 h-12 bg-primary-container rounded-lg text-[12px] text-black/80 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20"
+            >
+              SCAN PRODUCT
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-10 h-10 flex items-center justify-center border border-white/5 hover:bg-white/5 rounded-lg transition-colors rounded-[2px] group"
+            >
+              <span className="material-symbols-outlined  group-hover:opacity-100 group-hover:rotate-90 transition-all text-xl font-light">
+                close
+              </span>
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 lg:p-10 space-y-8 custom-scrollbar">
@@ -241,6 +266,10 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
                 <option value="Mini GT">Mini GT</option>
                 <option value="Bburago">Bburago</option>
                 <option value="Maisto">Maisto</option>
+                <option value="M2">M2</option>
+                <option value="Jada">Jada</option>
+                <option value="AutoWorld">Auto World</option>
+                <option value="Nascar">Nascar</option>
                 <option value="Others">Others...</option>
               </select>
             </div>
@@ -350,20 +379,14 @@ const AddProductModal = ({ isOpen, onClose, showToast, onSuccess }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-8 h-12 border border-white/5 rounded-lg text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:bg-white/[0.03] transition-all  hover:opacity-100"
+            className="px-8 h-12 border border-white/5 rounded-lg text-[12px] font-black font-headline uppercase tracking-[0.3em] bg-white/[0.05] transition-all  hover:opacity-100"
           >
             CANCEL
           </button>
-          <button
-            type="button"
-            onClick={() => setScannerOpen(true)}
-            className="px-8 h-12 border border-white/5 rounded-lg text-[10px] font-black font-headline uppercase tracking-[0.3em] hover:bg-white/[0.03] transition-all  hover:opacity-100"
-          >
-            SCAN PRODUCT
-          </button>
+
           <button
             type="submit"
-            className="px-8 h-12 bg-primary-container rounded-lg text-[10px] text-black/80 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20"
+            className="px-8 h-12 bg-primary-container rounded-lg text-[12px] text-black/80 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20"
           >
             ADD PRODUCT
           </button>

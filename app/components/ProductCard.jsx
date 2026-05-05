@@ -12,7 +12,7 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#262626] rounded-[2px] overflow-hidden group hover:bg-[#2A2A2A] transition-all duration-300">
+    <div className="flex flex-col h-full bg-[#262626] rounded-lg overflow-hidden group hover:bg-[#2A2A2A] transition-all duration-300">
       <div className="relative aspect-[4/3] bg-surface-container-lowest overflow-hidden">
         <img
           src={product.item_image || "/placeholder-car.png"}

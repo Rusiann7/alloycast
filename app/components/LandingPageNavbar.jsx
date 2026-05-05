@@ -68,12 +68,16 @@ export default function LandingPageNavbar() {
         visible={toast.visible}
       />
       {/* Header Navigation */}
-      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5">
-        <div className="mx-auto flex items-center justify-between px-6 lg:px-12 py-4">
+      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5 ">
+        <div className="mx-auto flex items-center justify-between px-3 lg:px-12 py-4">
           <div className="flex items-center gap-10">
-            <div className="flex items-center gap-3 text-white">
-              <div className="size-6 text-primary-container">
-                <img src="/logo.jpg" alt="Ethan Marcus Diecast" />
+            <div className="flex items-center gap-3  text-white">
+              <div className="size-10 text-primary-container">
+                <img
+                  src="/logo.jpg"
+                  alt="Ethan Marcus Diecast"
+                  className="rounded-lg"
+                />
               </div>
               <h2 className="font-headline text-lg font-bold uppercase tracking-tight hover:cursor-pointer">
                 <Link href="/">Ethan Marcus Diecast</Link>
@@ -141,13 +145,10 @@ export default function LandingPageNavbar() {
         <div
           className={`absolute top-0 right-0 h-full w-[300px] bg-surface-container-low border-l border-white/5 p-8 transition-transform duration-500 transform ${navbarOpen ? "translate-x-0" : "translate-x-full"}`}
         >
-          <div className="flex justify-between items-center mb-16">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-container">
-              Vault Access
-            </span>
+          <div className="flex justify-end items-center mb-16">
             <button
               onClick={() => setNavbarOpen(false)}
-              className="material-symbols-outlined text-white hover:rotate-90 transition-transform"
+              className="material-symbols-outlined  text-red hover:rotate-90 transition-transform"
             >
               close
             </button>

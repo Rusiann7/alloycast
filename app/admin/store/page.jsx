@@ -13,6 +13,8 @@ export default function StorePage() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scannedBarCode, setScannedBarCode] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -20,6 +22,8 @@ export default function StorePage() {
   });
 
   const supabase = createClient();
+
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetchInventoryProduct();
@@ -29,14 +33,19 @@ export default function StorePage() {
     (sum, item) => sum + (Number(item.stock) || 0),
     0,
   );
-  const totalProducts = inventory.length;
+
+  const searchedInventory = inventory.filter((item) =>
+    item.item_name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const totalProducts = searchedInventory.length;
 
   const fetchInventoryProduct = async () => {
     try {
       let { data, error } = await supabase
         .from("Inventory")
         .select("*")
-        .order("created_at");
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setInventory(data || []);
@@ -144,20 +153,23 @@ export default function StorePage() {
               </span>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
                 placeholder="FILTER BY BRAND, SCALE, OR SKU..."
-                className="bg-transparent border-none outline-none text-md font-headline font-bold tracking-[0.1em] w-full placeholder:opacity-10 text-white"
+                className="bg-transparent border-none outline-none text-md font-headline font-bold tracking-[0.1em] w-md placeholder:opacity-80 text-white"
               />
-
-              <button
-                className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-xl hover:shadow-primary-container/20 hidden sm:flex items-center gap-3"
-                onClick={() => scannerModal()}
-              >
-                <span className="material-symbols-outlined text-xl">
-                  barcode_scanner
-                </span>
-                SCAN
-              </button>
             </div>
+            <button
+              className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-xl hover:shadow-primary-container/20 hidden sm:flex items-center gap-3"
+              onClick={() => scannerModal()}
+            >
+              <span className="material-symbols-outlined text-xl">
+                barcode_scanner
+              </span>
+              SCAN
+            </button>
           </div>
 
           {/* Product Table */}
@@ -192,75 +204,135 @@ export default function StorePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.02]">
-                {inventory.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="group hover:bg-white/[0.01] transition-all duration-300"
-                  >
-                    {/* IMAGE */}
-                    <td className="px-8 py-5">
-                      <div className="w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative">
-                        <img
-                          src={item.item_image || "/placeholder-car.png"}
-                          alt={item.item_name}
-                          className="w-full h-40 object-cover group-hover:scale-110 transition-all duration-700"
-                        />
-                      </div>
-                    </td>
+                {searchedInventory.length > 0 ? (
+                  searchedInventory
+                    .slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage,
+                    )
+                    .map((item) => (
+                      <tr
+                        key={item.id}
+                        className="group hover:bg-white/[0.01] transition-all duration-300"
+                      >
+                        {/* IMAGE */}
+                        <td className="px-8 py-5">
+                          <div className="w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative">
+                            <img
+                              src={item.item_image || "/placeholder-car.png"}
+                              alt={item.item_name}
+                              className="w-full h-40 object-cover group-hover:scale-110 transition-all duration-700"
+                            />
+                          </div>
+                        </td>
 
-                    {/* Product Name */}
-                    <td className="px-8 py-5 text-center">
-                      <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
-                        {item.item_name}
-                      </p>
-                    </td>
+                        {/* Product Name */}
+                        <td className="px-8 py-5 text-center">
+                          <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                            {item.item_name}
+                          </p>
+                        </td>
 
-                    {/* Brand */}
-                    <td className="px-8 py-5 text-center">
-                      <span className="bg-white/5 border border-white/10 rounded-lg text-primary-color px-2.5 py-1 rounded-[1px] text-sm font-black tracking-[0.1em]">
-                        {item.brand}
-                      </span>
-                    </td>
-
-                    {/* Category */}
-                    <td className="px-8 py-5 text-center">
-                      <p className="text-md text-white font-headline uppercase tracking-[0.2em]">
-                        {item.category}
-                      </p>
-                    </td>
-
-                    {/* Price */}
-                    <td className="px-8 py-5 text-center">
-                      <p className="text-md font-headline font-bold text-primary-container">
-                        ₱{item.price}
-                      </p>
-                    </td>
-
-                    {/* Stock */}
-                    <td className="px-8 py-5 text-center">
-                      <p className="text-md text-white font-headline font-bold">
-                        {item.stock}
-                      </p>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          className="w-10 h-10 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
-                          title="Purchase"
-                          onClick={() => confirmItems(item)}
-                        >
-                          <span className="material-symbols-outlined text-lg">
-                            shopping_cart
+                        {/* Brand */}
+                        <td className="px-8 py-5 text-center">
+                          <span className="bg-white/5 border border-white/10 rounded-lg text-primary-color px-2.5 py-1 rounded-[1px] text-sm font-black tracking-[0.1em]">
+                            {item.brand}
                           </span>
-                        </button>
+                        </td>
+
+                        {/* Category */}
+                        <td className="px-8 py-5 text-center">
+                          <p className="text-md text-white font-headline uppercase tracking-[0.2em]">
+                            {item.category}
+                          </p>
+                        </td>
+
+                        {/* Price */}
+                        <td className="px-8 py-5 text-center">
+                          <p className="text-md font-headline font-bold text-primary-container">
+                            ₱{item.price}
+                          </p>
+                        </td>
+
+                        {/* Stock */}
+                        <td className="px-8 py-5 text-center">
+                          <p className="text-md text-white font-headline font-bold">
+                            {item.stock}
+                          </p>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-8 py-5">
+                          <div className="flex items-center justify-center gap-3">
+                            <button
+                              className="w-10 h-10 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
+                              title="Purchase"
+                              onClick={() => confirmItems(item)}
+                            >
+                              <span className="material-symbols-outlined text-lg">
+                                shopping_cart
+                              </span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-8 py-20 text-center">
+                      <div className="flex flex-col items-center gap-4 opacity-20">
+                        <span className="material-symbols-outlined text-6xl">
+                          search_off
+                        </span>
+                        <p className="text-xl font-headline font-black uppercase tracking-[0.2em]">
+                          Product not available
+                        </p>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
+            {/* Pagination */}
+            <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
+              <div className="flex items-center gap-3">
+                {/* Previous */}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                >
+                  <span className="material-symbols-outlined text-md">
+                    chevron_left
+                  </span>
+                </button>
+
+                {/* Current Page Indicator */}
+                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
+                  {currentPage}
+                </button>
+
+                {/* Next */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) =>
+                      Math.min(
+                        p + 1,
+                        Math.ceil(inventory.length / itemsPerPage),
+                      ),
+                    )
+                  }
+                  disabled={
+                    currentPage >= Math.ceil(inventory.length / itemsPerPage)
+                  }
+                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-md">
+                    chevron_right
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </main>

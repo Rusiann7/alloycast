@@ -2,8 +2,8 @@ import "./globals.css";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 
 export const metadata = {
-  title: "AlloyDash",
-  description: "The premier destination for elite diecast collectors.",
+  title: "Ethan Marcus Diecast",
+  description: "The reservation system for ordering diecast.",
 };
 
 export default function RootLayout({ children }) {
