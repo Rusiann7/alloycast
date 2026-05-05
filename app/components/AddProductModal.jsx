@@ -17,11 +17,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   });
   const [preview, setPreview] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [toast, setToast] = useState({
-    visible: false,
-    message: "",
-    type: "error",
-  });
+  const [scannedBarCode, setScannedBarCode] = useState(null);
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
@@ -56,50 +52,28 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
       .substring(0, 100);
   };
 
-  const scanProduct = async (decodedText) => {
-    // found existing product in Inventory
-    const existingItem = inventory.find(
-      (item) => String(item.barcode) === String(decodedText),
-    );
+  const handelScannedBarCode = async (decodedText) => {
+    setScannedBarCode(decodedText);
+    setScannerOpen(false);
+    console.log("Scanned Items: ", decodedText);
 
-    if (existingItem) {
-      setAddFormData({
-        ...addFormData,
-        item_name: existingItem.item_name || "",
-        item_brand: existingItem.brand || "",
-        barcode: decodedText,
-      });
-      showToast("Product found!", "success");
-      setScannerOpen(false);
-      return;
-    }
-
-    // add product in inventory if not exists
     try {
-      showToast("Searching for product details...", "info");
       const response = await fetch(`/api/barcode?upc=${decodedText}`);
-      const data = await response.json();
 
-      if (data.items && data.items.length > 0) {
-        const item = data.items[0];
+      const result = await response.json();
+      const item = result.items?.[0];
+
+      if (item) {
         setAddFormData((prev) => ({
           ...prev,
           item_name: item.title || "",
-          item_brand: item.brand || "",
-          barcode: decodedText,
         }));
-        showToast("Successfully prefilled specific fields !", "success");
       } else {
-        setAddFormData((prev) => ({ ...prev, barcode: decodedText }));
-        showToast("New product successfully scanned", "succes");
+        showToast("Product not found", "error");
       }
     } catch (error) {
-      console.error("Lookup error: ", error);
-      setAddFormData((prev) => ({ ...prev, barcode: decodedText }));
-      showToast("Error getting product details. Enter it manually", "error");
+      console.log(error);
     }
-
-    setScannerOpen(false);
   };
 
   // function para mag-add product sa Inventory Table
@@ -178,7 +152,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
         price: sanitizedInput.price,
         stock: sanitizedInput.stock,
         item_image: imageUrl,
-        barcode: addFormData.barcode,
+        barcode: scannedBarCode,
       },
     ]);
 
@@ -422,12 +396,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
       <Scanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}
-        onScan={scanProduct}
-      />
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        visible={toast.visible}
+        onScan={handelScannedBarCode}
       />
     </div>
   );
