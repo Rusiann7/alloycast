@@ -42,11 +42,11 @@ export default function LandingPage() {
       {/* Main Hero Section */}
       <main className="relative h-screen min-h-[700px] sm:min-h-[800px] w-full overflow-hidden radial-brand flex flex-col justify-center custom-cursor-area">
         {/* Background Asset: Nissan Skyline PNG - Optimized positioning */}
-        <div className="absolute  inset-0 z-0 flex items-center justify-start pointer-events-none overflow-hidden">
-          <div className="relative  w-full h-full flex items-center justify-center lg:justify-start lg:ml-[45%] ">
+        <div className="absolute inset-0 z-0 flex items-center justify-start pointer-events-none overflow-hidden">
+          <div className="relative w-full h-full flex items-center justify-center lg:justify-start lg:ml-[45%]">
             <img
               alt="Nissan Skyline GT-R R34"
-              className="w-[140%] sm:w-[110%] lg:w-[85%] h-auto object-contain filter grayscale brightness-80 contrast-[1.1] opacity-0 animate-drive-in-stop max-w-none lg:max-w-full"
+              className="w-[140%] sm:w-[110%] lg:w-[85%] h-auto object-contain filter grayscale-75 brightness-90 contrast-[1.1] opacity-0 animate-drive-in-stop max-w-none lg:max-w-full [-webkit-box-reflect:below_-200px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))]"
               src="/nissan skyline.png"
             />
           </div>

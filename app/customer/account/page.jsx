@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import SessionModal from "../../components/SessionModal";
 
 export default function Account() {
   const supabase = createClient();
@@ -11,6 +12,7 @@ export default function Account() {
   const [user, setUser] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
     const fetchAccountData = async () => {
@@ -68,8 +70,13 @@ export default function Account() {
     fetchAccountData();
   }, []);
 
-  const handleLogout = async () => {
+  const showLogoutModal = async () => {
+    setShowSessionModal(true);
+  };
+
+  const logoutAccount = async () => {
     await supabase.auth.signOut();
+    setShowSessionModal(false);
     router.push("/");
   };
 
@@ -137,10 +144,10 @@ export default function Account() {
           </div>
           <div className="text-center md:text-left flex-1">
             <h1 className="font-headline font-black text-4xl lg:text-6xl uppercase italic tracking-tighter leading-[0.9] mb-4">
-              {firstName} <br />{" "}
+              {firstName}{" "}
               <span className="text-primary-container">{lastName}</span>
             </h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#A8A8A0]">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-[13px] tracking-[0.2em] text-[#A8A8A0]">
               <span className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">mail</span>{" "}
                 {email}
@@ -152,8 +159,8 @@ export default function Account() {
             </div>
           </div>
           <button
-            onClick={handleLogout}
-            className="px-6 py-3 border border-white/10 hover:border-primary-container/50 hover:bg-primary-container/5 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3"
+            onClick={showLogoutModal}
+            className="px-6 py-3 border border-white/10 rounded-lg hover:border-primary-container/50 hover:bg-primary-container/5 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3"
           >
             <span className="material-symbols-outlined text-sm">logout</span>
             Sign Out
@@ -211,7 +218,7 @@ export default function Account() {
                     onClick={() => setFilter(f)}
                     className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded ${
                       filter === f
-                        ? "bg-primary-container text-white shadow-lg"
+                        ? "bg-primary-container text-black/90 shadow-lg"
                         : "text-white/40 hover:text-white"
                     }`}
                   >
@@ -292,6 +299,11 @@ export default function Account() {
           </div>
         </div>
       </div>
+      <SessionModal
+        isOpen={showSessionModal}
+        onClose={() => setShowSessionModal(false)}
+        onConfirm={logoutAccount}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
 import Toast from "../../components/Toast";
 import OrderStatusConfirmationModal from "../../components/OrderStatusConfirmationModal";
+import * as XLSX from "xlsx";
 
 export default function AdminReservations() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -85,6 +86,29 @@ export default function AdminReservations() {
     };
     fetchTableData();
   }, []);
+
+  const exportToExcel = () => {
+    // data to be expored to excel
+    const exportData = reservation.map((res) => ({
+      "Customer Name": res.customer,
+      "Email Address": res.customer_email,
+      "Product Name": res.item_name,
+      Brand: res.brand,
+      Quantity: res.qty,
+      "Date Reserved": res.date,
+      Status: res.status,
+    }));
+
+    // craete a worksheet from data
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    // create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reservations");
+
+    // download the excel
+    XLSX.writeFile(workbook, "Ethan_Marcus_Reservations_Report.xlsx");
+  };
 
   const handleActionClick = (
     reservationId,
@@ -211,28 +235,34 @@ export default function AdminReservations() {
       >
         {/* Page Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
-          <div>
-            <div className="flex items-center gap-4 mb-2">
-              <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
-                Reservations
-              </h3>
-              <span className="bg-primary-container text-black/90 px-3 py-1 text-[13px] font-black  uppercase tracking-widest rounded-[2px] shadow-lg shadow-primary-container/20">
-                {reservation.length} TOTAL
-              </span>
+          <div className="mb-14 reveal-up">
+            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
+              RESERVATIONS
+            </h3>
+            <div className="flex items-center gap-4">
+              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
+                TOTAL RESREVATIONS:{" "}
+                <span className="text-white">{reservation.length}</span>{" "}
+              </p>
+              <div className="w-1 h-1 bg-white/20 rounded-full" />
+              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
+                PENDING RESERVATIONS:{" "}
+                <span className="text-primary-container">
+                  {reservation.filter((res) => res.status === "Pending").length}
+                </span>
+              </p>
             </div>
           </div>
-
           <div className="relative group">
-            <button className="flex items-center gap-3 bg-surface-container-high/40 px-6 py-3 border border-white/5  font-bold text-md uppercase tracking-widest hover:bg-surface-container-highest transition-all rounded-[2px] group relative overflow-hidden">
-              <span className="material-symbols-outlined text-lg opacity-40">
+            <button
+              onClick={exportToExcel}
+              className="flex items-center gap-3 bg-primary-container px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:bg-secondary-container transition-all rounded-[2px] group relative overflow-hidden"
+            >
+              <span className="material-symbols-outlined text-lg">
                 download
               </span>
               <span>Export Data</span>
-              <span className="material-symbols-outlined text-lg opacity-40 group-hover:rotate-180 transition-transform">
-                expand_more
-              </span>
             </button>
-            {/* Dropdown Logic would go here */}
           </div>
         </div>
 
@@ -265,56 +295,12 @@ export default function AdminReservations() {
           ))}
         </div>
 
-        {/* Filter Bar */}
-        {/* <div
-          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 reveal-up"
-          style={{ animationDelay: "0.2s" }}
-        >
-          <div className="md:col-span-2 bg-[#161616] p-1 rounded-[2px] border border-white/5 flex items-center group focus-within:border-primary-container/40 transition-colors">
-            <span className="material-symbols-outlined px-5 text-on-surface/20 group-hover:text-primary-container transition-colors">
-              search
-            </span>
-            <input
-              className="bg-transparent border-none focus:ring-0 text-xs  font-bold uppercase tracking-widest w-full py-4 text-white placeholder:opacity-10"
-              placeholder="Search customer, SKU, or model name..."
-              type="text"
-            />
-          </div>
-          <div className="bg-[#161616] p-1 rounded-[2px] border border-white/5 flex items-center relative group">
-            <span className="material-symbols-outlined px-5 text-on-surface/20">
-              calendar_month
-            </span>
-            <select className="bg-transparent border-none focus:ring-0 text-md  font-black uppercase tracking-widest w-full py-4 appearance-none text-white/60">
-              <option>Last 30 Days</option>
-              <option>This Quarter</option>
-              <option>Custom Range</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-4 text-on-surface/10 pointer-events-none">
-              expand_more
-            </span>
-          </div>
-          <div className="bg-[#161616] p-1 rounded-[2px] border border-white/5 flex items-center relative group">
-            <span className="material-symbols-outlined px-5 text-on-surface/20">
-              filter_list
-            </span>
-            <select className="bg-transparent border-none focus:ring-0 text-md  font-black uppercase tracking-widest w-full py-4 appearance-none text-white/60">
-              <option>All Brands</option>
-              <option>Hot Wheels</option>
-              <option>AutoArt</option>
-              <option>Kyosho</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-4 text-on-surface/10 pointer-events-none">
-              expand_more
-            </span>
-          </div>
-        </div> */}
-
         {/* Reservations Table */}
         <div
           className="bg-[#111111]/40 border border-white/[0.03] rounded-[2px] overflow-hidden reveal-up"
           style={{ animationDelay: "0.3s" }}
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto ">
             <table className="w-full text-left border-collapse">
               <thead className="text-center">
                 <tr className="bg-[#131313] border-b border-white/[0.03]">
@@ -420,7 +406,11 @@ export default function AdminReservations() {
                           <div className="flex text-center">
                             {/* --- Approve Button --- */}
                             <button
-                              className="w-9 h-9 flex items-center justify-center hover:bg-green-500/10 transition-colors rounded-[2px] text-green-500 group/btn"
+                              className="w-9 h-9 flex items-center justify-center hover:bg-green-500/10 transition-colors rounded-[2px] text-green-500 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                              disabled={
+                                res.status === "Approved" ||
+                                res.status === "Rejected"
+                              }
                               onClick={() =>
                                 handleActionClick(
                                   res.id,
@@ -439,7 +429,11 @@ export default function AdminReservations() {
 
                             {/* --- Reject Button --- */}
                             <button
-                              className="w-9 h-9 flex items-center justify-center hover:bg-red-500/10 transition-colors rounded-[2px] text-red-500 group/btn"
+                              className="w-9 h-9 flex items-center justify-center hover:bg-red-500/10 transition-colors rounded-[2px] text-red-500 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                              disabled={
+                                res.status === "Approved" ||
+                                res.status === "Rejected"
+                              }
                               onClick={() =>
                                 handleActionClick(
                                   res.id,
