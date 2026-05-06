@@ -18,6 +18,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   const [preview, setPreview] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedBarCode, setScannedBarCode] = useState(null);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
+
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
@@ -68,7 +74,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           ...prev,
           item_name: item.title || "",
         }));
-        showToast("Scanned", "success");
+        showToast("Product Scanned Successfully!", "success");
       } else {
         showToast("Product not found", "error");
       }
@@ -393,7 +399,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           </button>
         </footer>
       </form>
-
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
       <Scanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}

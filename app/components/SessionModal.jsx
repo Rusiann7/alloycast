@@ -37,7 +37,7 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
           </button>
           <button
             onClick={onConfirm}
-            className="w-full py-4 bg-[#C8102E] text-white font-headline font-black uppercase text-[11px] tracking-[0.2em] hover:bg-white hover:text-[#C8102E] transition-all duration-300 rounded-[4px]"
+            className="w-full py-4 bg-primary-container text-black/90 font-headline font-black uppercase text-[11px] tracking-[0.2em] hover:bg-secondary-container hover:text-white/90 transition-all duration-300 rounded-lg"
           >
             Yes
           </button>

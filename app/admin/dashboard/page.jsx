@@ -47,9 +47,6 @@ export default function AdminDashboard() {
       case "Last 7 Days":
         startDate.setDate(now.getDate() - 7);
         break;
-      case "Last 30 Days":
-        startDate.setDate(now.getDate() - 30);
-        break;
       case "This Month":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         break;
@@ -69,7 +66,9 @@ export default function AdminDashboard() {
       .from("Reservation")
       .select("quantity, created_at, Inventory(price)")
       .gte("created_at", startDate.toISOString())
-      .lte("created_at", endDate.toISOString());
+      .lte("created_at", endDate.toISOString())
+      .neq("status", "Pending")
+      .neq("status", "Rejected");
 
     if (error || !analyticsData) {
       console.error("Error fetching analytics:", error);
@@ -109,9 +108,9 @@ export default function AdminDashboard() {
         .select("status");
 
       // 2. Fetch Sales (for revenue)
-      const { data: salesData } = await supabase
-        .from("Sales")
-        .select("revenue");
+      // const { data: salesData } = await supabase
+      //   .from("Sales")
+      //   .select("revenue");
       // 3. Fetch Inventory (for critical stock)
       const { data: invData } = await supabase
         .from("Inventory")
@@ -120,8 +119,8 @@ export default function AdminDashboard() {
         totalReservations: resData?.length || 0,
         pendingReservations:
           resData?.filter((r) => r.status === "Pending").length || 0,
-        revenueEstimate:
-          salesData?.reduce((sum, s) => sum + (Number(s.revenue) || 0), 0) || 0,
+        // revenueEstimate:
+        //   salesData?.reduce((sum, s) => sum + (Number(s.revenue) || 0), 0) || 0,
         criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
         loading: false,
       });
@@ -174,7 +173,10 @@ export default function AdminDashboard() {
           <KPICard
             icon="payments"
             label="Revenue Estimate"
-            value={data.revenueEstimate.toLocaleString()}
+            value={`₱${totalRevenue.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`}
             onClick={() => router.push("/admin/analytics")}
           />
           <KPICard
@@ -211,8 +213,8 @@ export default function AdminDashboard() {
               </div>
 
               {/* 2. Filter Buttons (Top Center) */}
-              <div className="max-w-md lg:justify-self-center flex items-center bg-surface-container-high/10 p-1 rounded-lg border border-white/5 overflow-x-hidden scrollbar-hide">
-                {["Last 7 Days", "Last 30 Days", "Last Month", "All Time"].map(
+              <div className="max-w-sm lg:justify-self-center flex items-center bg-surface-container-high/10 p-1 rounded-lg border border-white/5 overflow-x-hidden scrollbar-hide">
+                {["Last 7 Days", "This Month", "Last Month", "All Time"].map(
                   (label) => (
                     <button
                       key={label}

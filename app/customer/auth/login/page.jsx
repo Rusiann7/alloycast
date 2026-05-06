@@ -199,7 +199,7 @@ function LoginContent() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lgI px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={loginForm.password}
                   onChange={getInputValue}
