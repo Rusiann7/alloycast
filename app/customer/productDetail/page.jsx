@@ -236,7 +236,7 @@ function ProductDetail() {
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
             <div className="space-y-12">
               <div>
-                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2 border border-[#E8112D]/20 mb-8 uppercase italic">
+                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2 border border-[#E8112D]/20 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
                 </span>
                 <h1 className="text-[60px] lg:text-[80px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
@@ -249,7 +249,7 @@ function ProductDetail() {
                 </div>
               </div>
               {/* Allocation Telemetry */}
-              <div className="bg-surface-container-low p-12 border border-white/5 carbon-noise relative group">
+              <div className="bg-surface-container-low p-12 border border-white/5 rounded-lg carbon-noise relative group">
                 <div className="flex justify-between items-end mb-10">
                   <div>
                     <p className="font-headline text-[13px]  text-white uppercase tracking-[0.5em] text-on-surface/30 mb-3 font-bold">
@@ -277,11 +277,11 @@ function ProductDetail() {
                 </div>
               </div>
               <div className="space-y-6">
-                <p>Product Details: AI TO BE IMPLEMENTED</p>
+                {/* <p>Product Details: AI TO BE IMPLEMENTED</p> */}
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
-                  className={`w-full py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge shadow-2xl ${
+                  className={`w-full rounded-lg py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge shadow-2xl ${
                     product.stock === 0
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed grayscale" // 2. "Sold Out" styling
                       : "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 active:scale-[0.98]" // regular styling

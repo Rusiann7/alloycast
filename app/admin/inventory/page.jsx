@@ -172,7 +172,6 @@ export default function AdminInventory() {
               </p>
             </div>
           </div>
-
           {/* Search/Filter Bar */}
           <div
             className="bg-[#111111] border border-white/[0.03] p-5 rounded-lg mb-10 flex items-center gap-5 reveal-up shadow-xl"

@@ -1,7 +1,7 @@
 import AdminSidebar from "../components/AdminSidebar";
 
 export const metadata = {
-  title: "AlloyDash Admin",
+  title: "Ethan Marcus Diecast Admin",
   description: "Inventory Management System",
 };
 

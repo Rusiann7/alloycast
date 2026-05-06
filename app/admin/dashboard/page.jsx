@@ -1,9 +1,140 @@
+"use client";
+import { useState, useEffect } from "react";
+import { createClient } from "../../../lib/supabase/client";
+import { useRouter } from "next/navigation";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import CriticalStockModal from "../../components/CriticalStockModal";
+
 export default function AdminDashboard() {
-  const HeaderAction = ({ icon }) => (
-    <button className="material-symbols-outlined text-[#e5e2e1] opacity-70 hover:text-primary-container hover:opacity-100 transition-all">
-      {icon}
-    </button>
-  );
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [data, setData] = useState({
+    totalReservations: 0,
+    pendingReservations: 0,
+    revenueEstimate: 0,
+    criticalStockCount: 0,
+    loading: true,
+  });
+
+  // Revenue Graph States
+  const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [revenueData, setRevenueData] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  const supabase = createClient();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchDashboardData();
+    fetchAllAnalytics();
+  }, [dateRange]);
+
+  const fetchAllAnalytics = async () => {
+    // 1. Calculate Date Bounds
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
+
+    switch (dateRange) {
+      case "Last 7 Days":
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case "Last 30 Days":
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case "This Month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "Last Month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        break;
+      case "All Time":
+        startDate = new Date(0);
+        break;
+      default:
+        startDate.setDate(now.getDate() - 30);
+    }
+
+    // 2. Fetch Data
+    const { data: analyticsData, error } = await supabase
+      .from("Reservation")
+      .select("quantity, created_at, Inventory(price)")
+      .gte("created_at", startDate.toISOString())
+      .lte("created_at", endDate.toISOString());
+
+    if (error || !analyticsData) {
+      console.error("Error fetching analytics:", error);
+      return;
+    }
+
+    // 3. Process Revenue
+    const dailyRevenue = {};
+    let sumRev = 0;
+    analyticsData.forEach((res) => {
+      if (res.Inventory?.price) {
+        const rev = res.quantity * res.Inventory.price;
+        sumRev += rev;
+        const dateStr = res.created_at.split("T")[0];
+        dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
+      }
+    });
+
+    setTotalRevenue(sumRev);
+    const chartData = Object.keys(dailyRevenue)
+      .sort((a, b) => new Date(a) - new Date(b))
+      .map((dateStr) => ({
+        name: new Date(dateStr).toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+        }),
+        revenue: dailyRevenue[dateStr],
+      }));
+    setRevenueData(chartData);
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      // 1. Fetch Reservations
+      const { data: resData } = await supabase
+        .from("Reservation")
+        .select("status");
+
+      // 2. Fetch Sales (for revenue)
+      const { data: salesData } = await supabase
+        .from("Sales")
+        .select("revenue");
+      // 3. Fetch Inventory (for critical stock)
+      const { data: invData } = await supabase
+        .from("Inventory")
+        .select("item_name, item_image, brand, stock, reorder_point");
+      setData({
+        totalReservations: resData?.length || 0,
+        pendingReservations:
+          resData?.filter((r) => r.status === "Pending").length || 0,
+        revenueEstimate:
+          salesData?.reduce((sum, s) => sum + (Number(s.revenue) || 0), 0) || 0,
+        criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
+        loading: false,
+      });
+
+      const criticalItems = invData?.filter((i) => i.stock <= 5) || [];
+      setLowStockProducts(criticalItems);
+
+      console.log("All goods!");
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    }
+  };
+
   return (
     <div className="bg-background text-on-surface font-body min-h-screen overflow-x-hidden select-none">
       {/* --- Main Content Canvas --- */}
@@ -11,25 +142,16 @@ export default function AdminDashboard() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 reveal-up">
           <div>
-            <h2 className="text-4xl font-black font-headline uppercase tracking-tighter leading-none italic">
-              Admin <span className="text-primary-container">Dashboard</span>
-            </h2>
-            <p className="text-on-surface/50 text-xs font-headline uppercase tracking-widest mt-2">
-              Operational Overview & Acquisition Velocity
-            </p>
+            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
+              Admin <span className="text-white/90">Dashboard</span>
+            </h3>
           </div>
           <div className="flex space-x-2 w-full md:w-auto">
-            <button className="flex-1 md:flex-none bg-surface-container-high px-4 py-2 rounded-[4px] text-[10px] font-headline font-bold uppercase tracking-widest border border-outline-variant/20 flex items-center justify-center space-x-2 hover:bg-surface-bright transition-colors">
-              <span className="material-symbols-outlined text-sm">
-                calendar_today
-              </span>
-              <span>Last 30 Days</span>
-            </button>
-            <button className="flex-1 md:flex-none bg-primary-container text-black/90 px-4 py-2 rounded-[4px] text-[10px] font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform">
+            <button className="flex-1 md:flex-none bg-primary-container text-black/90 px-4 py-2 rounded-lg text-[10px] font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform">
               <span className="material-symbols-outlined text-sm">
                 download
               </span>
-              <span>Export Logs</span>
+              <span>Export Data</span>
             </button>
           </div>
         </div>
@@ -39,35 +161,37 @@ export default function AdminDashboard() {
           <KPICard
             icon="bookmark_manager"
             label="Total Reservations"
-            value="1,284"
-            trend="+12.4%"
-            trendColor="text-secondary-container"
+            value={data.totalReservations.toLocaleString()}
             delay="0.1s"
+            onClick={() => router.push("/admin/reservations")}
           />
           <KPICard
             icon="pending_actions"
             label="Pending Review"
-            value="42"
-            trend="Manual Auth Required"
-            trendColor="text-on-surface/40"
-            delay="0.2s"
+            value={data.pendingReservations.toLocaleString()}
+            onClick={() => router.push("/admin/reservations")}
           />
           <KPICard
             icon="payments"
             label="Revenue Estimate"
-            value="$4.2M"
-            trend="Target: 92%"
-            trendColor="text-primary-container"
-            delay="0.3s"
+            value={data.revenueEstimate.toLocaleString()}
+            onClick={() => router.push("/admin/analytics")}
           />
           <KPICard
             icon="warning"
             label="Critical Stock"
-            value="08"
-            trend="Urgent"
-            trendColor="text-primary-container"
+            value={data.criticalStockCount.toString().padStart(2, "0")}
+            trend={
+              data.criticalStockCount > 0 ? "Urgent Restock" : "Enough Stock"
+            }
+            trendColor={
+              data.criticalStockCount > 0
+                ? "text-primary-container"
+                : "text-green-500"
+            }
             delay="0.4s"
-            badge="Urgent"
+            badge={data.criticalStockCount > 0 ? "Urgent" : null}
+            onClick={() => setIsStockModalOpen(true)}
           />
         </div>
 
@@ -77,55 +201,99 @@ export default function AdminDashboard() {
             className="lg:col-span-2 bg-surface-container-low p-8 rounded-[4px] border border-outline-variant/10 relative reveal-up"
             style={{ animationDelay: "0.5s" }}
           >
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h4 className="text-lg font-black font-headline uppercase tracking-tighter">
-                  Reservations Velocity
+            {/* Updated Header Layout: Title (Left), Filters (Center), Revenue (Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 items-center mb-10 gap-6">
+              {/* 1. Title (Top Left) */}
+              <div className="lg:justify-self-start">
+                <h4 className="text-lg font-black font-headline uppercase tracking-tighter italic text-primary-container">
+                  Revenue Analysis Graph
                 </h4>
-                <p className="text-[10px] font-headline uppercase tracking-widest text-on-surface/40">
-                  Active tracking across nodes
-                </p>
               </div>
-              <div className="flex items-center space-x-4">
-                <LegendItem color="bg-primary-container" label="Completed" />
-                <LegendItem color="bg-secondary-container" label="Initiated" />
+
+              {/* 2. Filter Buttons (Top Center) */}
+              <div className="max-w-md lg:justify-self-center flex items-center bg-surface-container-high/10 p-1 rounded-lg border border-white/5 overflow-x-hidden scrollbar-hide">
+                {["Last 7 Days", "Last 30 Days", "Last Month", "All Time"].map(
+                  (label) => (
+                    <button
+                      key={label}
+                      onClick={() => setDateRange(label)}
+                      className={`whitespace-nowrap px-3 py-1.5 text-[13px] font-headline font-black uppercase tracking-widest transition-all rounded-[2px] ${
+                        dateRange === label
+                          ? "bg-primary-container text-black/90 shadow-lg rounded-lg"
+                          : "text-on-surface/30 hover:text-white hover:bg-white/5 rounded-lg"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ),
+                )}
+              </div>
+
+              {/* 3. Total Revenue (Top Right) */}
+              <div className="lg:justify-self-end flex items-center space-x-2 bg-green-500/5 px-4 py-2 border border-green-500/10 rounded-lg">
+                <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                <span className="text-[11px] font-headline font-bold uppercase tracking-widest opacity-40">
+                  TOTAL REVENUE:
+                </span>
+                <span className="text-[13px] font-black font-headline text-green-500">
+                  ₱
+                  {totalRevenue.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
               </div>
             </div>
-            {/* Chart Placeholder */}
-            <div className="h-64 w-full relative">
-              <svg className="w-full h-full" viewBox="0 0 1000 200">
-                <defs>
-                  <linearGradient
-                    id="chartGradient"
-                    x1="0"
-                    x2="0"
-                    y1="0"
-                    y2="1"
-                  >
-                    <stop offset="0%" stopColor="#C8102E" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#C8102E" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M0,200 L0,150 C100,120 200,180 300,140 C400,100 500,130 600,80 C700,30 800,100 900,60 L1000,40 L1000,200 Z"
-                  fill="url(#chartGradient)"
-                />
-                <path
-                  d="M0,150 C100,120 200,180 300,140 C400,100 500,130 600,80 C700,30 800,100 900,60 L1000,40"
-                  fill="none"
-                  stroke="#C8102E"
-                  strokeWidth="3"
-                />
-                <circle cx="300" cy="140" fill="#C8102E" r="4" />
-                <circle cx="600" cy="80" fill="#C8102E" r="4" />
-                <circle cx="900" cy="60" fill="#C8102E" r="4" />
-              </svg>
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[8px] font-headline font-bold text-on-surface/20 py-2">
-                <span>1.5K</span>
-                <span>1.0K</span>
-                <span>0.5K</span>
-                <span>0.0K</span>
-              </div>
+
+            {/* Chart Area */}
+            <div className="h-64 w-full relative mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={revenueData}
+                  margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="name"
+                    stroke="#ffffff"
+                    fontSize={13}
+                    tickMargin={10}
+                    axisLine={10}
+                    tickLine={10}
+                  />
+                  <YAxis
+                    stroke="#ffffff"
+                    fontSize={13}
+                    axisLine={10}
+                    tickLine={10}
+                    tickFormatter={(value) => `₱${value}`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#131313",
+                      borderColor: "#333",
+                      fontSize: "13px",
+                      borderRadius: "4px",
+                    }}
+                    itemStyle={{ color: "#22C55E" }}
+                    formatter={(value) => `₱${Number(value).toFixed(2)}`}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#22C55E"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorRev)"
+                    animationDuration={1500}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -273,13 +441,28 @@ export default function AdminDashboard() {
           Launch New Batch Listing
         </span>
       </button>
+      <CriticalStockModal
+        isOpen={isStockModalOpen}
+        onClose={() => setIsStockModalOpen(false)}
+        items={lowStockProducts}
+      />
     </div>
   );
 }
 
-const KPICard = ({ icon, label, value, trend, trendColor, delay, badge }) => (
+const KPICard = ({
+  icon,
+  label,
+  value,
+  trend,
+  trendColor,
+  delay,
+  badge,
+  onClick,
+}) => (
   <div
-    className="bg-surface-container-low p-6 rounded-[4px] border-l-2 border-primary-container relative overflow-hidden group reveal-up"
+    onClick={onClick}
+    className="bg-surface-container-low p-6 rounded-lg border-l-2 border-primary-container relative overflow-hidden group reveal-up hover:cursor-pointer hover:bg-surface-container-highest"
     style={{ animationDelay: delay }}
   >
     <div className="flex justify-between items-start mb-4">
