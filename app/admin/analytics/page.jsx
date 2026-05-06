@@ -52,9 +52,6 @@ export default function AdminAnalytics() {
         case "Last 7 Days":
           startDate.setDate(now.getDate() - 7);
           break;
-        case "Last 30 Days":
-          startDate.setDate(now.getDate() - 30);
-          break;
         case "This Month":
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
@@ -76,7 +73,9 @@ export default function AdminAnalytics() {
           "quantity, created_at, status, Inventory(item_name, brand, price)",
         )
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .lte("created_at", endDate.toISOString())
+        .neq("status", "Pending")
+        .neq("status", "Rejected");
 
       if (error || !data) {
         console.error("Error fetching analytics:", error);
@@ -205,25 +204,21 @@ export default function AdminAnalytics() {
         {/* Sticky Date Range Control */}
         <div className="sticky mt-5 z-30 bg-[#131313]/90 backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up">
           <div className="flex items-center bg-surface-container-high/20 p-1 rounded-[2px] border border-white/5">
-            {[
-              "Last 7 Days",
-              "Last 30 Days",
-              "This Month",
-              "Last Month",
-              "All Time",
-            ].map((label) => (
-              <button
-                key={label}
-                onClick={() => setDateRange(label)}
-                className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-[1px] ${
-                  dateRange === label
-                    ? "bg-primary-container text-black/90 shadow-lg"
-                    : "text-on-surface/30 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {["Last 7 Days", "This Month", "Last Month", "All Time"].map(
+              (label) => (
+                <button
+                  key={label}
+                  onClick={() => setDateRange(label)}
+                  className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-[1px] ${
+                    dateRange === label
+                      ? "bg-primary-container text-black/90 shadow-lg"
+                      : "text-on-surface/30 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {label}
+                </button>
+              ),
+            )}
           </div>
         </div>
 

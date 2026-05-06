@@ -68,6 +68,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           ...prev,
           item_name: item.title || "",
         }));
+        showToast("Scanned", "success");
       } else {
         showToast("Product not found", "error");
       }

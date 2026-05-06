@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useActionState } from "react";
 import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 import POSModal from "../../components/POSModal";
@@ -12,6 +12,7 @@ export default function StorePage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [id, setId] = useState(0);
   const [scannedBarCode, setScannedBarCode] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,6 +80,7 @@ export default function StorePage() {
     purchaseBarCode(decodedText);
   };
 
+  //sa barcode ito
   const purchaseBarCode = async (scannedBarCode) => {
     try {
       const matchedItem = inventory.find(
@@ -92,13 +94,33 @@ export default function StorePage() {
 
       if (error) throw error;
 
-      showToast("Confirms", "success");
+      addSales(matchedItem.id);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //para ma punta sa reservation
+  const addSales = async (id) => {
+    try {
+      const { error } = await supabase.from("Reservation").insert({
+        user_id: "becbb0d6-f436-45c7-9ffb-7e7b81774437",
+        inventory_id: id,
+        quantity: 1,
+        discount: 0,
+        status: "Approved",
+      });
+
+      if (error) throw error;
+
+      showToast("OK", "success");
       fetchInventoryProduct();
     } catch (error) {
       console.log(error);
     }
   };
 
+  //sa button ito
   const purchaseItems = async (id) => {
     try {
       const { error } = await supabase
@@ -108,10 +130,12 @@ export default function StorePage() {
 
       if (error) throw error;
 
-      setIsOpen(false);
+      setId(selectedItem.id);
 
-      fetchInventoryProduct();
+      addSales(selectedItem.id);
+      setIsOpen(false);
       showToast("Confirms", "success");
+
       console.log("It works");
     } catch (error) {
       console.log(error);
