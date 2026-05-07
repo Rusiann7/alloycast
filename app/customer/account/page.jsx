@@ -200,18 +200,18 @@ export default function Account() {
             className="space-y-8 animate-fade-in"
             style={{ animationDelay: "400ms" }}
           >
-            <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/5 pb-6 gap-6">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between border-b border-white/5 pb-6 gap-6">
               <div>
-                <h2 className="font-headline font-black text-2xl uppercase italic tracking-tight mb-1">
+                <h2 className="font-headline font-black text-2xl sm:text-3xl uppercase italic tracking-tight mb-1 text-primary-container lg:text-white">
                   Active Reservoir
                 </h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 sm:text-white/20">
                   Manage and track your diecast allocations
                 </p>
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex items-center gap-2 p-1 bg-surface-container-high rounded-lg border border-white/5">
+              <div className="grid grid-cols-2 lg:flex items-center gap-2 p-1 bg-surface-container-high rounded-lg border border-white/5">
                 {["All", "Pending", "Approved", "Rejected"].map((f) => (
                   <button
                     key={f}
@@ -228,10 +228,10 @@ export default function Account() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredReservations.length === 0 ? (
-                <div className="md:col-span-2 py-20 text-center border border-dashed border-white/10 rounded-lg">
-                  <p className="font-headline text-white/20 uppercase tracking-widest text-sm">
+                <div className="lg:col-span-2 py-20 text-center border border-dashed border-white/10 rounded-lg">
+                  <p className="font-headline text-white/20 uppercase tracking-widest text-sm px-6">
                     No {filter !== "All" ? filter : ""} Reservations Found
                   </p>
                   <Link
@@ -245,26 +245,26 @@ export default function Account() {
                 filteredReservations.map((res) => (
                   <div
                     key={res.id}
-                    className="bg-surface-container-low border border-white/5 p-6 rounded-lg flex items-center gap-6 group hover:bg-surface-container-high transition-colors"
+                    className="bg-surface-container-low border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 group hover:bg-surface-container-high transition-colors"
                   >
-                    <div className="size-16 bg-surface-container-highest rounded flex items-center justify-center p-2 flex-shrink-0 group-hover:scale-105 transition-transform duration-500">
+                    <div className="w-full sm:w-20 h-32 sm:h-20 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
                       <img
                         src={
                           res.Inventory?.item_image ||
                           "https://via.placeholder.com/150"
                         }
                         alt={res.Inventory?.item_name}
-                        className="w-full h-auto object-contain"
+                        className="w-full h-full object-contain"
                       />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-center sm:text-left">
                       <p className="text-[10px] font-black uppercase tracking-widest text-[#555555] mb-1 leading-none">
                         {res.Inventory?.brand}
                       </p>
-                      <h3 className="font-headline text-lg font-bold uppercase tracking-tight text-white mb-2 leading-none">
+                      <h3 className="font-headline text-lg font-bold uppercase tracking-tight text-white mb-3 sm:mb-2 leading-none">
                         {res.Inventory?.item_name}
                       </h3>
-                      <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
+                      <div className="flex items-center justify-center sm:justify-start gap-4 text-[10px] font-black uppercase tracking-widest">
                         <span className="opacity-40">
                           {new Date(res.created_at).toLocaleDateString(
                             "en-GB",
@@ -274,21 +274,21 @@ export default function Account() {
                         <span
                           className={`px-2 py-0.5 rounded-[2px] ${
                             res.status === "Approved"
-                              ? "bg-green-500/10 text-green-500"
+                              ? "bg-green-500/10 text-green-500 border border-green-500/20"
                               : res.status === "Rejected"
-                                ? "bg-red-500/10 text-red-500"
-                                : "bg-yellow-500/10 text-yellow-500"
+                                ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                                : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
                           }`}
                         >
                           {res.status || "Pending"}
                         </span>
                       </div>
                     </div>
-                    <div className="text-right pr-4">
-                      <p className="text-[10px] font-black uppercase text-white/20 mb-1">
-                        Qty
+                    <div className="w-full sm:w-auto flex items-center justify-start sm:flex-col sm:items-end sm:justify-center gap-2 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                      <p className="text-[13px] font-black uppercase text-white/90">
+                        Quantity: {""}
                       </p>
-                      <p className="font-headline text-xl font-black italic">
+                      <p className="font-headline text-2xl sm:text-xl font-black italic text-primary-container sm:text-white leading-none">
                         {res.quantity?.toString().padStart(2, "0")}
                       </p>
                     </div>

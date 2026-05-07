@@ -256,7 +256,7 @@ export default function AdminReservations() {
           <div className="relative group">
             <button
               onClick={exportToExcel}
-              className="flex items-center gap-3 bg-primary-container px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:bg-secondary-container transition-all rounded-[2px] group relative overflow-hidden"
+              className="flex items-center gap-3 bg-primary-container px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:bg-secondary-container transition-all rounded-lg group relative overflow-hidden"
             >
               <span className="material-symbols-outlined text-lg">
                 download

@@ -151,34 +151,34 @@ export default function AdminInventory() {
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen ">
-        <div className="px-10 pb-40">
+      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
+        <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
-          <div className="mb-14 reveal-up">
-            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
+          <div className="mb-10 sm:mb-14 reveal-up">
+            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
               INVENTORY
             </h3>
-            <div className="flex items-center gap-4">
-              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
-                TOTAL PRODUCTS STOCKS:{" "}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <p className="text-[11px] sm:text-[13px] font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-white/40">
+                TOTAL STOCKS:{" "}
                 <span className="text-white">
                   {totalProductStock.toLocaleString()}
                 </span>{" "}
               </p>
-              <div className="w-1 h-1 bg-white/20 rounded-full" />
-              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
-                TOTAL PRODUCTS LIST:{" "}
+              <div className="hidden sm:block w-1 h-1 bg-white/20 rounded-full" />
+              <p className="text-[11px] sm:text-[13px] font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-white/40">
+                TOTAL ITEMS:{" "}
                 <span className="text-primary-container">{totalProducts}</span>
               </p>
             </div>
           </div>
           {/* Search/Filter Bar */}
           <div
-            className="bg-[#111111] border border-white/[0.03] p-5 rounded-lg mb-10 flex items-center gap-5 reveal-up shadow-xl"
+            className="bg-[#111111] border border-white/[0.03] p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up shadow-xl"
             style={{ animationDelay: "0.1s" }}
           >
-            <div className="flex-1 flex items-center gap-5  border border-white/[0.1] px-6 h-14 rounded-lg">
-              <span className="material-symbols-outlined  text-xl font-light">
+            <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-white/[0.1] px-4 sm:px-6 h-14 rounded-lg bg-white/5 sm:bg-transparent">
+              <span className="material-symbols-outlined text-xl font-light opacity-40">
                 search
               </span>
               <input
@@ -188,23 +188,24 @@ export default function AdminInventory() {
                   setSearchQuery(e.target.value);
                 }}
                 placeholder="FILTER BY BRAND, SCALE, OR SKU..."
-                className="bg-transparent border-none outline-none text-md font-headline font-bold tracking-[0.1em] w-sm placeholder:opacity-80 text-white"
+                className="flex-1 bg-transparent border-none outline-none text-[12px] sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-40 text-white"
               />
             </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="h-14 px-8 bg-primary-container rounded-lg text-md text-black/90 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20 hidden sm:block"
+              className="w-full sm:w-auto h-14 px-8 bg-primary-container rounded-lg text-sm text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20 flex items-center justify-center gap-3"
             >
+              <span className="material-symbols-outlined text-lg sm:hidden">add</span>
               ADD PRODUCT
             </button>
           </div>
 
           {/* Inventory Table */}
           <div
-            className="bg-[#111111]/40 border border-white/[0.03] rounded-lg overflow-hidden reveal-up"
+            className="bg-[#111111]/40 border border-white/[0.03] rounded-lg overflow-x-auto reveal-up scrollbar-hide"
             style={{ animationDelay: "0.2s" }}
           >
-            <table className="w-full  text-left border-collapse ">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="border-b border-white/[0.03] bg-[#131313]">
                   <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">

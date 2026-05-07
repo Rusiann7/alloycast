@@ -18,6 +18,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   const [preview, setPreview] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedBarCode, setScannedBarCode] = useState(null);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
+
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
@@ -68,7 +74,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           ...prev,
           item_name: item.title || "",
         }));
-        showToast("Scanned", "success");
+        showToast("Product Scanned Successfully!", "success");
       } else {
         showToast("Product not found", "error");
       }
@@ -189,36 +195,37 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
         onSubmit={addProduct}
         className="relative w-full max-w-3xl bg-[#0F0F0F] border border-white/[0.05] shadow-[0_0_100px_rgba(0,0,0,1)] rounded-[2px] animate-slide-in-up flex flex-col max-h-[90vh]"
       >
-        <header className="p-8 lg:p-10 border-b border-white/[0.03] flex items-center justify-between shrink-0">
+        <header className="p-6 sm:p-8 lg:p-10 border-b border-white/[0.03] flex flex-col sm:flex-row items-start sm:items-center justify-between shrink-0 gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center rounded-[2px]">
-              <span className="material-symbols-outlined text-primary-container text-2xl">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center rounded-[2px]">
+              <span className="material-symbols-outlined text-primary-container text-xl sm:text-2xl">
                 add_box
               </span>
             </div>
             <div>
-              <h4 className="text-3xl font-black font-headline uppercase tracking-tighter italic leading-none">
+              <h4 className="text-2xl sm:text-3xl font-black font-headline uppercase tracking-tighter italic leading-none">
                 ADD PRODUCT
               </h4>
-              <p className="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-white/40 mt-1">
+              <p className="text-[9px] sm:text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-white/40 mt-1">
                 NEW INVENTORY ENTRY
               </p>
             </div>
           </div>
-          <div className="flex gap-10 items-center">
+          <div className="flex w-full sm:w-auto gap-4 items-center justify-between sm:justify-end">
             <button
               type="button"
               onClick={() => setScannerOpen(true)}
-              className="px-8 h-12 bg-primary-container rounded-lg text-[12px] text-black/80 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20"
+              className="flex-1 sm:flex-none px-6 sm:px-8 h-12 bg-primary-container rounded-lg text-[11px] sm:text-[12px] text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20 flex items-center justify-center gap-2"
             >
-              SCAN PRODUCT
+              <span className="material-symbols-outlined text-lg">qr_code_scanner</span>
+              <span>SCAN</span>
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="w-10 h-10 flex items-center justify-center border border-white/5 hover:bg-white/5 rounded-lg transition-colors rounded-[2px] group"
+              className="w-12 h-12 flex items-center justify-center border border-white/5 hover:bg-white/5 rounded-lg transition-colors group"
             >
-              <span className="material-symbols-outlined  group-hover:opacity-100 group-hover:rotate-90 transition-all text-xl font-light">
+              <span className="material-symbols-outlined group-hover:opacity-100 group-hover:rotate-90 transition-all text-xl font-light">
                 close
               </span>
             </button>
@@ -376,24 +383,28 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           </div>
         </div>
 
-        <footer className="p-8 border-t border-white/[0.03] flex justify-end gap-4 bg-black rounded-b-[2px] shrink-0">
+        <footer className="p-6 sm:p-8 border-t border-white/[0.03] flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-[#0A0A0A] rounded-b-[2px] shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-8 h-12 border border-white/5 rounded-lg text-[12px] font-black font-headline uppercase tracking-[0.3em] bg-white/[0.05] transition-all  hover:opacity-100"
+            className="w-full sm:w-auto px-8 h-12 border border-white/10 rounded-lg text-[11px] sm:text-[12px] font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-white/5 hover:bg-white/10 transition-all"
           >
             CANCEL
           </button>
 
           <button
             type="submit"
-            className="px-8 h-12 bg-primary-container rounded-lg text-[12px] text-black/80 font-black font-headline uppercase tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-[#C8102E]/20"
+            className="w-full sm:w-auto px-8 h-12 bg-primary-container rounded-lg text-[11px] sm:text-[12px] text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20"
           >
-            ADD PRODUCT
+            ADD TO INVENTORY
           </button>
         </footer>
       </form>
-
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
       <Scanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}
