@@ -73,20 +73,9 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
         <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
 
         {/* Scanning Overlay */}
-        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <br />
-          <div className="mt-75 px-6 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-xl">
-            <p className="text-[12px] font-headline font-black uppercase tracking-[0.3em] text-white/70">
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-end pb-12 sm:pb-16">
+          <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-xl">
+            <p className="text-[10px] sm:text-[12px] font-headline font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/70">
               Align Barcode in Frame
             </p>
           </div>

@@ -45,8 +45,6 @@ export default function LandingPageNavbar() {
       label: "Browse Products",
       href: "/customer/product",
     },
-    // { id: 1, label: "New Arrivals", href: "/customer/new-arrivals" },
-    // { id: 2, label: "Pre-Orders", href: "/customer/pre-orders" },
   ];
 
   const logoutAccount = async () => {
@@ -68,7 +66,7 @@ export default function LandingPageNavbar() {
         visible={toast.visible}
       />
       {/* Header Navigation */}
-      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5 ">
+      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5 z-1000">
         <div className="mx-auto flex items-center justify-between px-3 lg:px-12 py-4">
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3  text-white">
