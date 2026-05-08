@@ -80,6 +80,45 @@ export default function Account() {
     router.push("/");
   };
 
+  const handleCancelReservation = async (
+    reservationId,
+    inventoryId,
+    quantity,
+  ) => {
+    if (!confirm("Are you sure you want to cancel this reservation?")) return;
+
+    try {
+      // 1. Delete reservation
+      const { error: deleteError } = await supabase
+        .from("Reservation")
+        .delete()
+        .eq("id", reservationId);
+
+      if (deleteError) throw deleteError;
+
+      // 2. Fetch current stock and restore it
+      const { data: inventory, error: fetchError } = await supabase
+        .from("Inventory")
+        .select("stock")
+        .eq("id", inventoryId)
+        .single();
+
+      if (!fetchError && inventory) {
+        const restoredStock = inventory.stock + quantity;
+        await supabase
+          .from("Inventory")
+          .update({ stock: restoredStock })
+          .eq("id", inventoryId);
+      }
+
+      // 3. Update local state
+      setReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    } catch (error) {
+      console.error("Cancellation Failed: ", error.message);
+      alert("Failed to cancel reservation");
+    }
+  };
+
   const [filter, setFilter] = useState("All");
 
   if (loading) {
@@ -282,6 +321,23 @@ export default function Account() {
                         >
                           {res.status || "Pending"}
                         </span>
+                        {(res.status === "Pending" || !res.status) && (
+                          <button
+                            onClick={() =>
+                              handleCancelReservation(
+                                res.id,
+                                res.inventory_id,
+                                res.quantity,
+                              )
+                            }
+                            className="text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 group/cancel"
+                          >
+                            <span className="material-symbols-outlined text-sm group-hover/cancel:rotate-90 transition-transform">
+                              close
+                            </span>
+                            Cancel Request
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="w-full sm:w-auto flex items-center justify-start sm:flex-col sm:items-end sm:justify-center gap-2 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
