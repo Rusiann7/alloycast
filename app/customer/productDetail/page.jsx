@@ -1074,7 +1074,7 @@ function ProductDetail() {
 
           {/* Right Column: Spec Sheet & Control */}
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
-            <div className="space-y -12">
+            <div className="space-y-12">
               <div>
                 <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-sm tracking-[0.4em] px-4 py-2  drop-shadow-lg/30 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
