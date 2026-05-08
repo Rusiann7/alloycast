@@ -66,7 +66,7 @@ export default function LandingPageNavbar() {
         visible={toast.visible}
       />
       {/* Header Navigation */}
-      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5 z-1000">
+      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5 z-999">
         <div className="mx-auto flex items-center justify-between px-3 lg:px-12 py-4">
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3  text-white">
@@ -184,7 +184,7 @@ export default function LandingPageNavbar() {
                 {/* Mobile Logout Link */}
                 <button
                   onClick={() => {
-                    handleLogout();
+                    logoutAccount();
                     setNavbarOpen(false);
                   }}
                   className="text-left text-2xl font-headline font-black uppercase italic text-on-surface hover:text-primary-container transition-colors tracking-tighter"

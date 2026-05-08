@@ -234,7 +234,7 @@ function ProductDetail() {
 
           {/* Right Column: Spec Sheet & Control */}
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
-            <div className="space-y-12">
+            <div className="space-y -12">
               <div>
                 <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2 border border-[#E8112D]/20 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
@@ -313,47 +313,85 @@ function ProductDetail() {
       </main>
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">
-          <div className="relative w-full  bg-surface-container border border-white/10 p-12 text-white">
-            <div className="flex justify-between items-start mb-8">
-              <h2 className="text-4xl font-headline font-black uppercase italic">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-md bg-surface-container border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-white my-auto shadow-2xl">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">
                 Confirm Reservation?
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="material-symbols-outlined"
+                className="material-symbols-outlined flex-shrink-0 hover:bg-surface rounded-lg p-2 transition-colors"
+                aria-label="Close reservation modal"
               >
                 close
               </button>
             </div>
 
-            <p className="font-light text-on-surface-variant">
-              How many &nbsp;
-              <span className="text-primary-container font-bold">
-                {product.item_name}
-              </span>
-              &nbsp; you want to reserve?
-            </p>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              max={product.stock}
-              className=" bg-surface p-2 border border-white/10"
-            />
+            {/* Quantity Section */}
+            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
+              <p className="font-light text-sm sm:text-base text-on-surface-variant leading-relaxed">
+                How many &nbsp;
+                <span className="text-primary-container font-bold">
+                  {product.item_name}
+                </span>
+                &nbsp; you want to reserve?
+              </p>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                max={product.stock}
+                min="1"
+                className="w-auto bg-surface px-4 py-3 sm:py-4 border border-white/10 rounded-lg text-white font-headline text-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+                placeholder="Enter quantity"
+              />
+              <p className="text-xs sm:text-sm text-on-surface-variant/70 font-light">
+                Available stock: {product.stock} units
+              </p>
+            </div>
 
-            <p className="mb-8 font-light text-on-surface-variant">
-              You are about to reserve:{" "}
-              <span className="text-primary-container font-bold">
-                {product.item_name}
-              </span>
-            </p>
-            <button
-              className="w-full py-6 bg-primary-container font-headline font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-              onClick={insertReservationToTable}
-            >
-              Confirm My Reservation
-            </button>
+            {/* Summary Section */}
+            <div className="bg-surface-container-low border border-white/5 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+              <p className="text-xs sm:text-sm uppercase tracking-wider text-on-surface/40 font-headline mb-2">
+                Order Summary
+              </p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm sm:text-base text-on-surface-variant">
+                    Product:
+                  </span>
+                  <span className="text-sm sm:text-base font-bold text-primary-container">
+                    {product.item_name}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm sm:text-base text-on-surface-variant">
+                    Quantity:
+                  </span>
+                  <span className="text-sm sm:text-base font-bold text-white">
+                    {quantity || 0} {quantity > 1 ? "units" : "unit"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 sm:space-y-4">
+              <button
+                className="w-full py-4 sm:py-5 md:py-6 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-sm sm:text-base hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
+                onClick={insertReservationToTable}
+              >
+                Confirm My Reservation
+              </button>
+              <button
+                className="w-full py-3 sm:py-4 bg-surface-container border border-white/10 font-headline font-bold uppercase tracking-wider text-sm sm:text-base text-on-surface hover:bg-surface transition-all rounded-lg"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

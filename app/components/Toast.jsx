@@ -14,7 +14,7 @@ export default function Toast({ message, type = "error", visible }) {
   const isSuccess = type === "success";
 
   return (
-    <div className="fixed top-6 right-6 z-100 animate-reveal-up max-w-[90vw] sm:max-w-sm">
+    <div className="fixed top-6 right-6 z-1000 animate-reveal-up max-w-[90vw] sm:max-w-sm">
       <div
         className={`${
           isSuccess

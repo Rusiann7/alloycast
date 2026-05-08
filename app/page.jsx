@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import LandingPageNavbar from "./components/LandingPageNavbar";
@@ -12,12 +13,14 @@ export default function LandingPage() {
   const [howItWorksModal, setHowItWorksModal] = useState(false);
   const supabase = createClient();
 
+  const router = useRouter();
+
   const loadInventoryProduct = async () => {
     try {
       let { data, error } = await supabase
         .from("Inventory")
         .select("*")
-        .order("created_at");
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setInventory(data || []); // ilagay sa inventory state ung nafetch na product
@@ -143,7 +146,10 @@ export default function LandingPage() {
                 Top Products
               </h2>
             </div>
-            <button className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary-container">
+            <button
+              onClick={() => router.push("/customer/product")}
+              className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary-container"
+            >
               View More
               <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
                 arrow_forward
