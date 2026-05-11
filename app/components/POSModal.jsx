@@ -11,6 +11,12 @@ export default function POSModal({
   const [userName, setUserName] = useState(null);
   const [emailAddr, setEmailAddr] = useState(null);
 
+  const handleConfirm = () => {
+    onPurchase({ userName, emailAddr });
+    setUserName("");
+    setEmailAddr("");
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -59,7 +65,7 @@ export default function POSModal({
             </button>
             <button
               className="flex-1 py-2 bg-primary-container rounded-lg text-black text-sm font-bold hover:bg-primary-container/80 transition-all"
-              onClick={() => onPurchase(userName, emailAddr)}
+              onClick={handleConfirm}
             >
               Confirm Purchase
             </button>
