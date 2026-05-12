@@ -18,8 +18,8 @@ export default function Toast({ message, type = "error", visible }) {
       <div
         className={`${
           isSuccess
-            ? "bg-primary-container text-black/90"
-            : "bg-secondary-container text-white"
+            ? "bg-secondary-container text-black/90"
+            : "bg-secondary-container text-black/90"
         } px-5 py-4 rounded-lg shadow-2xl flex items-center gap-3 border border-white/10`}
       >
         {/* Icon */}

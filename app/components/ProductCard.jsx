@@ -12,8 +12,8 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#262626] rounded-lg overflow-hidden group hover:bg-[#2A2A2A] transition-all duration-300">
-      <div className="relative aspect-[4/3] bg-surface-container-lowest overflow-hidden">
+    <div className="flex flex-col h-full drop-shadow-lg/30 bg-secondary-container rounded-lg overflow-hidden group hover:bg-secondary-background hover:cursor-pointer transition-all duration-300">
+      <div className="relative aspect-[4/3]  overflow-hidden">
         <img
           src={product.item_image || "/placeholder-car.png"}
           alt={product.item_name}
@@ -31,15 +31,15 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
       </div>
       <div className="flex-1 flex flex-col p-4">
         <p
-          className={`text-[10px] font-black uppercase tracking-widest mb-1 ${featured ? "text-primary-container" : "text-[#A8A8A0]"}`}
+          className={`text-[12px] font-black uppercase tracking-widest mb-1 ${featured ? "text-primary-container" : "text-[#A8A8A0]"}`}
         >
           {product.brand}
         </p>
-        <h3 className="font-headline font-bold text-xl uppercase mb-2 text-white">
+        <h3 className=" font-bold text-md uppercase mb-2 text-white">
           {product.item_name}
         </h3>
         <div className="mt-auto flex items-center justify-between">
-          <span className="font-headline font-black text-lg text-white">
+          <span className="font-black text-lg text-white">
             ₱ {product.price}
           </span>
           <Link

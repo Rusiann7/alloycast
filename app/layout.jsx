@@ -1,14 +1,16 @@
 import "./globals.css";
 import GoogleAnalytics from "./components/GoogleAnalytics";
+import { ThemeProvider } from "next-themes";
+import ThemeToggle from "./components/ThemeToggle";
 
 export const metadata = {
-  title: "Ethan Marcus Diecast",
+  title: "AlloyDash",
   description: "The reservation system for ordering diecast.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full antialiased dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -25,9 +27,12 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col custom-cursor-area bg-background">
-        <GoogleAnalytics />
-        {children}
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          <GoogleAnalytics />
+          {children}
+          <ThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );

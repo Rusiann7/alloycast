@@ -17,6 +17,8 @@ function ProductDetail() {
   const searchParams = useSearchParams(); // identify the id of the product clicked url
   const [quantity, setQuantity] = useState(1); // for adding more product reservation
   const [similarProducts, setSimilarProducts] = useState([]); // for similar products analytics
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -113,7 +115,6 @@ function ProductDetail() {
       return;
     }
     setIsModalOpen(true);
-    showToast("Reservation Successful!", "success"); // if user is currently logged
   };
 
   // This will insert the reserve product to Reservation Table using the confirmation Modal
@@ -132,13 +133,6 @@ function ProductDetail() {
         .from("Reservation")
         .insert([reservationDataInsert]); // inserts the reservationDataInsert items
       if (reserveError) throw reserveError;
-
-      // Decreases the stock in Inventory Table because a reservation has been made
-      const { error: stockError } = await supabase
-        .from("Inventory")
-        .update({ stock: product.stock })
-        .eq("id", product.id);
-      if (stockError) throw stockError;
 
       // fetch admins to send emails
       const { data: admins } = await supabase
@@ -210,21 +204,21 @@ function ProductDetail() {
       <main className="pt-24 lg:pt-32 min-h-screen">
         <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 px-6 lg:px-12 pb-24">
           {/* Left Column: Image Display */}
-          <div className="md:sticky md:top-32 h-fit space-y-8 reveal-up">
-            <div className="relative aspect-square bg-surface-container-lowest border border-white/5 overflow-hidden display-case-lighting group shadow-2xl">
+          <div className="md:sticky md:top-32 h-fit space-y-8 reveal-up ">
+            <div className="relative aspect-square bg-white rounded-lg overflow-hidden display-case-lighting group shadow-lg/50">
               <div className="absolute inset-0 carbon-noise opacity-30 pointer-events-none"></div>
               <img
                 alt={product.item_name}
-                className="w-full h-full object-contain p-12 transition-transform duration-1000 group-hover:scale-110"
+                className="w-full h-full object-contain  p-12 transition-transform duration-1000 group-hover:scale-110"
                 src={product.item_image}
               />
               {/* Dynamic Tag based on category */}
               <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
-                <span className="bg-[#FFDB3C] text-black font-headline font-black text-[12px] px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
+                <span className="bg-primary-container text-black font-headline font-black text-lg px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
                   {product.category || "PREMIUM SELECTION"}
                 </span>
                 {product.stock < 5 && (
-                  <span className="bg-[#E8112D] text-white font-headline font-black text-[10px] px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
+                  <span className="bg-on-primary text-white font-headline font-black text-[10px] px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
                     LOW STOCK ALERT
                   </span>
                 )}
@@ -236,7 +230,7 @@ function ProductDetail() {
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
             <div className="space-y -12">
               <div>
-                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2 border border-[#E8112D]/20 rounded-lg mb-8 uppercase italic">
+                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2  drop-shadow-lg/30 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
                 </span>
                 <h1 className="text-[60px] lg:text-[80px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
@@ -249,25 +243,25 @@ function ProductDetail() {
                 </div>
               </div>
               {/* Allocation Telemetry */}
-              <div className="bg-surface-container-low p-12 border border-white/5 rounded-lg carbon-noise relative group">
+              <div className=" p-6 rounded-lg carbon-noise relative group">
                 <div className="flex justify-between items-end mb-10">
                   <div>
-                    <p className="font-headline text-[13px]  text-white uppercase tracking-[0.5em] text-on-surface/30 mb-3 font-bold">
-                      ITEM PRICE
+                    <p className="font-headline text-sm  text-font-color dark:text-foreground  uppercase tracking-[0.5em] mb-3 font-bold">
+                      ITEM PRICE:
                     </p>
-                    <p className="text-6xl lg:text-6xl font-headline font-black text-[#FFDB3C] tracking-tighter italic tabular-nums">
+                    <p className="text-6xl lg:text-6xl font-headline font-black ext-font-color dark:text-foreground  tracking-tighter italic tabular-nums">
                       ₱{Number(product.price).toLocaleString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-headline font-black text-[#fa7a02] uppercase tracking-tight animate-pulse">
+                    <p className="text-xl font-headline font-black text-on-primary dark:text-red-500 uppercase tracking-tight animate-pulse">
                       {product.stock} STOCKS LEFT
                     </p>
                   </div>
                 </div>
-                <div className="h-3 w-full bg-surface-container-highest overflow-hidden relative">
+                <div className="h-3 w-full bg-input-field overflow-hidden relative drop-shadow-lg/30 rounded-lg">
                   <div
-                    className="h-full bg-[#E8112D] relative transition-all duration-1000"
+                    className="h-full bg-primary-container relative transition-all duration-1000"
                     style={{
                       width: `${Math.min((product.stock / 20) * 100, 100)}%`,
                     }}
@@ -277,7 +271,6 @@ function ProductDetail() {
                 </div>
               </div>
               <div className="space-y-6">
-                {/* <p>Product Details: AI TO BE IMPLEMENTED</p> */}
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
@@ -290,6 +283,48 @@ function ProductDetail() {
                   {product.stock === 0 ? "Out of Stock" : "Reserve Product"}
                 </button>
               </div>
+            </div>
+            {/* Customer Rating Section */}
+            <div
+              className="mt-12 pt-12 border-t border-secondary-container space-y-8 reveal-up"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <div className="space-y-4">
+                <h3 className="font-headline font-black text-xl uppercase tracking-widest italic">
+                  Customer Review
+                </h3>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      className={`material-symbols-outlined text-4xl transition-all duration-300${
+                        rating >= star
+                          ? "text-primary-container [font-variation-settings:'FILL'_1]"
+                          : "text-font-color dark:text-foreground hover:text-secondary-container [font-variation-settings:'FILL'_0]"
+                      }`}
+                    >
+                      star
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
+                  Provide Comment
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share your thoughts on performance and quality..."
+                  className="w-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-6 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
+                />
+              </div>
+
+              <button className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]">
+                Submit Review
+              </button>
             </div>
           </div>
         </div>
@@ -309,12 +344,13 @@ function ProductDetail() {
             )}
           </div>
         </div>
+        <div className="mt-20"> </div>
         <CustomerFooter />
       </main>
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-md bg-surface-container border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-white my-auto shadow-2xl">
+          <div className="relative w-full max-w-md bg-background  border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-font-color dark:text-foreground my-auto shadow-2xl">
             {/* Header */}
             <div className="flex justify-between items-start mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">
@@ -322,7 +358,7 @@ function ProductDetail() {
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="material-symbols-outlined flex-shrink-0 hover:bg-surface rounded-lg p-2 transition-colors"
+                className="material-symbols-outlined flex-shrink-0 bg-on-primary text-white/90  rounded-full p-2 transition-colors"
                 aria-label="Close reservation modal"
               >
                 close
@@ -331,9 +367,9 @@ function ProductDetail() {
 
             {/* Quantity Section */}
             <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
-              <p className="font-light text-sm sm:text-base text-on-surface-variant leading-relaxed">
+              <p className="font-light text-lg sm:text-sm text-on-surface-variant leading-relaxed">
                 How many &nbsp;
-                <span className="text-primary-container font-bold">
+                <span className="text-primary-container dark:text-secondary-container font-bold">
                   {product.item_name}
                 </span>
                 &nbsp; you want to reserve?
@@ -344,33 +380,33 @@ function ProductDetail() {
                 onChange={(e) => setQuantity(e.target.value)}
                 max={product.stock}
                 min="1"
-                className="w-auto bg-surface px-4 py-3 sm:py-4 border border-white/10 rounded-lg text-white font-headline text-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+                className="w-auto bg-input-field px-4 py-3 sm:py-4 border border-white/10 rounded-lg text-white font-headline text-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
                 placeholder="Enter quantity"
               />
-              <p className="text-xs sm:text-sm text-on-surface-variant/70 font-light">
+              <p className="text-lg sm:text-md text-on-surface-variant/70 font-light">
                 Available stock: {product.stock} units
               </p>
             </div>
 
             {/* Summary Section */}
             <div className="bg-surface-container-low border border-white/5 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
-              <p className="text-xs sm:text-sm uppercase tracking-wider text-on-surface/40 font-headline mb-2">
+              <p className="text-lg sm:text-md uppercase tracking-wider text-on-surface/40 font-headline mb-2">
                 Order Summary
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm sm:text-base text-on-surface-variant">
+                  <span className="text-lg sm:text-md text-on-surface-variant">
                     Product:
                   </span>
-                  <span className="text-sm sm:text-base font-bold text-primary-container">
+                  <span className="text-lg sm:text-md font-bold text-primary-container dark:text-secondary-container">
                     {product.item_name}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm sm:text-base text-on-surface-variant">
+                  <span className="text-lg sm:text-md text-on-surface-variant">
                     Quantity:
                   </span>
-                  <span className="text-sm sm:text-base font-bold text-white">
+                  <span className="text-lg sm:text-md font-bold text-font-color">
                     {quantity || 0} {quantity > 1 ? "units" : "unit"}
                   </span>
                 </div>
@@ -395,6 +431,12 @@ function ProductDetail() {
           </div>
         </div>
       )}
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
     </div>
   );
 }

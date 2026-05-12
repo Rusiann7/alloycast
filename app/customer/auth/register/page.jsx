@@ -6,6 +6,7 @@ import Link from "next/link";
 import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 import TermsModal from "../../../components/TermsModal";
+import DataPrivacyModal from "../../../components/DataPrivacyModal";
 import { createClient } from "../../../../lib/supabase/client";
 export default function RegisterPage() {
   const supabase = createClient();
@@ -25,7 +26,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false); // eye toggle para makita password
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // eye toggle para makita confirmPassword
   const [isAgreed, setIsAgreed] = useState(false); // Agreement checkbox state
+  const [isPrivacyAgreed, setIsPrivacyAgreed] = useState(false); // Privacy agreement state
   const [showTermsModal, setShowTermsModal] = useState(false); // Terms Modal visibility state
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false); // Privacy Modal state
   const [toast, setToast] = useState({
     // toast notification (gawa ni AI) hehehe
     visible: false,
@@ -185,7 +188,17 @@ export default function RegisterPage() {
         }}
       />
 
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
+      {/* Data Privacy Modal */}
+      <DataPrivacyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        onAgree={() => {
+          setIsPrivacyAgreed(true);
+          setShowPrivacyModal(false);
+        }}
+      />
+
+      <div className="max-w-4xl min-h-screen w-full grid grid-cols-1 md:grid-cols-2 bg-background rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
         {/* Left Side: Branding/Visual */}
         <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
           <div className="relative z-10">
@@ -207,45 +220,45 @@ export default function RegisterPage() {
           <div className="relative z-10 flex items-center gap-2 text-primary-container">
             <span className="material-symbols-outlined">flare</span>
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-              Diecast Vault established 2024
+              Diecast Vault established 2026
             </span>
           </div>
         </div>
 
         {/* Right Side: Form */}
-        <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
+        <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary-container">
           <div className="mb-8">
-            <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
+            <h2 className="text-2xl text-primary-container font-headline font-black uppercase italic mb-2">
               CREATE YOUR ACCOUNT
             </h2>
-            <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
+            <p className="text-sm text-white/90 uppercase tracking-widest">
               Create an account to order reservations
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={registerAccount}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                   First Name
                 </label>
                 <input
                   type="text"
-                  placeholder="FIRST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  placeholder="John..."
+                  className="w-full bg-input-field border-b border-primary-container  rounded-lg px-4 py-3 text-sm text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="firstName"
                   value={accountForm.firstName}
                   onChange={getInputValue}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                   Last Name
                 </label>
                 <input
                   type="text"
-                  placeholder="LAST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  placeholder="Doe..."
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="lastName"
                   value={accountForm.lastName}
                   onChange={getInputValue}
@@ -255,31 +268,32 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                   Gender
                 </label>
                 <select
                   id="gender"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="gender"
                   value={accountForm.gender}
                   onChange={getInputValue}
                 >
                   <option value="" disabled hidden>
-                    GENDER
+                    Your Gender
                   </option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
+                  <option value="Prefer Not to Say">Prefer Not to Say</option>
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                   Date of Birth
                 </label>
                 <input
                   type="date"
                   placeholder="DATE OF BIRTH"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="dob"
                   value={accountForm.dob}
                   onChange={getInputValue}
@@ -288,13 +302,13 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Email
               </label>
               <input
                 type="email"
-                placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                placeholder="example@gmail.com"
+                className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={accountForm.email}
                 onChange={getInputValue}
@@ -302,14 +316,14 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={accountForm.password}
                   onChange={getInputValue}
@@ -327,14 +341,14 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="confirmPassword"
                   value={accountForm.confirmPassword}
                   onChange={getInputValue}
@@ -361,7 +375,7 @@ export default function RegisterPage() {
               />
               <label
                 htmlFor="terms"
-                className="text-[10px] text-[#A8A8A0] uppercase tracking-widest cursor-pointer select-none"
+                className="text-xs text-white/90 uppercase tracking-widest cursor-pointer select-none"
               >
                 I have read and agree to the{" "}
                 <span
@@ -372,6 +386,31 @@ export default function RegisterPage() {
                   className="text-primary-container hover:underline italic font-bold"
                 >
                   Terms of Service
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3 py-2 ">
+              <input
+                type="checkbox"
+                id="privacy"
+                checked={isPrivacyAgreed}
+                onChange={(e) => setIsPrivacyAgreed(e.target.checked)}
+                className="w-4 h-4  accent-primary-container cursor-pointer"
+              />
+              <label
+                htmlFor="privacy"
+                className="text-xs text-white/90 uppercase tracking-widest cursor-pointer select-none"
+              >
+                I agree to the{" "}
+                <span
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowPrivacyModal(true);
+                  }}
+                  className="text-primary-container hover:underline italic font-bold"
+                >
+                  Data Privacy Policy
                 </span>
               </label>
             </div>
@@ -387,16 +426,16 @@ export default function RegisterPage() {
                   alt="Google Logo"
                   className="w-5 h-5"
                 />
-                <span className="uppercase text-[10px] tracking-widest font-black">
+                <span className="uppercase text-xs tracking-widest font-black">
                   Sign up with Google
                 </span>
               </button>
               <button
-                disabled={!isAgreed}
+                disabled={!isAgreed || !isPrivacyAgreed}
                 className={`w-full py-3 px-4 rounded-lg font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
-                  isAgreed
+                  isAgreed && isPrivacyAgreed
                     ? "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90  cursor-pointer"
-                    : "bg-surface-container-highest text-[#A8A8A0] opacity-50 cursor-not-allowed"
+                    : "bg-input-field text-white/90 opacity-50 cursor-not-allowed"
                 }`}
               >
                 REGISTER
@@ -404,8 +443,8 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-            <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+          <div className="mt-8 pt-6  border-t border-primary-container flex flex-col gap-4">
+            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
               Already have an account?{" "}
               <Link
                 href="/customer/auth/login"

@@ -68,13 +68,15 @@ export default function AdminReservations() {
             statusColor:
               reservation.status === "Approved"
                 ? "bg-green-500/10 text-green-400 border-green-500/20"
-                : reservation.status === "Rejected"
+                : reservation.status === "Rejected" ||
+                    reservation.status === "Cancelled"
                   ? "bg-red-500/10 text-red-400 border-red-500/20"
                   : "bg-secondary-container/10 text-secondary-container border-secondary-container/20",
             statusDot:
               reservation.status === "Approved"
                 ? "bg-green-500"
-                : reservation.status === "Rejected"
+                : reservation.status === "Rejected" ||
+                    reservation.status === "Cancelled"
                   ? "bg-red-500"
                   : "bg-secondary-container",
 
@@ -271,28 +273,30 @@ export default function AdminReservations() {
           className="flex items-center gap-10 border-b border-white/5 mb-10 overflow-x-auto scrollbar-hide reveal-up"
           style={{ animationDelay: "0.1s" }}
         >
-          {["All Items", "Pending", "Approved", "Rejected"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setCurrentPage(1);
-              }}
-              className={`pb-5 text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
-                activeTab === tab
-                  ? "text-primary-container"
-                  : "text-on-surface/30 hover:text-white"
-              }`}
-            >
-              {tab}
-              {tab === "Pending" && (
-                <span className="ml-2 w-2 h-2 rounded-full bg-secondary-container inline-block" />
-              )}
-              {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 w-full h-[3px] bg-primary-container animate-scale-in" />
-              )}
-            </button>
-          ))}
+          {["All Items", "Pending", "Approved", "Rejected", "Cancelled"].map(
+            (tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setCurrentPage(1);
+                }}
+                className={`pb-5 text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
+                  activeTab === tab
+                    ? "text-primary-container"
+                    : "text-on-surface/30 hover:text-white"
+                }`}
+              >
+                {tab}
+                {tab === "Pending" && (
+                  <span className="ml-2 w-2 h-2 rounded-full bg-secondary-container inline-block" />
+                )}
+                {activeTab === tab && (
+                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-primary-container animate-scale-in" />
+                )}
+              </button>
+            ),
+          )}
         </div>
 
         {/* Reservations Table */}
