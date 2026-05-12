@@ -87,28 +87,30 @@ export default function StorePage() {
         (item) => item.barcode === parseInt(scannedBarCode),
       );
 
-      const { error } = await supabase
-        .from("Inventory")
-        .update({ stock: matchedItem.stock - 1 })
-        .eq("barcode", parseInt(scannedBarCode));
+      setSelectedItem(matchedItem);
+      setIsOpen(true);
 
-      if (error) throw error;
+      // const { error } = await supabase
+      //   .from("Inventory")
+      //   .update({ stock: matchedItem.stock - 1 })
+      //   .eq("barcode", parseInt(scannedBarCode));
 
-      addSales(matchedItem.id);
+      // if (error) throw error;
+
+      // addSales(matchedItem.id);
     } catch (error) {
       console.log(error);
     }
   };
 
   //para ma punta sa reservation
-  const addSales = async (id) => {
+  const addSales = async (id, formData) => {
     try {
-      const { error } = await supabase.from("Reservation").insert({
-        user_id: "becbb0d6-f436-45c7-9ffb-7e7b81774437",
-        inventory_id: id,
+      const { error } = await supabase.from("point_of_sale").insert({
+        product_id: id,
         quantity: 1,
-        discount: 0,
-        status: "Approved",
+        name: formData.userName || null,
+        email: formData.emailAddr || null,
       });
 
       if (error) throw error;
@@ -121,7 +123,7 @@ export default function StorePage() {
   };
 
   //sa button ito
-  const purchaseItems = async (id) => {
+  const purchaseItems = async (id, formData) => {
     try {
       const { error } = await supabase
         .from("Inventory")
@@ -132,7 +134,7 @@ export default function StorePage() {
 
       setId(selectedItem.id);
 
-      addSales(selectedItem.id);
+      addSales(selectedItem.id, formData);
       setIsOpen(false);
       showToast("Confirms", "success");
 
@@ -371,7 +373,7 @@ export default function StorePage() {
         isOpen={isOpen}
         isClose={() => setIsOpen(false)}
         selectedItem={selectedItem}
-        onPurchase={() => purchaseItems(selectedItem?.id)}
+        onPurchase={(formData) => purchaseItems(selectedItem?.id, formData)}
       />
 
       <Scanner
