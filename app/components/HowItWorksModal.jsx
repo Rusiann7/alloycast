@@ -1,11 +1,6 @@
 "use client";
 import React from "react";
 
-/* 
-   HowItWorksModal Component
-   A responsive modal that explains the 7-step reservation process 
-   using the Ethan & Marcus Diecast design system.
-*/
 export default function HowItWorksModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
@@ -41,7 +36,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-background/90 backdrop-blur-sm animate-fade-in">
       {/* Modal Container */}
       <div className="relative w-full max-w-2xl bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden reveal-up">
         {/* Checkered Racing Header */}
@@ -51,16 +46,16 @@ export default function HowItWorksModal({ isOpen, onClose }) {
           {/* Header */}
           <div className="flex justify-between items-start mb-10">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-headline font-black uppercase  leading-none text-primary-container">
+              <h2 className="text-3xl sm:text-4xl font-headline font-black uppercase  leading-none text-secondary-container dark:text-primary-container">
                 HOW IT WORKS
               </h2>
-              <p className="text-[11px] uppercase tracking-[0.4em] text-white/90 font-bold mt-2">
+              <p className="text-[12px] uppercase tracking-[0.4em] text-font-color dark:text-foreground font-bold mt-2">
                 7-Steps to Order Product Reservation
               </p>
             </div>
             <button
               onClick={onClose}
-              className="size-10 p-5 flex items-center justify-center bg-white/5 hover:bg-on-primary text-white transition-all rounded-full"
+              className="size-10 p-5 flex items-center justify-center bg-on-primary text-white transition-all rounded-full"
             >
               <span className="material-symbols-outlined text-xl">close</span>
             </button>
@@ -71,7 +66,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
             {steps.map((step) => (
               <div key={step.id} className="flex gap-6 group">
                 {/* Step Number Badge */}
-                <div className="flex-shrink-0 size-8 bg-surface-container-highest border border-white/10 flex items-center justify-center font-headline font-black  text-primary-container group-hover:bg-primary-container group-hover:text-black transition-colors">
+                <div className="flex-shrink-0 size-8 bg-primary-container rounded-lg flex items-center justify-center font-headline font-black  text-font-color dark:text-black/90 group-hover:bg-secondary-container  transition-colors">
                   0{step.id}
                 </div>
                 {/* Step Description */}

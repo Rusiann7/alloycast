@@ -66,18 +66,18 @@ export default function LandingPageNavbar() {
         visible={toast.visible}
       />
       {/* Header Navigation */}
-      <header className="fixed top-0 left-0 w-full z-1 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-white/5 z-999">
+      <header className="fixed top-0 left-0 w-full z-1 bg-primary-container  text-font-color z-999">
         <div className="mx-auto flex items-center justify-between px-3 lg:px-12 py-4">
           <div className="flex items-center gap-10">
-            <div className="flex items-center gap-3  text-white">
+            <div className="flex items-center gap-3 text-font-color">
               <div className="size-10 text-primary-container">
                 <img
                   src="/logo.jpg"
                   alt="Ethan Marcus Diecast"
-                  className="rounded-lg"
+                  className="border-black/70 border-1 rounded-lg"
                 />
               </div>
-              <h2 className="font-headline text-lg font-bold uppercase tracking-tight hover:cursor-pointer">
+              <h2 className="font-headline text-lg text-black/90  font-bold uppercase tracking-tight hover:cursor-pointer hover:text-secondary-container">
                 <Link href="/">Ethan Marcus Diecast</Link>
               </h2>
             </div>
@@ -86,7 +86,7 @@ export default function LandingPageNavbar() {
               {navLinks.map((navLink) => (
                 <Link
                   key={navLink.id}
-                  className="text-xs uppercase tracking-widest font-bold hover:text-primary-container transition-colors"
+                  className="font-headline text-md text-black/90 hover:text-secondary-container  font-bold uppercase tracking-tight hover:cursor-pointer"
                   href={navLink.href}
                 >
                   {navLink.label}
@@ -97,13 +97,15 @@ export default function LandingPageNavbar() {
           <div className="flex items-center gap-4">
             <button
               className="flex lg:hidden items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
-              onClick={() => setNavbarOpen(true)}
+              onClick={() => setNavbarOpen(!navbarOpen)}
             >
-              <span className="material-symbols-outlined">menu</span>
+              <span className="material-symbols-outlined transition-all duration-300">
+                {navbarOpen ? "close" : "menu"}
+              </span>
             </button>
 
             {!user ? (
-              <button className="hidden lg:block bg-primary-container text-black/60 text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
+              <button className="hidden lg:block bg-secondary-container hover:scale-105 text-font-color  text-xs font-black uppercase tracking-widest px-6 h-10 rounded-lg ">
                 <Link href="/customer/auth/login">Log In</Link>
               </button>
             ) : (
@@ -111,7 +113,7 @@ export default function LandingPageNavbar() {
                 {/* Link to the user's profile/dashboard */}
                 <Link
                   href="/customer/account"
-                  className="hidden lg:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] hover:text-white"
+                  className="hidden lg:flex items-center gap-2 text-sm font-black uppercase tracking-widest text-black/90 hover:text-secondary-container "
                 >
                   <span className="material-symbols-outlined text-sm">
                     person
@@ -122,7 +124,7 @@ export default function LandingPageNavbar() {
                 {/* Trigger the logout function */}
                 <button
                   onClick={logoutAccount}
-                  className="hidden lg:block text-[10px] font-black uppercase tracking-widest text-primary-container hover:text-white transition-colors"
+                  className="hidden lg:block text-sm font-black uppercase tracking-widest text-on-primary hover:text-secondary-container  transition-colors"
                 >
                   Log Out
                 </button>
@@ -141,7 +143,7 @@ export default function LandingPageNavbar() {
           onClick={() => setNavbarOpen(false)}
         ></div>
         <div
-          className={`absolute top-0 right-0 h-full w-[300px] bg-surface-container-low border-l border-white/5 p-8 transition-transform duration-500 transform ${navbarOpen ? "translate-x-0" : "translate-x-full"}`}
+          className={`absolute top-0 right-0 h-full w-[300px] bg-secondary-container p-8 transition-transform duration-500 transform ${navbarOpen ? "translate-x-0" : "translate-x-full"}`}
         >
           <div className="flex justify-end items-center mb-16">
             <button

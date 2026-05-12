@@ -139,7 +139,7 @@ function LoginContent() {
         type={toast.type}
         visible={toast.visible}
       />
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-lg  overflow-hidden  shadow-lg/30 animate-fade-in">
         {/* Left Side: Branding/Visual */}
         <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
           <div className="relative z-10">
@@ -167,39 +167,39 @@ function LoginContent() {
         </div>
 
         {/* Right Side: Form */}
-        <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
+        <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary-container">
           <div className="mb-8">
             <h2 className="text-2xl font-headline text-primary-container uppercase italic mb-2">
               LOGIN YOUR ACCOUNT
             </h2>
-            <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
+            <p className="text-sm text-white/90 uppercase tracking-widest">
               To order the product you want
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={loginAccount}>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                Email
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
+                Email Address
               </label>
               <input
                 type="email"
-                placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                placeholder="hello@gmail.com..."
+                className="w-full bg-input-field dark:border-b dark:border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={loginForm.email}
                 onChange={getInputValue}
               />
             </div>
             <div className="relative">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-input-field dark:border-b dark:border-primary-container  rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={loginForm.password}
                   onChange={getInputValue}
@@ -215,7 +215,7 @@ function LoginContent() {
                 </button>
               </div>
             </div>
-            <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
               Didn&apos;t receive the email?{" "}
               <button
                 type="button"
@@ -235,7 +235,7 @@ function LoginContent() {
                 alt="Google Logo"
                 className="w-5 h-5"
               />
-              <span className="uppercase text-[10px] tracking-widest font-black">
+              <span className="uppercase text-xs tracking-widest font-black">
                 Sign in with Google
               </span>
             </button>
@@ -246,7 +246,7 @@ function LoginContent() {
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-            <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
               Don&apos;t have an account?{" "}
               <Link
                 href="/customer/auth/register"

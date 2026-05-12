@@ -84,9 +84,9 @@ export default function Product() {
     <div className="bg-background text-on-surface font-body min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
       <header className="relative py-28 px-12 lg:px-20 border-b border-white/5 overflow-hidden reveal-up">
         <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/70 to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 w-full lg:w-3/4 h-full pointer-events-none opacity-20 lg:opacity-40 grayscale animate-drive-in">
+        <div className="absolute right-0 top-0 w-full  h-full pointer-events-none   grayscale animate-drive-in drop-shadow-lg/50">
           <img
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover "
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-iBE2bThpejE-k0yVjvD9_9bvpDi5E3-AIaZyaBgX3WPkoe0yeJqYYJiLR6JCLDq3vnmf9gRVTcYGP6rugVRMCVEGdqa5PtYQMotdtaVumU-aptncRp3o4KMv80mCpzkhu6pRz2Y7EXRwz2tb_tzNhTP79N5vKOqra706nIC6yxKh4_9faXMzKGTW5bC44JQUOglYXXBYJrh1xRWnR3ic2a5ACn4QsnLJi5euAjQ63XxuarlEUO048Nv5uAMWPT1YxMjhUDQEtJM"
             alt="Hero BG"
           />
@@ -98,11 +98,8 @@ export default function Product() {
           </h1>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <span className="bg-secondary-container text-white/90 px-6 py-2 font-headline font-black text-sm tracking-widest uppercase italic shadow-2xl">
-              Q1-Q3 2024 DROP SCHEDULE
-            </span>
-            <span className="text-primary-container text-[11px] font-black tracking-[0.4em] uppercase">
-              Limited Slot Allocations Remaining
+            <span className="text-primary-container text-sm font-black tracking-[0.4em] uppercase">
+              Limited Stocks Only!
             </span>
           </div>
         </div>
@@ -111,9 +108,9 @@ export default function Product() {
       {/* Main Catalog View */}
       <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32">
         {/* Sidebar Filters */}
-        <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-[#1A1A1A] p-8 rounded border border-white/5 carbon-noise h-fit sticky top-[100px] reveal-up">
-          <h2 className="font-headline text-2xl font-black uppercase mb-8 border-b border-white/5 pb-4 tracking-tighter italic">
-            Filters
+        <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit sticky top-[100px] reveal-up drop-shadow-lg/50">
+          <h2 className="font-headline text-2xl text-font-color dark:text-foreground font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
+            Filter by Brand
           </h2>
 
           <div className="space-y-12">
@@ -166,34 +163,34 @@ export default function Product() {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Dashboard Toolbar */}
           <div
-            className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 bg-[#1A1A1A]/40 backdrop-blur-xl p-8 rounded border border-white/5 reveal-up"
+            className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 bg-secondary-container backdrop-blur-xl p-8 rounded-lg border border-white/5 reveal-up drop-shadow-lg/50"
             style={{ animationDelay: "0.2s" }}
           >
             <div className="flex-1 w-full max-w-xl relative group">
-              <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary-container transition-colors">
+              <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary-container group-focus-within:text-primary-container transition-colors">
                 search
               </span>
               <input
                 type="text"
-                className="w-full bg-[#242424] border-b-2 border-transparent focus:border-primary-container focus:outline-none py-4 pl-14 pr-6 rounded-t text-sm font-headline tracking-widest placeholder:text-white/10 transition-all font-bold"
+                className="w-full bg-input-field border-b-2 border-transparent focus:border-primary-container focus:outline-none py-4 pl-14 pr-6 rounded-lg text-md text-white/90 font-headline tracking-widest placeholder:text-white/80 transition-all font-bold"
                 placeholder="SEARCH PRODUCTS"
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="w-full lg:w-64">
-              <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary-container mb-3 ml-1">
+              <p className="text-sm font-black uppercase tracking-[0.4em] text-primary-container  mb-3 ml-1">
                 Sort Products
               </p>
               <div className="relative">
                 <select
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full bg-[#242424] border-b-2 border-transparent focus:border-primary-container focus:outline-none py-4 px-5 rounded-t text-[12px]  uppercase tracking-[0.2em] cursor-pointer appearance-none transition-all text-white/60 focus:text-white"
+                  className="w-full bg-input-field border-b-2 border-transparent focus:border-primary-container focus:outline-none py-4 px-5 rounded-lg text-sm  uppercase tracking-[0.2em] cursor-pointer appearance-none transition-all text-white/90 focus:text-white"
                 >
                   <option value="new-arrivals">Newest Arrivals</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none">
+                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/90  pointer-events-none">
                   expand_more
                 </span>
               </div>
@@ -295,7 +292,7 @@ export default function Product() {
 
 const FilterSection = ({ title, children }) => (
   <div className="space-y-6">
-    <h3 className="font-headline text-[10px] font-black uppercase tracking-[0.4em] text-primary-container">
+    <h3 className="font-headline text-sm font-black uppercase tracking-[0.4em] text-primary-container ">
       {title}
     </h3>
     <div className="flex flex-col gap-4">{children}</div>
@@ -309,7 +306,7 @@ const FilterCheckbox = ({ label, checked, onChange }) => (
         type="checkbox"
         checked={checked} // Changed from defaultChecked
         onChange={onChange} // Added the onChange handler
-        className="appearance-none size-5 border-2 border-white/10 rounded-[1px] checked:bg-primary-container checked:border-primary-container transition-all"
+        className="appearance-none size-5 border-2 border-primary-container rounded-md checked:bg-primary-container checked:border-primary-container transition-all"
       />
       {/* 
          IMPORTANT: Use 'checked' (not peer-checked) 
@@ -322,7 +319,7 @@ const FilterCheckbox = ({ label, checked, onChange }) => (
       )}
     </div>
     <span
-      className={`font-headline text-[11px] font-black uppercase tracking-widest transition-colors ${checked ? "text-white" : "text-white/20"} group-hover:text-white`}
+      className={`font-headline text-sm font-black uppercase tracking-widest transition-colors ${checked ? "text-white" : "text-font-color"} group-hover:text-white`}
     >
       {label}
     </span>

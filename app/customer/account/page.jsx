@@ -88,13 +88,13 @@ export default function Account() {
     if (!confirm("Are you sure you want to cancel this reservation?")) return;
 
     try {
-      // 1. Delete reservation
-      const { error: deleteError } = await supabase
+      // 1. Update reservation status to Cancelled
+      const { error: updateError } = await supabase
         .from("Reservation")
-        .delete()
+        .update({ status: "Cancelled" })
         .eq("id", reservationId);
 
-      if (deleteError) throw deleteError;
+      if (updateError) throw updateError;
 
       // 2. Fetch current stock and restore it
       const { data: inventory, error: fetchError } = await supabase
@@ -112,7 +112,11 @@ export default function Account() {
       }
 
       // 3. Update local state
-      setReservations((prev) => prev.filter((r) => r.id !== reservationId));
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.id === reservationId ? { ...r, status: "Cancelled" } : r,
+        ),
+      );
     } catch (error) {
       console.error("Cancellation Failed: ", error.message);
       alert("Failed to cancel reservation");
@@ -175,18 +179,14 @@ export default function Account() {
             <img
               src={`https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=E31837&color=fff`}
               alt="User"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover grayscale"
             />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-xs font-black uppercase tracking-widest leading-none">
-              Update
-            </div>
           </div>
           <div className="text-center md:text-left flex-1">
-            <h1 className="font-headline font-black text-4xl lg:text-6xl uppercase italic tracking-tighter leading-[0.9] mb-4">
-              {firstName}{" "}
-              <span className="text-primary-container">{lastName}</span>
+            <h1 className="font-headline font-black text-4xl lg:text-6xl uppercase italic tracking-tighter leading-[0.9] mb-4 drop-shadow-lg/30">
+              {firstName} {lastName}
             </h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-[13px] tracking-[0.2em] text-[#A8A8A0]">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm tracking-[0.2em] text-font-color dark:text-foreground">
               <span className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">mail</span>{" "}
                 {email}
@@ -199,7 +199,7 @@ export default function Account() {
           </div>
           <button
             onClick={showLogoutModal}
-            className="px-6 py-3 border border-white/10 rounded-lg hover:border-primary-container/50 hover:bg-primary-container/5 text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3"
+            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:border-secondary-container hover:bg-primary-container text-xs text-white/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 drop-shadow-lg/25"
           >
             <span className="material-symbols-outlined text-sm">logout</span>
             Sign Out
@@ -214,10 +214,10 @@ export default function Account() {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="bg-surface-container-high border border-white/5 p-8 rounded-lg relative overflow-hidden group hover:border-primary-container/30 transition-all"
+              className="bg-secondary-container  p-8 rounded-lg relative overflow-hidden group transition-all"
             >
               <div className="absolute -top-10 -right-10 size-32 bg-primary-container/5 blur-3xl group-hover:bg-primary-container/10 transition-colors"></div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#555555] mb-2">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-white/90 mb-2">
                 {stat.label}
               </p>
               <div className="flex items-end gap-2">
@@ -241,41 +241,43 @@ export default function Account() {
           >
             <div className="flex flex-col lg:flex-row lg:items-end justify-between border-b border-white/5 pb-6 gap-6">
               <div>
-                <h2 className="font-headline font-black text-2xl sm:text-3xl uppercase italic tracking-tight mb-1 text-primary-container lg:text-white">
-                  Active Reservoir
+                <h2 className="font-headline font-black text-2xl sm:text-3xl uppercase italic tracking-tight mb-1 text-primary-container dark:text-secondary-container">
+                  Your Reservations
                 </h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 sm:text-white/20">
-                  Manage and track your diecast allocations
+                <p className="text-xs font-black uppercase tracking-widest text-font-color dark:text-foreground sm:text-white/20">
+                  Manage and track your diecast reservations status
                 </p>
               </div>
 
               {/* Filter Buttons */}
-              <div className="grid grid-cols-2 lg:flex items-center gap-2 p-1 bg-surface-container-high rounded-lg border border-white/5">
-                {["All", "Pending", "Approved", "Rejected"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded ${
-                      filter === f
-                        ? "bg-primary-container text-black/90 shadow-lg"
-                        : "text-white/40 hover:text-white"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 lg:flex items-center gap-2 p-1 bg-secondary-container rounded-lg border border-white/5">
+                {["All", "Pending", "Approved", "Rejected", "Cancelled"].map(
+                  (f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded ${
+                        filter === f
+                          ? "bg-primary-container text-black/90 shadow-lg"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ),
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredReservations.length === 0 ? (
-                <div className="lg:col-span-2 py-20 text-center border border-dashed border-white/10 rounded-lg">
-                  <p className="font-headline text-white/20 uppercase tracking-widest text-sm px-6">
+                <div className="lg:col-span-2 py-20 text-center border border-dashed border-secondary-container rounded-lg">
+                  <p className="font-headline text-font-color dark:text-foreground uppercase tracking-widest text-md px-6">
                     No {filter !== "All" ? filter : ""} Reservations Found
                   </p>
                   <Link
                     href="/customer/product"
-                    className="text-primary-container text-[10px] font-black uppercase tracking-[0.3em] mt-4 inline-block hover:underline"
+                    className="text-secondary-container dark:text-primary-container text-sm font-black uppercase tracking-[0.3em] mt-4 inline-block hover:underline"
                   >
                     Start Your Collection
                   </Link>
@@ -284,9 +286,9 @@ export default function Account() {
                 filteredReservations.map((res) => (
                   <div
                     key={res.id}
-                    className="bg-surface-container-low border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 group hover:bg-surface-container-high transition-colors"
+                    className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 drop-shadow-lg/30 transition-colors"
                   >
-                    <div className="w-full sm:w-20 h-32 sm:h-20 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
+                    <div className="w-full sm:w-40 h-auto sm:h-40 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
                       <img
                         src={
                           res.Inventory?.item_image ||
@@ -297,26 +299,27 @@ export default function Account() {
                       />
                     </div>
                     <div className="flex-1 text-center sm:text-left">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#555555] mb-1 leading-none">
+                      <p className="text-sm font-black uppercase tracking-widest text-white/90 mb-1 leading-none">
                         {res.Inventory?.brand}
                       </p>
-                      <h3 className="font-headline text-lg font-bold uppercase tracking-tight text-white mb-3 sm:mb-2 leading-none">
+                      <h3 className="font-headline text-xl font-bold uppercase tracking-tight text-white/90 mb-3 sm:mb-2 leading-none">
                         {res.Inventory?.item_name}
                       </h3>
-                      <div className="flex items-center justify-center sm:justify-start gap-4 text-[10px] font-black uppercase tracking-widest">
-                        <span className="opacity-40">
+                      <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-white font-black uppercase tracking-widest">
+                        <span>
                           {new Date(res.created_at).toLocaleDateString(
                             "en-GB",
                             { day: "2-digit", month: "short", year: "numeric" },
                           )}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded-[2px] ${
+                          className={`p-2 rounded-lg text-md ${
                             res.status === "Approved"
                               ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                              : res.status === "Rejected"
-                                ? "bg-red-500/10 text-red-500 border border-red-500/20"
-                                : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                              : res.status === "Rejected" ||
+                                  res.status === "Cancelled"
+                                ? "bg-on-primary text-white/90  border border-red-500/20"
+                                : "bg-yellow-500/10 text-primary-container border border-yellow-500/20"
                           }`}
                         >
                           {res.status || "Pending"}
@@ -330,18 +333,18 @@ export default function Account() {
                                 res.quantity,
                               )
                             }
-                            className="text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 group/cancel"
+                            className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
                           >
-                            <span className="material-symbols-outlined text-sm group-hover/cancel:rotate-90 transition-transform">
+                            <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
                               close
                             </span>
-                            Cancel Request
+                            Cancel
                           </button>
                         )}
                       </div>
                     </div>
                     <div className="w-full sm:w-auto flex items-center justify-start sm:flex-col sm:items-end sm:justify-center gap-2 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
-                      <p className="text-[13px] font-black uppercase text-white/90">
+                      <p className="text-sm font-black uppercase text-white/90">
                         Quantity: {""}
                       </p>
                       <p className="font-headline text-2xl sm:text-xl font-black italic text-primary-container sm:text-white leading-none">
