@@ -5,12 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import Toast from "./Toast";
+import SessionModal from "./SessionModal";
 
 export default function LandingPageNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [navbarOpen, setNavbarOpen] = useState(false);
   const [user, setUser] = useState(null); // user state to track user logged in
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -47,11 +49,16 @@ export default function LandingPageNavbar() {
     },
   ];
 
+  const showLogoutModal = async () => {
+    setShowSessionModal(true);
+  };
+
   const logoutAccount = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
-      // logout sucess
       showToast("Goodbye!", "success");
+      setShowSessionModal(false);
+      // logout sucess
       setUser(null); // manually clear user state for instant UI update
       router.push("/");
     } else {
@@ -123,7 +130,7 @@ export default function LandingPageNavbar() {
 
                 {/* Trigger the logout function */}
                 <button
-                  onClick={logoutAccount}
+                  onClick={showLogoutModal}
                   className="hidden lg:block text-sm font-black uppercase tracking-widest text-on-primary hover:text-secondary-container  transition-colors"
                 >
                   Log Out
@@ -198,6 +205,11 @@ export default function LandingPageNavbar() {
           </nav>
         </div>
       </div>
+      <SessionModal
+        isOpen={showSessionModal}
+        onClose={() => setShowSessionModal(false)}
+        onConfirm={logoutAccount}
+      />
     </>
   );
 }
