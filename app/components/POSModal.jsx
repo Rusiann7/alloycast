@@ -1,9 +1,22 @@
+"use client";
+
+import { useState } from "react";
+
 export default function POSModal({
   isOpen,
   isClose,
   selectedItem,
   onPurchase,
 }) {
+  const [userName, setUserName] = useState(null);
+  const [emailAddr, setEmailAddr] = useState(null);
+
+  const handleConfirm = () => {
+    onPurchase({ userName, emailAddr });
+    setUserName("");
+    setEmailAddr("");
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -28,10 +41,20 @@ export default function POSModal({
             </p>
 
             <label htmlFor="">Name (Optional):</label>
-            <input type="text" placeholder="Name" />
+            <input
+              type="text"
+              placeholder="Name"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+            />
 
             <label htmlFor="">Email (Optional):</label>
-            <input type="email" placeholder="Email" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={emailAddr}
+              onChange={(e) => setEmailAddr(e.target.value)}
+            />
           </div>
           <div className="flex gap-3 mt-2">
             <button
@@ -42,7 +65,7 @@ export default function POSModal({
             </button>
             <button
               className="flex-1 py-2 bg-primary-container rounded-lg text-black text-sm font-bold hover:bg-primary-container/80 transition-all"
-              onClick={onPurchase}
+              onClick={handleConfirm}
             >
               Confirm Purchase
             </button>

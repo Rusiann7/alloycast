@@ -183,6 +183,18 @@ export default function AdminSidebar() {
             href="/admin/store"
           />
 
+          <SidebarLink
+            icon="shopping_cart"
+            label="REVIEWS"
+            href="/admin/reviews"
+          />
+
+          <SidebarLink
+            icon="shopping_cart"
+            label="FEEDBACK"
+            href="/admin/feedbacks"
+          />
+
           {/* <SidebarLink icon="group" label="CUSTOMERS" href="/admin/customers" />
           <SidebarLink icon="ios_share" label="EXPORT" href="/admin/export" /> */}
         </nav>

@@ -1,19 +1,14 @@
 "use client";
 
-import { useState, useEffect, useActionState } from "react";
+import { useState, useEffect } from "react";
 import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
-import POSModal from "../../components/POSModal";
-import Scanner from "../../components/Scanner";
 
-export default function StorePage() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scannerOpen, setScannerOpen] = useState(false);
+export default function FeedbackPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
-  const [scannedBarCode, setScannedBarCode] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({
@@ -30,16 +25,9 @@ export default function StorePage() {
     fetchInventoryProduct();
   }, []);
 
-  const totalProductStock = inventory.reduce(
-    (sum, item) => sum + (Number(item.stock) || 0),
-    0,
-  );
-
   const searchedInventory = inventory.filter((item) =>
     item.item_name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
-  const totalProducts = searchedInventory.length;
 
   const fetchInventoryProduct = async () => {
     try {
@@ -64,86 +52,6 @@ export default function StorePage() {
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
-  const scannerModal = () => {
-    setScannerOpen(true);
-  };
-
-  const confirmItems = (item) => {
-    setSelectedItem(item);
-    setIsOpen(true);
-  };
-
-  const handelScannedBarCode = (decodedText) => {
-    setScannedBarCode(decodedText);
-    setScannerOpen(false);
-    console.log("Scanned Items: ", decodedText);
-    purchaseBarCode(decodedText);
-  };
-
-  //sa barcode ito
-  const purchaseBarCode = async (scannedBarCode) => {
-    try {
-      const matchedItem = inventory.find(
-        (item) => item.barcode === parseInt(scannedBarCode),
-      );
-
-      setSelectedItem(matchedItem);
-      setIsOpen(true);
-
-      // const { error } = await supabase
-      //   .from("Inventory")
-      //   .update({ stock: matchedItem.stock - 1 })
-      //   .eq("barcode", parseInt(scannedBarCode));
-
-      // if (error) throw error;
-
-      // addSales(matchedItem.id);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //para ma punta sa reservation
-  const addSales = async (id, formData) => {
-    try {
-      const { error } = await supabase.from("POS").insert({
-        product_id: id,
-        quantity: 1,
-        name: formData.userName || null,
-        email: formData.emailAddr || null,
-      });
-
-      if (error) throw error;
-
-      showToast("OK", "success");
-      fetchInventoryProduct();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //sa button ito
-  const purchaseItems = async (id, formData) => {
-    try {
-      const { error } = await supabase
-        .from("Inventory")
-        .update({ stock: selectedItem.stock - 1 }) // minus 1
-        .eq("id", selectedItem.id);
-
-      if (error) throw error;
-
-      setId(selectedItem.id);
-
-      addSales(selectedItem.id, formData);
-      setIsOpen(false);
-      showToast("Confirms", "success");
-
-      console.log("It works");
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-hidden select-none">
       <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
@@ -151,21 +59,8 @@ export default function StorePage() {
           {/* Section Header */}
           <div className="mb-10 sm:mb-14 reveal-up">
             <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
-              POINT OF SALES
+              REVIEWS
             </h3>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <p className="text-[11px] sm:text-[13px] font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-white/40">
-                TOTAL STOCKS:{" "}
-                <span className="text-white">
-                  {totalProductStock.toLocaleString()}
-                </span>{" "}
-              </p>
-              <div className="hidden sm:block w-1 h-1 bg-white/20 rounded-full" />
-              <p className="text-[11px] sm:text-[13px] font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-white/40">
-                TOTAL ITEMS:{" "}
-                <span className="text-primary-container">{totalProducts}</span>
-              </p>
-            </div>
           </div>
 
           {/* Search/Filter Bar */}
@@ -187,18 +82,9 @@ export default function StorePage() {
                 className="flex-1 bg-transparent border-none outline-none text-[12px] sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-40 text-white"
               />
             </div>
-            <button
-              className="w-full sm:w-auto h-14 px-8 bg-primary-container rounded-lg text-sm text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-xl hover:shadow-primary-container/20 flex items-center justify-center gap-3"
-              onClick={() => scannerModal()}
-            >
-              <span className="material-symbols-outlined text-xl">
-                barcode_scanner
-              </span>
-              SCAN
-            </button>
           </div>
 
-          {/* Product Table */}
+          {/* Review Table */}
           <div
             className="bg-[#111111]/40 border border-white/[0.03] rounded-lg overflow-x-auto reveal-up scrollbar-hide"
             style={{ animationDelay: "0.2s" }}
@@ -216,13 +102,13 @@ export default function StorePage() {
                     BRAND
                   </th>
                   <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    CATEGORY/SERIES
+                    CUSTOMER
                   </th>
                   <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    PRICE
+                    REVIEW
                   </th>
                   <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    STOCK
+                    RATING
                   </th>
                   <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     ACTIONS
@@ -291,12 +177,11 @@ export default function StorePage() {
                         <td className="px-8 py-5">
                           <div className="flex items-center justify-center gap-3">
                             <button
-                              className="w-10 h-10 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
-                              title="Purchase"
-                              onClick={() => confirmItems(item)}
+                              // onClick={() => deleteProduct(item.id)}
+                              className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                             >
-                              <span className="material-symbols-outlined text-lg">
-                                shopping_cart
+                              <span className="material-symbols-outlined text-sm">
+                                delete
                               </span>
                             </button>
                           </div>
@@ -367,19 +252,6 @@ export default function StorePage() {
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
-      />
-
-      <POSModal
-        isOpen={isOpen}
-        isClose={() => setIsOpen(false)}
-        selectedItem={selectedItem}
-        onPurchase={(formData) => purchaseItems(selectedItem?.id, formData)}
-      />
-
-      <Scanner
-        scannerOpen={scannerOpen}
-        scannerClose={() => setScannerOpen(false)}
-        onScan={handelScannedBarCode}
       />
     </div>
   );
