@@ -8,7 +8,6 @@ export default function FeedbackPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [id, setId] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({
@@ -155,21 +154,21 @@ export default function FeedbackPage() {
                         {/* Category */}
                         <td className="px-8 py-5 text-center">
                           <p className="text-md text-white font-headline uppercase tracking-[0.2em]">
-                            {item.category}
+                            Name
                           </p>
                         </td>
 
                         {/* Price */}
                         <td className="px-8 py-5 text-center">
                           <p className="text-md font-headline font-bold text-primary-container">
-                            ₱{item.price}
+                            I like this
                           </p>
                         </td>
 
                         {/* Stock */}
                         <td className="px-8 py-5 text-center">
                           <p className="text-md text-white font-headline font-bold">
-                            {item.stock}
+                            5
                           </p>
                         </td>
 

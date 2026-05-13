@@ -55,7 +55,7 @@ export default function LandingPage() {
              opacity-0 animate-drive-in-stop max-w-none lg:max-w-full 
              dark:lg:[-webkit-box-reflect:below_-225px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
              -translate-y-[20%] lg:translate-y-0"
-              src="/nissan-skyline.png"
+              src="/test.png"
             />
           </div>
         </div>

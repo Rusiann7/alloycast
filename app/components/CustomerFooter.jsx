@@ -23,7 +23,7 @@ const CustomerFooter = () => {
               Company
             </h5>
             <ul className="space-y-4 text-md text-">
-              {["About", "Selling"].map((item) => (
+              {["About", "Selling", "Feedback"].map((item) => (
                 <li key={item}>
                   <a
                     className="hover:text-primary-container transition-colors"
