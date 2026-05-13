@@ -8,6 +8,23 @@ import Toast from "../../components/Toast";
 import ProductCard from "../../components/ProductCard";
 import CustomerFooter from "../../components/CustomerFooter";
 import emailjs from "@emailjs/browser";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false,
+});
+
+const DynamicProductCards = dynamic(
+  () => import("../../components/ProductCard"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicFooter = dynamic(() => import("../../components/CustomerFooter"), {
+  ssr: false,
+});
 
 function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -196,7 +213,7 @@ function ProductDetail() {
 
   return (
     <div className="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white min-h-screen">
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
@@ -207,10 +224,13 @@ function ProductDetail() {
           <div className="md:sticky md:top-32 h-fit space-y-8 reveal-up ">
             <div className="relative aspect-square bg-white rounded-lg overflow-hidden display-case-lighting group shadow-lg/50">
               <div className="absolute inset-0 carbon-noise opacity-30 pointer-events-none"></div>
-              <img
+              <Image
                 alt={product.item_name}
                 className="w-full h-full object-contain  p-12 transition-transform duration-1000 group-hover:scale-110"
                 src={product.item_image}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw" // 4. Add sizes for better optimization
               />
               {/* Dynamic Tag based on category */}
               <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
@@ -270,7 +290,7 @@ function ProductDetail() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-6 mt-10">
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
@@ -335,7 +355,7 @@ function ProductDetail() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {similarProducts.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <DynamicProductCards key={item.id} product={item} />
             ))}
             {similarProducts.length === 0 && (
               <p className="text-[10px] text-white/20 uppercase tracking-widest font-headline">
@@ -345,7 +365,7 @@ function ProductDetail() {
           </div>
         </div>
         <div className="mt-20"> </div>
-        <CustomerFooter />
+        <DynamicFooter />
       </main>
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
@@ -432,7 +452,7 @@ function ProductDetail() {
         </div>
       )}
 
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}

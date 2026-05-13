@@ -28,7 +28,7 @@ export default function Toast({ message, type = "error", visible }) {
         </span>
 
         {/* Message */}
-        <span className="font-headline font-bold uppercase tracking-wider text-xs leading-snug">
+        <span className="font-headline font-bold uppercase tracking-wider text-md leading-snug">
           {message}
         </span>
       </div>

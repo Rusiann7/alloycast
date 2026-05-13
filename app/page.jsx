@@ -2,12 +2,28 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import LandingPageNavbar from "./components/LandingPageNavbar";
-import ProductCard from "./components/ProductCard";
-import HowItWorksModal from "./components/HowItWorksModal";
-import CustomerFooter from "./components/CustomerFooter";
 import { createClient } from "../lib/supabase/client";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 
+// for lazy loading components
+
+const DynamicNavbar = dynamic(() => import("./components/LandingPageNavbar"));
+
+const DynamicHowItWorksModal = dynamic(
+  () => import("./components/HowItWorksModal"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicProductCards = dynamic(() => import("./components/ProductCard"), {
+  ssr: false,
+});
+
+const DynamicFooter = dynamic(() => import("./components/CustomerFooter"), {
+  ssr: false,
+});
 export default function LandingPage() {
   const [inventory, setInventory] = useState([]);
   const [howItWorksModal, setHowItWorksModal] = useState(false);
@@ -37,8 +53,8 @@ export default function LandingPage() {
 
   return (
     <div className="bg-background font-body text-on-surface min-h-screen">
-      <LandingPageNavbar />
-      <HowItWorksModal
+      <DynamicNavbar />
+      <DynamicHowItWorksModal
         isOpen={howItWorksModal}
         onClose={() => setHowItWorksModal(false)}
       />
@@ -47,7 +63,7 @@ export default function LandingPage() {
         {/* Background Asset: Nissan Skyline PNG - Optimized positioning */}
         <div className="absolute inset-0 z-0 flex items-center justify-start pointer-events-none overflow-hidden">
           <div className="relative w-full h-full flex items-center justify-center lg:justify-start lg:ml-[45%]">
-            <img
+            <Image
               alt="Nissan Skyline GT-R R34"
               className="w-[100%] sm:w-[110%] lg:w-[85%] h-auto object-contain 
              filter drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)] 
@@ -56,6 +72,9 @@ export default function LandingPage() {
              dark:lg:[-webkit-box-reflect:below_-225px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
              -translate-y-[20%] lg:translate-y-0"
               src="/nissan-skyline.png"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw"
             />
           </div>
         </div>
@@ -152,7 +171,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>
               <h2 className="font-headline font-black text-4xl uppercase italic tracking-tight mb-2 text-font-color dark:text-foreground">
-                Top Products
+                Top Selling Products
               </h2>
             </div>
             <button
@@ -167,8 +186,12 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
-            {inventory.slice(0, 10).map((product) => (
-              <ProductCard key={product.id} product={product} featured />
+            {inventory.slice(0, 4).map((product) => (
+              <DynamicProductCards
+                key={product.id}
+                product={product}
+                featured
+              />
             ))}
           </div>
         </div>
@@ -204,7 +227,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <CustomerFooter />
+      <DynamicFooter />
     </div>
   );
 }

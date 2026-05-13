@@ -4,6 +4,12 @@ import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SessionModal from "../../components/SessionModal";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicSessionModal = dynamic(
+  () => import("../../components/SessionModal"),
+);
 
 export default function Account() {
   const supabase = createClient();
@@ -199,7 +205,7 @@ export default function Account() {
           </div>
           <button
             onClick={showLogoutModal}
-            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:border-secondary-container hover:bg-primary-container text-xs text-white/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 drop-shadow-lg/25"
+            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:border-secondary-container hover:bg-primary-container text-xs text-white/90 hover:text-black/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 drop-shadow-lg/25"
           >
             <span className="material-symbols-outlined text-sm">logout</span>
             Sign Out
@@ -288,14 +294,16 @@ export default function Account() {
                     key={res.id}
                     className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 drop-shadow-lg/30 transition-colors"
                   >
-                    <div className="w-full sm:w-40 h-auto sm:h-40 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
-                      <img
+                    <div className="relative w-full sm:w-40 h-64 sm:h-40 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
+                      <Image
                         src={
                           res.Inventory?.item_image ||
                           "https://via.placeholder.com/150"
                         }
                         alt={res.Inventory?.item_name}
-                        className="w-full h-full object-contain"
+                        className="object-contain p-2"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 160px"
                       />
                     </div>
                     <div className="flex-1 text-center sm:text-left">
@@ -319,7 +327,7 @@ export default function Account() {
                               : res.status === "Rejected" ||
                                   res.status === "Cancelled"
                                 ? "bg-on-primary text-white/90  border border-red-500/20"
-                                : "bg-yellow-500/10 text-primary-container border border-yellow-500/20"
+                                : "bg-primary-container text-font-color border border-yellow-500/20"
                           }`}
                         >
                           {res.status || "Pending"}
@@ -358,7 +366,7 @@ export default function Account() {
           </div>
         </div>
       </div>
-      <SessionModal
+      <DynamicSessionModal
         isOpen={showSessionModal}
         onClose={() => setShowSessionModal(false)}
         onConfirm={logoutAccount}
