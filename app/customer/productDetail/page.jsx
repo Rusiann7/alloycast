@@ -101,9 +101,29 @@ function ProductDetail() {
     const getCommentsAuto = async () => {
       const { data, error } = await supabase
         .from("Ratings")
-        .select("*")
-        .eq("product_id", productId)
-        .order("created_at", { ascending: false });
+        .select(
+          `
+  id,
+  product_id,
+  user_id,
+  comment,
+  rating,
+  created_at,
+  Inventory!product_id (
+    id,
+    item_name,
+    brand
+  ),
+  Users (
+    id,
+    Customer (
+      firstname,
+      lastname
+    )
+  )
+`,
+        )
+        .eq("product_id", productId);
 
       if (error) throw error;
       setCommentDB(data || []);
@@ -193,9 +213,29 @@ function ProductDetail() {
     try {
       const { data, error } = await supabase
         .from("Ratings")
-        .select("*")
-        .eq("product_id", product_id)
-        .order("created_at", { ascending: false });
+        .select(
+          `
+          id,
+          product_id,
+          user_id,
+          comment,
+          rating,
+          created_at,
+          Inventory!product_id (
+            id,
+            item_name,
+            brand
+          ),
+          Users (
+            id
+          ),
+          Customer!user_id (
+            firstname,
+            lastname
+          )
+        `,
+        )
+        .eq("product_id", product_id);
 
       if (error) throw error;
       setCommentDB(data || []);
@@ -404,14 +444,19 @@ function ProductDetail() {
             <div>
               <table>
                 <thead>
-                  <th>User</th>
-                  <th>Rating</th>
-                  <th>Comment</th>
+                  <tr>
+                    <th>User</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {commentDB.map((comments) => (
                     <tr key={comments.id}>
-                      <td>Shite</td>
+                      <td>
+                        {comments.Users?.Customer?.[0]?.firstname}{" "}
+                        {comments.Users?.Customer?.[0]?.lastname}
+                      </td>
                       <td>{comments.rating}</td>
                       <td>{comments.comment}</td>
                     </tr>
