@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/client";
-import Toast from "../../../components/Toast";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../../components/Toast"));
 
 export default function RegisterAdminPage() {
   const router = useRouter();
@@ -144,7 +146,7 @@ export default function RegisterAdminPage() {
 
   return (
     <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
@@ -176,39 +178,39 @@ export default function RegisterAdminPage() {
           </div>
         </div>
 
-        <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
+        <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary-container">
           <div className="mb-8">
-            <h2 className="text-2xl text-primary-container font-headline font-black uppercase  mb-2">
-              CREATE YOUR ACCOUNT
+            <h2 className="text-2xl text-primary-container  font-black uppercase  mb-2">
+              CREATE YOUR ADMIN ACCOUNT
             </h2>
-            <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
+            <p className="text-sm text-white/90 uppercase tracking-widest">
               Create an admin account to manage your business
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={registerAccount}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                   First Name
                 </label>
                 <input
                   type="text"
-                  placeholder="FIRST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  placeholder="John..."
+                  className="w-full bg-input-field border-b border-primary-container  rounded-lg px-4 py-3 text-sm text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="firstName"
                   value={accountForm.firstName}
                   onChange={getInputValue}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                   Last Name
                 </label>
                 <input
                   type="text"
-                  placeholder="LAST NAME"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  placeholder="Doe..."
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="lastName"
                   value={accountForm.lastName}
                   onChange={getInputValue}
@@ -217,13 +219,13 @@ export default function RegisterAdminPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Email
               </label>
               <input
                 type="email"
-                placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                placeholder="johndoe@gmail.com"
+                className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={accountForm.email}
                 onChange={getInputValue}
@@ -231,14 +233,14 @@ export default function RegisterAdminPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="password"
                   value={accountForm.password}
                   onChange={getInputValue}
@@ -256,14 +258,14 @@ export default function RegisterAdminPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                   name="confirmPassword"
                   value={accountForm.confirmPassword}
                   onChange={getInputValue}
@@ -282,7 +284,7 @@ export default function RegisterAdminPage() {
             <div className="flex flex-col gap-4">
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
+                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:scale-105  transition-all mb-2 border border-gray-300"
                 onClick={googleSignUp}
               >
                 <img
@@ -290,7 +292,7 @@ export default function RegisterAdminPage() {
                   alt="Google Logo"
                   className="w-5 h-5"
                 />
-                <span className="uppercase text-[10px] tracking-widest font-black">
+                <span className="uppercase text-xs tracking-widest font-black">
                   Sign up with Google
                 </span>
               </button>
@@ -299,7 +301,7 @@ export default function RegisterAdminPage() {
                 className={`w-full rounded-lg px-4 py-3 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
                   isLoading
                     ? "bg-primary-container text-black/90  cursor-not-allowed"
-                    : "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 cursor-pointer"
+                    : "bg-primary-container text-black/90 hover:scale-105  cursor-pointer"
                 }`}
               >
                 {isLoading ? "PROCCESSING..." : "REGISTER ADMIN"}
@@ -308,7 +310,7 @@ export default function RegisterAdminPage() {
           </form>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-            <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
               Already have an admin account?{" "}
               <Link
                 href="/admin/auth/login"

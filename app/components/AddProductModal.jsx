@@ -188,25 +188,25 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
       <form
         onSubmit={addProduct}
-        className="relative w-full max-w-3xl bg-[#0F0F0F] border border-white/[0.05] shadow-[0_0_100px_rgba(0,0,0,1)] rounded-[2px] animate-slide-in-up flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-3xl bg-background rounded-lg shadow-[0_0_100px_rgba(0,0,0,1)]  animate-slide-in-up flex flex-col max-h-[90vh]"
       >
         <header className="p-6 sm:p-8 lg:p-10 border-b border-white/[0.03] flex flex-col sm:flex-row items-start sm:items-center justify-between shrink-0 gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center rounded-[2px]">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary-container border border-secondary-container/20 flex items-center justify-center rounded-lg">
               <span className="material-symbols-outlined text-primary-container text-xl sm:text-2xl">
                 add_box
               </span>
             </div>
             <div>
-              <h4 className="text-2xl sm:text-3xl font-black font-headline uppercase tracking-tighter italic leading-none">
+              <h4 className="text-2xl sm:text-3xl text-font-color font-black font-headline uppercase tracking-tighter italic leading-none">
                 ADD PRODUCT
               </h4>
-              <p className="text-[9px] sm:text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-white/40 mt-1">
+              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.2em] text-font-color mt-1">
                 NEW INVENTORY ENTRY
               </p>
             </div>
@@ -215,9 +215,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
             <button
               type="button"
               onClick={() => setScannerOpen(true)}
-              className="flex-1 sm:flex-none px-6 sm:px-8 h-12 bg-primary-container rounded-lg text-[11px] sm:text-[12px] text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20 flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none px-6 sm:px-8 h-12 bg-primary-container rounded-lg text-xs sm:text-sm text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:scale-105 active:scale-95 transition-all shadow-lg/30 hover:shadow-primary-container/20 flex items-center justify-center gap-2"
             >
-              <span className="material-symbols-outlined text-lg">qr_code_scanner</span>
+              <span className="material-symbols-outlined text-lg">
+                qr_code_scanner
+              </span>
               <span>SCAN</span>
             </button>
             <button
@@ -225,7 +227,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
               onClick={onClose}
               className="w-12 h-12 flex items-center justify-center border border-white/5 hover:bg-white/5 rounded-lg transition-colors group"
             >
-              <span className="material-symbols-outlined group-hover:opacity-100 group-hover:rotate-90 transition-all text-xl font-light">
+              <span className="material-symbols-outlined text-font-color  group-hover:rotate-90 transition-all text-xl font-light">
                 close
               </span>
             </button>
@@ -235,7 +237,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
         <div className="flex-1 overflow-y-auto p-8 lg:p-10 space-y-8 custom-scrollbar">
           {/* Name */}
           <div className="space-y-3">
-            <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-primary-container pl-2">
+            <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
               ITEM NAME
             </label>
             <input
@@ -244,7 +246,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
               value={addFormData.item_name}
               required
               placeholder="e.g. Ferrari F40"
-              className="w-full bg-black/40 border border-white/[0.03] rounded-lg h-14 px-6 text-sm font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+              className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
               onChange={getInputValue}
             />
           </div>
@@ -252,7 +254,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           {/* Brand & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-primary-container pl-2">
+              <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
                 BRAND
               </label>
               <select
@@ -261,7 +263,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 type="text"
                 value={addFormData.item_brand}
                 required
-                className="w-full bg-black/40 border border-white/[0.03] rounded-lg h-14 px-6 text-sm font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
                 onChange={getInputValue}
               >
                 <option value="" disabled hidden>
@@ -282,7 +284,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
               </select>
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-primary-container pl-2">
+              <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
                 CATEGORY
               </label>
               <select
@@ -291,7 +293,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 type="text"
                 value={addFormData.category}
                 required
-                className="w-full bg-black/40 border border-white/[0.03] rounded-lg h-14 px-6 text-sm font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
                 onChange={getInputValue}
               >
                 <option value="" disabled hidden>
@@ -309,7 +311,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           {/* Price & Stock */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-primary-container pl-2">
+              <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
                 PRICE (₱)
               </label>
               <input
@@ -319,12 +321,12 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 step="0.01"
                 required
                 placeholder="0.00"
-                className="w-full bg-black/40 border border-white/[0.03] rounded-lg h-14 px-6 text-sm font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/10"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/70"
                 onChange={getInputValue}
               />
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-primary-container pl-2">
+              <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
                 STOCK
               </label>
               <input
@@ -332,7 +334,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 type="number"
                 required
                 placeholder="0"
-                className="w-full bg-black/40 border border-white/[0.03] rounded-lg h-14 px-6 text-sm font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/10"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/70"
                 onChange={getInputValue}
               />
             </div>
@@ -340,18 +342,18 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
 
           {/* Item Image */}
           <div className="space-y-3">
-            <label className="text-[10px] font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-primary-container pl-2">
+            <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
               ITEM IMAGE
             </label>
             <div
               onClick={() => fileInputRef.current.click()}
-              className="w-full h-48 bg-black/40 border border-dashed border-white/10 rounded-lg flex flex-col items-center justify-center group cursor-pointer hover:border-primary-container transition-all duration-500 rounded-[2px] relative overflow-hidden"
+              className="w-full h-48 bg-input-field border border-dashed border-white/10 rounded-lg flex flex-col items-center justify-center group cursor-pointer hover:border-primary-container transition-all duration-500 rounded-[2px] relative overflow-hidden"
             >
               <input
                 type="file"
                 name="item_image"
                 ref={fileInputRef}
-                className="hidden"
+                className="hidden rounded-lg"
                 accept="image/*"
                 onChange={getInputValue}
               />
@@ -363,18 +365,18 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 />
               ) : (
                 <div className="relative z-10 flex flex-col items-center">
-                  <span className="material-symbols-outlined text-4xl font-light opacity-20 mb-4 group-hover:text-primary-container group-hover:opacity-100 transition-all duration-500">
+                  <span className="material-symbols-outlined text-4xl font-light opacity-60 mb-4 group-hover:text-primary-container group-hover:opacity-100 transition-all duration-500">
                     add_photo_alternate
                   </span>
                   <p className="text-[12px] font-headline font-bold uppercase tracking-[0.3em]">
-                    <span className="opacity-20 group-hover:opacity-40 transition-opacity">
+                    <span className="opacity-70 text-white/90 text-lg">
                       DRAG & DROP OR
                     </span>{" "}
-                    <span className="text-primary-container group-hover:text-primary-container transition-colors">
+                    <span className="text-primary-container text-lg group-hover:text-primary-container transition-colors">
                       BROWSE
                     </span>
                   </p>
-                  <p className="text-[8px] text-white/90 mt-3 uppercase tracking-[0.1em]">
+                  <p className="text-xs text-white/90 mt-3 uppercase tracking-[0.1em]">
                     High-res PNG/JPG preferred.
                   </p>
                 </div>
@@ -383,18 +385,18 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           </div>
         </div>
 
-        <footer className="p-6 sm:p-8 border-t border-white/[0.03] flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-[#0A0A0A] rounded-b-[2px] shrink-0">
+        <footer className="p-6 sm:p-8 border-t border-secondary-container flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background rounded-lg  shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-8 h-12 border border-white/10 rounded-lg text-[11px] sm:text-[12px] font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-white/5 hover:bg-white/10 transition-all"
+            className="w-full sm:w-auto px-8 h-12 shadow-lg/30 bg-secondary-container hover:scale-105 rounded-lg text-xs sm:text-sm text-white/90 font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em]  transition-all"
           >
             CANCEL
           </button>
 
           <button
             type="submit"
-            className="w-full sm:w-auto px-8 h-12 bg-primary-container rounded-lg text-[11px] sm:text-[12px] text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20"
+            className="w-full sm:w-auto px-8 h-12 bg-primary-container rounded-lg text-xs sm:text-sm text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:scale-105 active:scale-95 transition-all shadow-lg/30 hover:shadow-secondary-container/20"
           >
             ADD TO INVENTORY
           </button>

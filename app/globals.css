@@ -2,14 +2,16 @@
 
 :root {
   /* light theme */
-  --background: #fffee0;
-  --secondary-background: #cfca35d7;
-  --foreground: #161515;
+  --background: #f2f1cd;
+  --secondary-background: #f8f9fa;
+  --foreground: #1a1a1a;
   --primary-container: #f8e408;
-  --secondary-container: #9e840f;
+  --secondary-container: #8d7a23;
+  --shit-container: #f8e408;
   --input-field: #504309;
   --font-color: #292727;
   --button-color: #fffee0;
+  --surface: #ffffff;
   --on-primary: #bb0725;
   --error-container: #c30410;
 
@@ -64,6 +66,7 @@
   --color-button-color: var(--button-color);
   --color-surface: var(--surface);
   --color-input-field: var(--input-field);
+  --color-shit-container: var(--shit-container);
   /* Color Mapping */
   --color-primary: var(--primary);
   --color-primary-container: var(--primary-container);
@@ -140,16 +143,16 @@
 
 .dark {
   /* Core Foundation */
-  --background: #161515;
-  --foreground: #e5e2e1;
-
-  /* Diecast Design System - Colors */
+  --background: #303604;
   /* --primary: #f07a0c; */
   --primary-container: #d0bf02;
-  --secondary-container: #61510b;
+  --secondary-container: #645a2f;
+  --shit-container: #f8e408;
 
   --font-color: #f3f3f3;
   --on-primary: #680011;
+  --surface: #121212;
+  --input-field: #1a1a1a;
   --error-container: #93000a;
   /* --on-primary-container: #ffdad8;
   --primary-fixed: #ffdad8;

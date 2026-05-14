@@ -7,6 +7,21 @@ import { createClient } from "../../lib/supabase/client";
 import SessionModal from "./SessionModal";
 import AddProductModal from "./AddProductModal";
 import Toast from "./Toast";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicToast = dynamic(() => import("./Toast"), {
+  ssr: false,
+});
+
+const DynamicAddProductModal = dynamic(() => import("./AddProductModal"), {
+  ssr: false,
+});
+
+const DynamicSessionModal = dynamic(() => import("./SessionModal"), {
+  ssr: false,
+});
+
 export default function AdminSidebar() {
   const supabase = createClient(); // para sa logout
   const route = useRouter(); // para sa pang redirect sa admin/auth/login
@@ -87,11 +102,11 @@ export default function AdminSidebar() {
     const clickedLink = linkName === href; // isave sa clickedLink ung linkName then kukunin ung url sa href na naclick
     return (
       <Link
-        className={`flex items-center space-x-3 rounded-[4px] px-4 py-3 mx-2 transition-all group ${clickedLink ? "text-black/90 bg-primary-container" : "text-[#e5e2e1] opacity-60 hover:bg-[#2a2a2a] hover:opacity-100"}`}
+        className={`flex items-center space-x-3 rounded-lg px-4 py-3 mx-2 transition-all group ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105  hover:drop-shadow-lg/30 hover:opacity-100"}`}
         href={href || "#"}
       >
         <span className="material-symbols-outlined">{icon}</span>
-        <span className="font-headline uppercase text-[10px] font-black tracking-[0.2em]">
+        <span className="font-headline uppercase text-xs font-black tracking-[0.2em]">
           {label}
         </span>
       </Link>
@@ -116,15 +131,10 @@ export default function AdminSidebar() {
   return (
     <>
       {/* --- Mobile Header (Hamburger) --- */}
-      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-[#131313]/90 backdrop-blur-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-secondary-container backdrop-blur-md  px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-container flex items-center justify-center rounded-[4px]">
-            <span className="material-symbols-outlined text-white text-sm">
-              precision_manufacturing
-            </span>
-          </div>
-          <h1 className="text-lg font-black font-headline uppercase leading-none italic">
-            {adminName ? adminName : "Admin"}
+          <h1 className="text-lg text-black/90 font-black font-headline uppercase leading-none italic">
+            {adminName ? adminName : "AlloyDash"} {""} Admin
           </h1>
         </div>
         <button
@@ -137,18 +147,25 @@ export default function AdminSidebar() {
 
       {/* --- SideNavBar --- */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 z-50 bg-[#131313] flex flex-col py-6 transition-transform duration-300 border-r border-white/5 ${activeSidebar ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed top-0 left-0 h-full w-64 z-50 bg-primary-container flex flex-col py-6 transition-transform duration-300 border-r border-white/5 ${activeSidebar ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
         <div className="px-6 mb-10 hidden lg:block">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-container flex items-center justify-center rounded-[4px]">
-              <img src="/logo.jpg" alt="Logo" />
+            <div className="w-10 h-10 bg-primary-container  flex items-center justify-center rounded-lg hover:scale-105">
+              <Image
+                src="/logo.jpg"
+                alt="Logo"
+                width={60}
+                height={60}
+                loading="lazy"
+                className="rounded-lg border-black/90 border-1"
+              />
             </div>
             <div>
-              <h1 className="text-xl font-black text-[#e5e2e1] font-headline uppercase leading-none ">
+              <h1 className="text-xl font-black text-black font-headline uppercase leading-none ">
                 {adminName}
               </h1>
-              <p className="font-headline uppercase text-[10px] font-black tracking-[0.3em] text-primary-container/98 mt-1">
+              <p className="font-headline uppercase text-xs font-black tracking-[0.3em] text-secondary-container mt-1">
                 SHOP ADMIN
               </p>
             </div>
@@ -178,70 +195,54 @@ export default function AdminSidebar() {
           />
 
           <SidebarLink
-            icon="shopping_cart"
+            icon="point_of_sale"
             label="POINT OF SALES"
             href="/admin/store"
           />
 
-          <SidebarLink
-            icon="shopping_cart"
-            label="REVIEWS"
-            href="/admin/reviews"
-          />
+          <SidebarLink icon="reviews" label="REVIEWS" href="/admin/reviews" />
 
           <SidebarLink
-            icon="shopping_cart"
+            icon="feedback"
             label="FEEDBACK"
             href="/admin/feedbacks"
           />
-
-          {/* <SidebarLink icon="group" label="CUSTOMERS" href="/admin/customers" />
-          <SidebarLink icon="ios_share" label="EXPORT" href="/admin/export" /> */}
         </nav>
 
         <div className="px-4 mt-auto space-y-4">
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="w-full bg-primary-container text-black/90 py-3 rounded-[4px] font-headline text-xs font-bold uppercase tracking-tighter flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="w-full bg-secondary-container text-white/90 py-3 rounded-lg font-headline text-xs font-bold uppercase tracking-tighter flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <span className="material-symbols-outlined text-sm">
               add_circle
             </span>
-            <span>New Product</span>
+            <span>Add New Product</span>
           </button>
           <div className="pt-4 border-t border-surface-container-highest">
-            {/* <a
-              className="flex items-center space-x-3 text-[#e5e2e1] px-4 py-2 opacity-60 hover:opacity-100 transition-opacity"
-              href="#"
-            >
-              <span className="material-symbols-outlined">settings</span>
-              <span className="font-headline uppercase text-xs font-bold tracking-widest">
-                Settings
-              </span>
-            </a> */}
             <button
               onClick={showLogoutModal}
-              className="flex items-center space-x-3 text-[#e5e2e1] px-4 py-2 opacity-60 hover:opacity-100 transition-opacity"
+              className="flex items-center space-x-3  text-input-field px-4 py-2  hover:scale-105 transition-opacity"
             >
               <span className="material-symbols-outlined">logout</span>
-              <span className="font-headline uppercase text-xs font-bold tracking-widest">
+              <span className="font-headline uppercase text-sm font-bold tracking-widest">
                 Logout
               </span>
             </button>
           </div>
         </div>
       </aside>
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <SessionModal
+      <DynamicSessionModal
         isOpen={showSessionModal}
         onClose={() => setShowSessionModal(false)}
         onConfirm={logoutAccount}
       />
-      <AddProductModal
+      <DynamicAddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         showToast={showToast}

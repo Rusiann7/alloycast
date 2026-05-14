@@ -351,20 +351,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="bg-background text-on-surface font-body min-h-screen overflow-x-hidden select-none">
+    <div className="bg-background  font-body min-h-screen overflow-x-hidden select-none">
       {/* --- Main Content Canvas --- */}
       <main className="lg:ml-64 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen">
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6 reveal-up">
           <div>
-            <h3 className="text-4xl sm:text-5xl lg:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
-              Admin <span className="text-white/90">Dashboard</span>
+            <h3 className="text-4xl sm:text-5xl lg:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
+              Admin Dashboard
             </h3>
           </div>
           <div className="w-full lg:w-auto">
             <button
               onClick={exportToExcel}
-              className="w-full lg:w-auto bg-primary-container text-black/90 px-6 py-3 rounded-lg text-[11px] font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform active:scale-95"
+              className="w-full lg:w-auto bg-secondary-container text-white/90 px-6 py-3 rounded-lg text-sm font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform active:scale-95"
             >
               <span className="material-symbols-outlined text-sm">
                 download
@@ -419,35 +419,35 @@ export default function AdminDashboard() {
         {/* Primary Data Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div
-            className="lg:col-span-2 bg-surface-container-low p-8 rounded-[4px] border border-outline-variant/10 relative reveal-up"
+            className="lg:col-span-2 bg-input-field p-4 rounded-lg border border-primary-container  text-white/90 shadow-lg/30 relative reveal-up"
             style={{ animationDelay: "0.5s" }}
           >
             {/* Updated Header Layout: Responsive stacking */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-10 gap-8">
               {/* 1. Title */}
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-primary-container/10 rounded-lg flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary-container">
+                <div className="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+                  <span className="material-symbols-outlined text-secondary-container">
                     insights
                   </span>
                 </div>
-                <h4 className="text-lg font-black font-headline uppercase tracking-tighter italic text-primary-container">
+                <h4 className="text-xl font-black font-headline uppercase tracking-tighter italic text-white/90">
                   Revenue Analysis
                 </h4>
               </div>
 
               {/* 2. Filter Buttons - Grid 2x2 on mobile, flex on desktop */}
               <div className="w-full xl:w-auto">
-                <div className="grid grid-cols-2 2xl:flex items-center bg-surface-container-high/10 p-1 rounded-lg border border-white/5 gap-1">
+                <div className="grid grid-cols-2 2xl:flex items-center bg-secondary-container p-1 rounded-lg  gap-1">
                   {["Last 7 Days", "This Month", "Last Month", "All Time"].map(
                     (label) => (
                       <button
                         key={label}
                         onClick={() => setDateRange(label)}
-                        className={`w-full xl:w-auto px-4 py-2 text-[10px] sm:text-[11px] font-headline font-black uppercase tracking-widest transition-all rounded-[4px] whitespace-nowrap ${
+                        className={`w-full xl:w-auto px-4 py-2 text-sm sm:text-xs font-headline font-black uppercase tracking-widest transition-all rounded-lg whitespace-nowrap ${
                           dateRange === label
                             ? "bg-primary-container text-black/90 shadow-lg"
-                            : "text-on-surface/30 hover:text-white hover:bg-white/5"
+                            : "text-white/90 opacity-80 hover:opacity-100 hover:bg-secondary-container/10"
                         }`}
                       >
                         {label}
@@ -458,13 +458,13 @@ export default function AdminDashboard() {
               </div>
 
               {/* 3. Total Revenue */}
-              <div className="flex items-center space-x-3 bg-green-500/5 px-5 py-3 border border-green-500/10 rounded-lg w-full xl:w-auto justify-center xl:justify-start">
-                <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse"></div>
+              <div className="flex items-center space-x-3 bg-primary-container/10 px-5 py-3  rounded-lg w-full xl:w-auto justify-center xl:justify-start">
+                <div className="w-2 h-2 bg-primary-container rounded-full shadow-[0_0_8px_rgba(248,228,8,0.5)] animate-pulse"></div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-headline font-bold uppercase tracking-[0.2em] opacity-40 leading-none mb-1">
-                    TOTAL PERIOD REVENUE
+                  <span className="text-[9px] font-headline font-bold uppercase tracking-[0.2em] text-white/60 leading-none mb-1">
+                    TOTAL REVENUE
                   </span>
-                  <span className="text-lg font-black font-headline text-green-500 leading-none">
+                  <span className="text-xl font-black font-headline text-primary-container leading-none">
                     ₱
                     {totalRevenue.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
@@ -484,40 +484,53 @@ export default function AdminDashboard() {
                 >
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                      <stop
+                        offset="5%"
+                        stopColor="var(--primary-container)"
+                        stopOpacity={0.4}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--primary-container)"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
                   <XAxis
                     dataKey="name"
                     stroke="#ffffff"
-                    fontSize={13}
+                    fontSize={12}
                     tickMargin={10}
                     axisLine={10}
                     tickLine={10}
+                    opacity={1}
                   />
                   <YAxis
                     stroke="#ffffff"
-                    fontSize={13}
+                    fontSize={12}
                     axisLine={10}
                     tickLine={10}
+                    opacity={1}
                     tickFormatter={(value) => `₱${value}`}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#131313",
-                      borderColor: "#333",
-                      fontSize: "13px",
-                      borderRadius: "4px",
+                      backgroundColor: "var(--secondary-container)",
+                      borderColor: "var(--primary-container)",
+                      fontSize: "12px",
+                      borderRadius: "8px",
+                      color: "white",
+                      border: "none",
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    itemStyle={{ color: "#22C55E" }}
+                    itemStyle={{ color: "var(--primary-container)" }}
                     formatter={(value) => `₱${Number(value).toFixed(2)}`}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#22C55E"
-                    strokeWidth={3}
+                    stroke="var(--primary-container)"
+                    strokeWidth={4}
                     fillOpacity={1}
                     fill="url(#colorRev)"
                     animationDuration={1500}
@@ -529,10 +542,10 @@ export default function AdminDashboard() {
 
           {/* Side Panel: Volume */}
           <div
-            className="bg-surface-container-low p-8 rounded-[4px] border border-outline-variant/10 reveal-up h-fit"
+            className="bg-secondary-container p-8 rounded-lg text-white/90 shadow-lg/30 reveal-up h-fit"
             style={{ animationDelay: "0.6s" }}
           >
-            <h4 className="text-lg font-black font-headline uppercase tracking-tighter mb-6">
+            <h4 className="text-xl font-black font-headline uppercase tracking-tighter mb-6">
               Top Selling Products
             </h4>
             <div className="space-y-6">
@@ -545,7 +558,7 @@ export default function AdminDashboard() {
                   />
                 ))
               ) : (
-                <div className="py-10 text-center opacity-20 text-[10px] font-black uppercase tracking-widest">
+                <div className="py-10 text-center opacity-60 text-sm font-black uppercase tracking-widest">
                   No Sales Data
                 </div>
               )}
@@ -556,37 +569,37 @@ export default function AdminDashboard() {
         {/* Activity Table */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           <div
-            className="xl:col-span-3 bg-surface-container-low rounded-[4px] border border-outline-variant/10 overflow-hidden reveal-up"
+            className="xl:col-span-3  text-white/90 bg-secondary-container rounded-lg  shadow-lg/30 overflow-hidden reveal-up"
             style={{ animationDelay: "0.7s" }}
           >
-            <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center">
-              <h4 className="text-lg font-black font-headline uppercase tracking-tighter">
+            <div className="p-6 border-b-2 border-primary-container  flex justify-between items-center">
+              <h4 className="text-xl text-white/90 font-black font-headline uppercase tracking-tighter">
                 Activity Ledger
               </h4>
               <button
                 onClick={() => router.push("/admin/reservations")}
-                className="text-[10px] font-headline font-bold uppercase tracking-widest text-primary-container hover:text-secondary-container transition-colors"
+                className="text-md sm:text-sm font-headline font-bold uppercase tracking-widest text-white/90 hover:text-primary-container hover:underline transition-colors"
               >
                 View All Reservations
               </button>
             </div>
             <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
-              <table className="w-full text-left min-w-[700px]">
+              <table className="w-full text-left min-w-[700px] text-white/90">
                 <thead>
-                  <tr className="bg-surface-container-highest/30">
-                    <th className="px-6 py-5 text-[10px] font-headline font-bold uppercase tracking-widest text-on-surface/40">
+                  <tr>
+                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
                       Timestamp
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-headline font-bold uppercase tracking-widest text-on-surface/40">
-                      Entity / Item
+                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
+                      Item
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-headline font-bold uppercase tracking-widest text-on-surface/40">
+                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
                       Action
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-headline font-bold uppercase tracking-widest text-on-surface/40">
+                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
                       Status
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-headline font-bold uppercase tracking-widest text-on-surface/40 text-right">
+                    <th className="px-6 py-5 border-primary-container border-b-2  text-sm text-center font-headline font-bold uppercase tracking-widest">
                       Reference
                     </th>
                   </tr>
@@ -620,7 +633,9 @@ export default function AdminDashboard() {
                             ? "bg-green-500/10 text-green-500"
                             : activity.status === "Pending"
                               ? "bg-primary-container/10 text-primary-container"
-                              : "bg-secondary-container/10 text-secondary-container"
+                              : // : activeReservation.status === "Cancelled"
+                                //   ? "bg-on-primary text-white/90 "
+                                "bg-secondary-container/10 text-secondary-container"
                         }
                         refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
                         img={activity.Inventory?.item_image}
@@ -630,7 +645,7 @@ export default function AdminDashboard() {
                     <tr>
                       <td
                         colSpan="5"
-                        className="p-10 text-center opacity-20 uppercase text-[10px] font-black tracking-widest"
+                        className="p-10 text-center opacity-20 uppercase text-sm font-black tracking-widest"
                       >
                         No Recent Activity
                       </td>
@@ -642,13 +657,13 @@ export default function AdminDashboard() {
           </div>
 
           <div
-            className="bg-surface-container-low p-6 rounded-[4px] border border-outline-variant/10 reveal-up"
+            className="bg-secondary-container p-6 rounded-lg  text-white/90 shadow-lg/30 reveal-up"
             style={{ animationDelay: "0.8s" }}
           >
-            <h4 className="text-sm font-black font-headline uppercase tracking-widest mb-6">
+            <h4 className="text-md text-white/90 font-black font-headline uppercase tracking-widest mb-6">
               Live Inventory{" "}
-              <span className="text-primary-container ml-2 text-[10px]">
-                {newArrivals.length} NEW
+              <span className="text-primary-container ml-2 text-sm">
+                +{newArrivals.length} ADDED ITEMS
               </span>
             </h4>
             <div className="space-y-4">
@@ -662,14 +677,14 @@ export default function AdminDashboard() {
                   />
                 ))
               ) : (
-                <div className="py-10 text-center opacity-20 uppercase text-[10px] font-black tracking-widest">
+                <div className="py-10 text-center opacity-20 uppercase text-sm font-black tracking-widest">
                   No New Items Added
                 </div>
               )}
             </div>
             <button
               onClick={() => router.push("/admin/inventory")}
-              className="w-full mt-6 py-3 border border-outline-variant/20 rounded-lg bg-primary-container/70 text-[13px] text-black/90 font-headline font-bold uppercase tracking-widest hover:bg-secondary-container hover:text-white/90 transition-all"
+              className="w-full mt-6 py-3 rounded-lg bg-primary-container text-md text-black/90 shadow-lg/50 font-headline font-bold uppercase tracking-widest hover:scale-105  transition-all"
             >
               Manage Inventory
             </button>
@@ -686,13 +701,13 @@ export default function AdminDashboard() {
       {isDetailsModalOpen && activeReservation && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
           <div
-            className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setIsDetailsModalOpen(false)}
           ></div>
-          <div className="relative w-full max-w-4xl bg-surface-container-low border border-white/5 p-6 sm:p-10 rounded-lg animate-scale-in max-h-[95vh] overflow-y-auto scrollbar-hide">
+          <div className="relative w-full max-w-4xl bg-background border border-white/5 p-6 sm:p-10 rounded-lg animate-scale-in max-h-[95vh] overflow-y-auto scrollbar-hide">
             <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
               <div className="flex items-center space-x-3">
-                <span className="material-symbols-outlined text-primary-container">
+                <span className="material-symbols-outlined text-secondary-container">
                   info
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black font-headline uppercase italic">
@@ -701,7 +716,7 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={() => setIsDetailsModalOpen(false)}
-                className="material-symbols-outlined opacity-40 hover:opacity-100 hover:rotate-90 transition-all p-2"
+                className="material-symbols-outlined  hover:rotate-90 transition-all p-2"
               >
                 close
               </button>
@@ -709,7 +724,7 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
               {/* Product Side */}
-              <div className="flex flex-col sm:flex-row gap-6 p-6 bg-white/[0.02] border border-white/5 rounded-lg">
+              <div className="flex flex-col sm:flex-row gap-6 p-6 bg-secondary-container border border-white/5 rounded-lg shadow-lg/30">
                 <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0">
                   <img
                     src={activeReservation.Inventory?.item_image}
@@ -718,20 +733,20 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary-container mb-2">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-container mb-2">
                     Product Info
                   </p>
-                  <h4 className="text-xl font-black uppercase italic leading-tight mb-1">
+                  <h4 className="text-xl text-white/90 font-black uppercase italic leading-tight mb-1">
                     {activeReservation.Inventory?.item_name}
                   </h4>
-                  <p className="opacity-40 uppercase text-xs font-bold tracking-widest">
+                  <p className="opacity-80 text-white/90 uppercase text-xs font-bold tracking-widest">
                     {activeReservation.Inventory?.brand}
                   </p>
                   <div className="mt-6 flex items-center justify-center sm:justify-start space-x-2">
-                    <span className="text-[10px] opacity-40 uppercase font-black">
-                      Quantity
+                    <span className="text-sm text-white/90 opacity-80 uppercase font-black">
+                      Quantity:
                     </span>
-                    <span className="text-2xl font-black font-headline tabular-nums leading-none">
+                    <span className="text-2xl text-white/90 font-black font-headline tabular-nums leading-none">
                       {activeReservation.quantity}
                     </span>
                   </div>
@@ -739,33 +754,33 @@ export default function AdminDashboard() {
               </div>
 
               {/* Customer Side */}
-              <div className="p-6 bg-white/[0.02] border border-white/5 rounded-lg">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary-container mb-6">
+              <div className="p-6 bg-secondary-container border border-white/5 rounded-lg shadow-lg/30">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-container mb-6">
                   Customer Information
                 </p>
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-4">
-                    <span className="material-symbols-outlined opacity-20 mt-1 hidden sm:block">
+                    <span className="material-symbols-outlined text-white/90 mt-1 hidden sm:block">
                       person
                     </span>
                     <div className="text-center sm:text-left">
-                      <p className="text-[10px] opacity-40 uppercase font-bold tracking-widest mb-1">
+                      <p className="text-sm text-white/90 opacity-80 uppercase font-bold tracking-widest mb-1">
                         Full Name
                       </p>
-                      <p className="font-black uppercase text-lg leading-none">
+                      <p className="font-black text-white/90 uppercase text-lg leading-none">
                         {activeReservation.customer_name}
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-4">
-                    <span className="material-symbols-outlined opacity-20 mt-1 hidden sm:block">
+                    <span className="material-symbols-outlined text-white/90 mt-1 hidden sm:block">
                       mail
                     </span>
                     <div className="text-center sm:text-left overflow-hidden w-full">
-                      <p className="text-[10px] opacity-40 uppercase font-bold tracking-widest mb-1">
+                      <p className="text-sm text-white/90 opacity-80 uppercase font-bold tracking-widest mb-1">
                         Email Address
                       </p>
-                      <p className="font-mono text-sm break-all">
+                      <p className="font-mono text-white/90 font-bold text-sm break-all">
                         {activeReservation.customer_email}
                       </p>
                     </div>
@@ -778,15 +793,17 @@ export default function AdminDashboard() {
             <div className="mt-10 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
               <div className="w-full sm:w-auto flex justify-center sm:justify-start">
                 <span
-                  className={`px-6 py-2 rounded-full border text-[10px] font-black uppercase tracking-[0.2em] ${
+                  className={`px-6 py-2 rounded-full border text-sm font-black uppercase tracking-[0.2em] ${
                     activeReservation.status === "Approved"
                       ? "text-green-500 border-green-500/20 bg-green-500/5"
                       : activeReservation.status === "Pending"
-                        ? "text-primary-container border-primary-container/20 bg-primary-container/5"
-                        : "text-red-500 border-red-500/20 bg-red-500/5"
+                        ? "text-font-color border-primary-container/20 bg-primary-container"
+                        : activeReservation.status === "Cancelled"
+                          ? "bg-on-primary  border-white/10 "
+                          : "text-red-500 border-red-500/20 bg-red-500/5"
                   }`}
                 >
-                  {activeReservation.status} Status
+                  Status: {activeReservation.status}
                 </span>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -795,7 +812,7 @@ export default function AdminDashboard() {
                   onClick={() =>
                     handleActionClick(activeReservation, "Rejected")
                   }
-                  className="w-full sm:w-auto px-10 py-4 bg-white/5 text-red-500 border border-white/10 font-black uppercase text-[11px] tracking-[0.2em] hover:bg-red-500 hover:text-white hover:border-red-500 transition-all disabled:opacity-10 disabled:cursor-not-allowed group flex items-center justify-center space-x-2"
+                  className="w-full sm:w-auto px-10 py-4 bg-secondary-container text-white/90  rounded-lg font-black uppercase text-xs tracking-[0.2em] hover:scale-105 transition-all disabled:opacity-10 disabled:cursor-not-allowed group flex items-center justify-center space-x-2"
                 >
                   <span className="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">
                     close
@@ -807,7 +824,7 @@ export default function AdminDashboard() {
                   onClick={() =>
                     handleActionClick(activeReservation, "Approved")
                   }
-                  className="w-full sm:w-auto px-10 py-4 bg-primary-container text-black font-black uppercase text-[11px] tracking-[0.2em] hover:brightness-110 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)] transition-all disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center space-x-2"
+                  className="w-full sm:w-auto px-10 py-4 bg-primary-container text-black/90 rounded-lg font-black uppercase text-xs tracking-[0.2em] hover:scale-105 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)] transition-all disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center space-x-2"
                 >
                   <span className="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">
                     check
@@ -848,7 +865,7 @@ const KPICard = ({
 }) => (
   <div
     onClick={onClick}
-    className="bg-surface-container-low p-6 rounded-lg border-l-2 border-primary-container relative overflow-hidden group reveal-up hover:cursor-pointer hover:bg-surface-container-highest"
+    className="bg-secondary-container  p-6 rounded-lg  dark:border-l-3 dark:border-primary-container relative overflow-hidden group reveal-up hover:cursor-pointer hover:scale-105 transition-all"
     style={{ animationDelay: delay }}
   >
     <div className="flex justify-between items-start mb-4">
@@ -856,19 +873,19 @@ const KPICard = ({
         {icon}
       </span>
       {badge ? (
-        <span className="bg-primary-container/20 text-primary-container text-[8px] px-2 py-0.5 rounded font-bold uppercase">
+        <span className="bg-primary-container text-secondary-container text-xs px-2 py-0.5 rounded font-bold uppercase">
           {badge}
         </span>
       ) : (
-        <span className={`text-[10px] font-headline font-bold ${trendColor}`}>
+        <span className={`text-sm font-headline font-bold ${trendColor}`}>
           {trend}
         </span>
       )}
     </div>
-    <p className="text-[10px] font-headline font-bold uppercase tracking-widest text-on-surface/40 mb-1">
+    <p className="text-xs font-headline font-bold uppercase tracking-widest text-white/90 mb-1">
       {label}
     </p>
-    <h3 className="text-3xl font-black font-headline tracking-tighter">
+    <h3 className="text-3xl text-white/90 font-black font-headline tracking-tighter">
       {value}
     </h3>
     <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -880,7 +897,7 @@ const KPICard = ({
 const LegendItem = ({ color, label }) => (
   <div className="flex items-center space-x-1">
     <div className={`w-3 h-3 ${color} rounded-full`}></div>
-    <span className="text-[10px] font-headline font-bold uppercase tracking-widest">
+    <span className="text-sm font-headline font-bold uppercase tracking-widest">
       {label}
     </span>
   </div>
@@ -889,10 +906,10 @@ const LegendItem = ({ color, label }) => (
 const ProgressBar = ({ label, value }) => (
   <div>
     <div className="flex justify-between mb-2">
-      <span className="text-[10px] font-headline font-bold uppercase tracking-widest opacity-60">
+      <span className="text-sm text-white/90 font-headline font-bold uppercase tracking-widest opacity-90">
         {label}
       </span>
-      <span className="text-[10px] font-headline font-bold text-primary-container">
+      <span className="text-sm font-headline font-bold text-white/90">
         {value}
       </span>
     </div>
@@ -916,39 +933,36 @@ const TableRow = ({
   img,
   onClick,
 }) => (
-  <tr
-    onClick={onClick}
-    className="hover:bg-surface-container-highest/20 transition-colors group cursor-pointer"
-  >
-    <td className="px-6 py-4">
-      <p className="text-xs font-mono">{date}</p>
-      <p className="text-[10px] opacity-40">{time}</p>
+  <tr onClick={onClick} className="transition-colors group cursor-pointer">
+    <td className="px-6 py-4 border-primary-container border-b-2 border-r-2">
+      <p className="text-sm text-white/90 font-bold">{date}</p>
+      <p className="text-sm text-white/90 ">{time}</p>
     </td>
-    <td className="px-6 py-4">
+    <td className="px-6 py-4 border-primary-container border-b-2 border-r-2">
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-6 bg-surface-container-highest rounded-[2px] overflow-hidden flex items-center justify-center">
+        <div className="w-20 h-10 bg-surface-container-highest rounded-[2px] overflow-hidden flex items-center justify-center">
           <img
             className="object-cover w-full h-full transition-all"
             src={img}
             alt=""
           />
         </div>
-        <p className="text-xs font-bold font-headline uppercase tracking-tight">
+        <p className="text-sm font-bold font-headline uppercase tracking-tight">
           {item}
         </p>
       </div>
     </td>
-    <td className="px-6 py-4 text-[10px] font-headline font-medium uppercase tracking-widest opacity-60">
+    <td className="px-6 py-4 border-primary-container border-b-2 border-r-2 text-sm font-headline font-bold uppercase tracking-widest text-center">
       {action}
     </td>
-    <td className="px-6 py-4">
+    <td className="px-6 py-4 border-r-2 border-primary-container border-b-2 text-center">
       <span
-        className={`px-2 py-1 rounded-[2px] ${statusColor} text-[8px] font-bold uppercase tracking-widest`}
+        className={`px-2 py-1  rounded-lg ${statusColor}  text-xs font-bold uppercase tracking-widest`}
       >
         {status}
       </span>
     </td>
-    <td className="px-6 py-4 text-right text-[10px] font-mono opacity-40 group-hover:opacity-100 transition-opacity">
+    <td className="px-6 py-4 border-primary-container border-b-2  text-sm font-bold transition-opacity">
       {refId}
     </td>
   </tr>
@@ -957,15 +971,15 @@ const TableRow = ({
 const InventoryItem = ({ name, price, img }) => (
   <div className="flex items-center space-x-4 p-3 bg-surface-container-highest/20 rounded-[4px] group cursor-pointer hover:bg-surface-container-highest transition-all border border-transparent hover:border-primary-container/20">
     <img
-      className="w-12 h-12 rounded-[2px] object-cover transition-all"
+      className="w-20 h-10 rounded-[2px] object-cover transition-all"
       src={img}
       alt=""
     />
     <div className="flex-1">
-      <p className="text-[13px] font-headline font-bold uppercase tracking-tight truncate">
+      <p className="text-md text-white/90 font-headline font-bold uppercase tracking-tight truncate">
         {name}
       </p>
-      <p className="text-[13px] font-headline text-primary-container font-black tracking-widest uppercase">
+      <p className="text-md font-headline text-primary-container font-black tracking-widest uppercase">
         {price}
       </p>
     </div>
