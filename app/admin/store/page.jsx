@@ -89,15 +89,6 @@ export default function StorePage() {
 
       setSelectedItem(matchedItem);
       setIsOpen(true);
-
-      // const { error } = await supabase
-      //   .from("Inventory")
-      //   .update({ stock: matchedItem.stock - 1 })
-      //   .eq("barcode", parseInt(scannedBarCode));
-
-      // if (error) throw error;
-
-      // addSales(matchedItem.id);
     } catch (error) {
       console.log(error);
     }

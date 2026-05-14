@@ -36,6 +36,7 @@ function ProductDetail() {
   const [similarProducts, setSimilarProducts] = useState([]); // for similar products analytics
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [commentDB, setCommentDB] = useState([]);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -111,6 +112,45 @@ function ProductDetail() {
     checkUser(); // calls the checkUser function
   }, []);
 
+  useEffect(() => {
+    if (!productId) return;
+
+    const getCommentsAuto = async () => {
+      const { data, error } = await supabase
+        .from("Ratings")
+        .select(
+          `
+  id,
+  product_id,
+  user_id,
+  comment,
+  rating,
+  created_at,
+  Inventory!product_id (
+    id,
+    item_name,
+    brand
+  ),
+  Users (
+    id,
+    Customer (
+      firstname,
+      lastname
+    )
+  )
+`,
+        )
+        .eq("product_id", productId);
+
+      if (error) throw error;
+      setCommentDB(data || []);
+      console.log(data);
+      setComment("");
+      setRating(1);
+    };
+    getCommentsAuto();
+  }, [productId]);
+
   // for product reservation
   const productReservation = () => {
     if (typeof window !== "undefined" && window.gtag) {
@@ -183,6 +223,80 @@ function ProductDetail() {
     } catch (error) {
       console.error("Reservation Failed: ", error.message);
       showToast("Failed to process reservation. Try again later", "error");
+    }
+  };
+
+  const getComments = async (product_id) => {
+    try {
+      const { data, error } = await supabase
+        .from("Ratings")
+        .select(
+          `
+  id,
+  product_id,
+  user_id,
+  comment,
+  rating,
+  created_at,
+  Inventory!product_id (
+    id,
+    item_name,
+    brand
+  ),
+  Users (
+    id,
+    Customer (
+      firstname,
+      lastname
+    )
+  )
+`,
+        )
+        .eq("product_id", product_id);
+
+      if (error) throw error;
+      setCommentDB(data || []);
+      console.log(data);
+      setComment("");
+      setRating(1);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const insertComment = async (rating, comment) => {
+    try {
+      if (!user) {
+        // is user is not logged in
+        showToast("You must login first to comment on this product", "error");
+        const captureCurrentPath =
+          window.location.pathname + window.location.search; // capture current page url with product id
+        setTimeout(() => {
+          router.push(
+            // pass the captured current path url to login page
+            `/customer/auth/login?redirectTo=${encodeURIComponent(captureCurrentPath)}`,
+          );
+        }, 4000);
+        return;
+      }
+
+      if (rating === 0 || !comment) return;
+
+      const { error } = await supabase.from("Ratings").insert({
+        product_id: productId,
+        user_id: user.id,
+        comment: comment,
+        rating: rating,
+      });
+
+      if (error) throw error;
+
+      getComments(productId);
+      showToast("Comment Added", "success");
+
+      console.log(rating, comment);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -334,6 +448,7 @@ function ProductDetail() {
                 <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
                   Provide Comment
                 </label>
+                <button>edit button</button>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
@@ -342,9 +457,35 @@ function ProductDetail() {
                 />
               </div>
 
-              <button className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]">
+              <button
+                className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]"
+                onClick={() => insertComment(rating, comment)}
+              >
                 Submit Review
               </button>
+            </div>
+            <div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commentDB.map((comments) => (
+                    <tr key={comments.id}>
+                      <td>
+                        {comments.Users?.Customer?.[0]?.firstname}{" "}
+                        {comments.Users?.Customer?.[0]?.lastname}
+                      </td>
+                      <td>{comments.rating}</td>
+                      <td>{comments.comment}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

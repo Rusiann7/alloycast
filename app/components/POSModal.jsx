@@ -8,8 +8,8 @@ export default function POSModal({
   selectedItem,
   onPurchase,
 }) {
-  const [userName, setUserName] = useState(null);
-  const [emailAddr, setEmailAddr] = useState(null);
+  const [userName, setUserName] = useState("");
+  const [emailAddr, setEmailAddr] = useState("");
 
   const handleConfirm = () => {
     onPurchase({ userName, emailAddr });
