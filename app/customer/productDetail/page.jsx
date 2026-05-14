@@ -263,6 +263,8 @@ function ProductDetail() {
         return;
       }
 
+      if (rating === 0 || !comment) return;
+
       const { error } = await supabase.from("Ratings").insert({
         product_id: productId,
         user_id: user.id,
@@ -426,6 +428,7 @@ function ProductDetail() {
                 <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
                   Provide Comment
                 </label>
+                <button>edit button</button>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}

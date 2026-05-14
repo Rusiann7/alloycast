@@ -582,8 +582,8 @@ export default function AdminReservations() {
                   Customer Notes
                 </label>
                 <div className="p-5 bg-[#161616] border border-white/[0.03] text-sm italic text-white/70 rounded-[2px] border-l-2 border-white/10">
-                  "Please ensure the box is in mint condition. For museum
-                  display."
+                  &quot Please ensure the box is in mint condition. For museum
+                  display. &quot
                 </div>
               </div>
               <div>
