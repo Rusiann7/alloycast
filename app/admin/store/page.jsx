@@ -173,13 +173,13 @@ export default function StorePage() {
                 }}
                 className={`pb-5 text-md font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
                   activeTab === tab
-                    ? "text-primary-container opacity-100"
+                    ? "text-secondary-container opacity-100"
                     : "text-font-color opacity-40 hover:opacity-80"
                 }`}
               >
                 {tab}
                 {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-primary-container animate-scale-in" />
+                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-secondary-container animate-scale-in" />
                 )}
               </button>
             ))}

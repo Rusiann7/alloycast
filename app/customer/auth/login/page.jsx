@@ -230,7 +230,7 @@ function LoginContent() {
             </p>
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-6 border border-gray-300"
+              className="w-full flex items-center justify-center gap-3 shadow-lg/30  bg-white hover:scale-105 transition-all text-black font-bold py-3 px-4 rounded-lg  mb-6 border border-gray-300"
               onClick={googleLogin}
             >
               <img
@@ -243,7 +243,7 @@ function LoginContent() {
               </span>
             </button>
 
-            <button className="w-full bg-primary-container rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:scale-105 hover:text-white/90 transition-all transform active:scale-[0.98]">
+            <button className="w-full bg-primary-container shadow-lg/30 rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:scale-105  transition-all transform active:scale-[0.98]">
               LOGIN
             </button>
           </form>

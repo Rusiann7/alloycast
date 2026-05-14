@@ -283,7 +283,9 @@ export default function AdminReservations() {
                   setCurrentPage(1);
                 }}
                 className={`pb-5  text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
-                  activeTab === tab ? "text-font-color" : "text-font-color"
+                  activeTab === tab
+                    ? "text-secondary-container"
+                    : "text-font-color opacity-40 hover:opacity-80"
                 }`}
               >
                 {tab}

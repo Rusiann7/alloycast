@@ -112,7 +112,7 @@ export default function LandingPageNavbar() {
             </button>
 
             {!user ? (
-              <button className="hidden lg:block bg-secondary-container hover:scale-105 text-font-color  text-xs font-black uppercase tracking-widest px-6 h-10 rounded-lg ">
+              <button className="hidden lg:block bg-secondary-container hover:scale-105 text-white/90 drop-shadow-lg/30 transition-all  text-xs font-black uppercase tracking-widest px-6 h-10 rounded-lg ">
                 <Link href="/customer/auth/login">Log In</Link>
               </button>
             ) : (
