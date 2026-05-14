@@ -67,11 +67,11 @@ export default function AdminReservations() {
             status: reservation.status || "Pending",
             statusColor:
               reservation.status === "Approved"
-                ? "bg-green-500/10 text-green-400 border-green-500/20"
+                ? "bg-green-700 text-white/90 border-green-500/20"
                 : reservation.status === "Rejected" ||
                     reservation.status === "Cancelled"
-                  ? "bg-red-500/10 text-red-400 border-red-500/20"
-                  : "bg-secondary-container/10 text-secondary-container border-secondary-container/20",
+                  ? "bg-red-400/50 text-red-300 border-red-500/20"
+                  : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
               reservation.status === "Approved"
                 ? "bg-green-500"
@@ -198,9 +198,8 @@ export default function AdminReservations() {
         if (res.id === reservationId) {
           const isApproved = newStatus === "Approved";
           const isRejected = newStatus === "Rejected";
-          let statusColor =
-            "bg-secondary-container/10 text-secondary-container border-secondary-container/20";
-          let statusDot = "bg-secondary-container";
+          let statusColor = "bg-white/5 text-white/60 border-white/10";
+          let statusDot = "bg-white/40";
           if (isApproved) {
             statusColor = "bg-green-500/10 text-green-400 border-green-500/20";
             statusDot = "bg-green-500";
@@ -236,20 +235,22 @@ export default function AdminReservations() {
         className={`lg:ml-64 pt-24 lg:pt-10 px-10 pb-12 transition-all duration-500 ${isDrawerOpen ? "lg:mr-[450px]" : ""}`}
       >
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
+        <div className="bg-background  text-font-color flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
           <div className="mb-14 reveal-up">
-            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none">
+            <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
               RESERVATIONS
             </h3>
             <div className="flex items-center gap-4">
-              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
+              <p className="text-sm font-headline font-bold uppercase tracking-[0.25em] text-font-color">
                 TOTAL RESREVATIONS:{" "}
-                <span className="text-white">{reservation.length}</span>{" "}
+                <span className="text-font-color">
+                  {reservation.length}
+                </span>{" "}
               </p>
-              <div className="w-1 h-1 bg-white/20 rounded-full" />
-              <p className="text-[13px] font-headline font-bold uppercase tracking-[0.25em] text-white/40">
+              <div className="w-1 h-1 bg-secondary-container rounded-full" />
+              <p className="text-sm font-headline font-bold uppercase tracking-[0.25em] text-font-color">
                 PENDING RESERVATIONS:{" "}
-                <span className="text-primary-container">
+                <span className="text-font-color">
                   {reservation.filter((res) => res.status === "Pending").length}
                 </span>
               </p>
@@ -258,7 +259,7 @@ export default function AdminReservations() {
           <div className="relative group">
             <button
               onClick={exportToExcel}
-              className="flex items-center gap-3 bg-primary-container px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:bg-secondary-container transition-all rounded-lg group relative overflow-hidden"
+              className="flex items-center gap-3 bg-primary-container shadow-lg/30 px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:scale-105 transition-all rounded-lg group relative overflow-hidden"
             >
               <span className="material-symbols-outlined text-lg">
                 download
@@ -270,7 +271,7 @@ export default function AdminReservations() {
 
         {/* Status Tabs */}
         <div
-          className="flex items-center gap-10 border-b border-white/5 mb-10 overflow-x-auto scrollbar-hide reveal-up"
+          className="flex items-center gap-10  mb-10 overflow-x-auto scrollbar-hide reveal-up"
           style={{ animationDelay: "0.1s" }}
         >
           {["All Items", "Pending", "Approved", "Rejected", "Cancelled"].map(
@@ -281,10 +282,8 @@ export default function AdminReservations() {
                   setActiveTab(tab);
                   setCurrentPage(1);
                 }}
-                className={`pb-5 text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
-                  activeTab === tab
-                    ? "text-primary-container"
-                    : "text-on-surface/30 hover:text-white"
+                className={`pb-5  text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
+                  activeTab === tab ? "text-font-color" : "text-font-color"
                 }`}
               >
                 {tab}
@@ -292,7 +291,7 @@ export default function AdminReservations() {
                   <span className="ml-2 w-2 h-2 rounded-full bg-secondary-container inline-block" />
                 )}
                 {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-primary-container animate-scale-in" />
+                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-secondary-container animate-scale-in" />
                 )}
               </button>
             ),
@@ -301,16 +300,13 @@ export default function AdminReservations() {
 
         {/* Reservations Table */}
         <div
-          className="bg-[#111111]/40 border border-white/[0.03] rounded-[2px] overflow-hidden reveal-up"
+          className="bg-secondary-container rounded-lg shadow-lg/30 overflow-hidden reveal-up"
           style={{ animationDelay: "0.3s" }}
         >
           <div className="overflow-x-auto ">
             <table className="w-full text-left border-collapse">
               <thead className="text-center">
-                <tr className="bg-[#131313] border-b border-white/[0.03]">
-                  {/* <th className="p-6 w-16 text-center">
-                    <Checkbox />
-                  </th> */}
+                <tr className="bg-input-field">
                   <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                     Customer Details
                   </th>
@@ -392,7 +388,7 @@ export default function AdminReservations() {
                       </td>
                       <td className="p-6">
                         <span
-                          className={`inline-flex items-center gap-3 px-4 py-2 ${res.statusColor} text-md font-black uppercase tracking-widest rounded-[1px] border`}
+                          className={`inline-flex items-center gap-3 px-4 py-2 ${res.statusColor} text-md font-black uppercase tracking-widest rounded-lg border`}
                         >
                           <span
                             className={`w-2 h-2 rounded-full ${res.statusDot} animate-pulse`}
@@ -407,10 +403,10 @@ export default function AdminReservations() {
                       >
                         <div className="flex items-center justify-center gap-2">
                           {/* Status Update Action Dropdown */}
-                          <div className="flex text-center">
+                          <div className="flex text-center gap-2">
                             {/* --- Approve Button --- */}
                             <button
-                              className="w-9 h-9 flex items-center justify-center hover:bg-green-500/10 transition-colors rounded-[2px] text-green-500 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                              className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
                               disabled={
                                 res.status === "Approved" ||
                                 res.status === "Rejected"
@@ -433,7 +429,7 @@ export default function AdminReservations() {
 
                             {/* --- Reject Button --- */}
                             <button
-                              className="w-9 h-9 flex items-center justify-center hover:bg-red-500/10 transition-colors rounded-[2px] text-red-500 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                              className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
                               disabled={
                                 res.status === "Approved" ||
                                 res.status === "Rejected"
@@ -450,7 +446,7 @@ export default function AdminReservations() {
                               title="Reject Reservation"
                             >
                               <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
-                                front_hand
+                                close
                               </span>
                             </button>
                           </div>
@@ -470,7 +466,7 @@ export default function AdminReservations() {
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/5 text-white/90 textmd hover:bg-white/50 transition-colors disabled:opacity-20"
                 >
                   <span className="material-symbols-outlined text-md">
                     chevron_left
@@ -478,13 +474,13 @@ export default function AdminReservations() {
                 </button>
 
                 {/* Page Indicator */}
-                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
+                <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-container text-black  font-black text-md">
                   {currentPage}
                 </button>
 
                 <button
                   onClick={() => setCurrentPage((prev) => prev + 1)} // (Add check for total pages if you want)
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/5 text-white/90 text-md hover:bg-white/50 hover:text-white transition-colors"
                 >
                   <span className="material-symbols-outlined text-md">
                     chevron_right

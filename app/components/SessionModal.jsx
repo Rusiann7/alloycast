@@ -10,20 +10,14 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
         onClick={onClose}
       />
 
-      <div className="bg-[#131313] border border-white/10 w-full max-w-sm rounded-xl overflow-hidden shadow-2xl animate-reveal-up relative z-10">
-        <div className="pt-10 pb-6 flex justify-center">
-          <div className="w-20 h-20 bg-[#C8102E]/10 rounded-full flex items-center justify-center border border-[#C8102E]/20">
-            <span className="material-symbols-outlined text-[#C8102E] text-4xl">
-              logout
-            </span>
-          </div>
-        </div>
+      <div className="bg-background  w-full max-w-sm rounded-xl overflow-hidden shadow-2xl animate-reveal-up relative z-10">
+        <div className="pt-10 pb-6 flex justify-center"></div>
 
         <div className="px-8 text-center space-y-2">
-          <h3 className="font-headline font-black uppercase italic tracking-[0.2em] text-white text-xl">
+          <h3 className="font-headline font-black uppercase italic tracking-[0.2em] text-font-color text-2xl">
             Confirm Logout
           </h3>
-          <p className="font-body text-[#A8A8A0] text-sm leading-relaxed">
+          <p className="font-body text-secondary-container text-md leading-relaxed">
             Are you sure you want to logout?
           </p>
         </div>
@@ -31,13 +25,13 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
         <div className="p-8 flex gap-3">
           <button
             onClick={onClose}
-            className="w-full py-4 border border-white/10 rounded-xl text-[#A8A8A0] font-headline font-black uppercase text-[11px] tracking-[0.2em] hover:text-white transition-colors"
+            className="w-full py-4 bg-secondary-container text-white/90 rounded-lg font-headline font-black uppercase text-sm tracking-[0.2em] hover:bg-primary-container hover:text-black/90 hover:scale-105 transition-colors"
           >
             No
           </button>
           <button
             onClick={onConfirm}
-            className="w-full py-4 bg-primary-container text-black/90 font-headline font-black uppercase text-[11px] tracking-[0.2em] hover:bg-secondary-container hover:text-white/90 transition-all duration-300 rounded-lg"
+            className="w-full py-4 bg-primary-container text-black/90 font-headline font-black uppercase text-sm tracking-[0.2em] hover:bg-secondary-container hover:scale-105 transition-all duration-300 rounded-lg"
           >
             Yes
           </button>

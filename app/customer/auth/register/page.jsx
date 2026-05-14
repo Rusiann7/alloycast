@@ -3,11 +3,29 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import bcrypt from "bcryptjs";
 import Toast from "../../../components/Toast";
 import TermsModal from "../../../components/TermsModal";
 import DataPrivacyModal from "../../../components/DataPrivacyModal";
 import { createClient } from "../../../../lib/supabase/client";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../../components/Toast"), {
+  ssr: false,
+});
+
+const DynamicTermsModal = dynamic(
+  () => import("../../../components/TermsModal"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicDataPrivacyModal = dynamic(
+  () => import("../../../components/DataPrivacyModal"),
+  {
+    ssr: false,
+  },
+);
 export default function RegisterPage() {
   const supabase = createClient();
   const router = useRouter(); // pang navigate to sa login page kung successfull na login
@@ -172,14 +190,14 @@ export default function RegisterPage() {
   return (
     <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
       {/* Reusable Toast Notification */}
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
 
       {/* Terms of Service Modal */}
-      <TermsModal
+      <DynamicTermsModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         onAgree={() => {
@@ -189,7 +207,7 @@ export default function RegisterPage() {
       />
 
       {/* Data Privacy Modal */}
-      <DataPrivacyModal
+      <DynamicDataPrivacyModal
         isOpen={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
         onAgree={() => {

@@ -2,9 +2,9 @@ export default function CriticalStockModal({ isOpen, onClose, items }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#0F0F0F] border border-white/10 w-full max-w-6xl rounded-lg p-8 flex flex-col max-h-[90vh]">
+      <div className="bg-background w-full max-w-6xl rounded-lg p-8 flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center mb-6 shrink-0">
-          <h4 className="text-xl font-black font-headline uppercase italic text-primary-container">
+          <h4 className="text-xl font-black font-headline uppercase italic text-font-color">
             Critical Stock Alert
           </h4>
           <button
@@ -16,20 +16,20 @@ export default function CriticalStockModal({ isOpen, onClose, items }) {
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {items.length > 0 ? (
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg overflow-x-auto">
-              <table className="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
+            <div className=" bg-white/[0.02]  border border-secondary-container  rounded-lg  overflow-x-auto">
+              <table className="w-full text-left border-collapse whitespace-nowrap min-w-[600px] ">
                 <thead>
                   <tr className="border-b border-white/[0.05] bg-black/40 ">
-                    <th className="px-6 py-4 text-md font-black font-headline uppercase tracking-[0.2em] text-primary-container">
+                    <th className="px-6 py-4 text-md text-center font-black font-headline uppercase tracking-[0.2em] text-primary-container">
                       Product
                     </th>
-                    <th className="px-6 py-4 text-md font-black font-headline uppercase tracking-[0.2em] text-primary-container">
+                    <th className="px-6 py-4 text-md  text-center font-black font-headline uppercase tracking-[0.2em] text-primary-container">
                       Brand
                     </th>
-                    <th className="px-6 py-4  text-md font-black font-headline uppercase tracking-[0.2em] text-primary-container">
+                    <th className="px-6 py-4  text-md text-center font-black font-headline uppercase tracking-[0.2em] text-primary-container">
                       Current Stock
                     </th>
-                    <th className="px-6 py-4  text-md font-black font-headline uppercase tracking-[0.2em] text-primary-container">
+                    <th className="px-6 py-4  text-md text-center font-black font-headline uppercase tracking-[0.2em] text-primary-container">
                       Reorder At
                     </th>
                   </tr>

@@ -3,7 +3,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/client";
-import Toast from "../../../components/Toast";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../../components/Toast"));
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -142,7 +144,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand">
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
@@ -175,39 +177,39 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Right Side: Form */}
-        <div className="p-8 md:p-12 flex flex-col justify-center bg-surface">
+        <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary-container">
           <div className="mb-8">
-            <h2 className="text-2xl font-headline font-black uppercase italic mb-2">
+            <h2 className="text-2xl text-primary-container font-headline  uppercase italic mb-2">
               LOGIN YOUR ADMIN ACCOUNT
             </h2>
-            <p className="text-xs text-[#A8A8A0] uppercase tracking-widest">
+            <p className="text-sm text-white/90 uppercase tracking-widest">
               Enter your credentials to access the inventory
             </p>
           </div>
 
           <form className="space-y-6" onSubmit={loginAccount}>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
-                EMAIL
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
+                EMAIL ADDRESS
               </label>
               <input
                 type="email"
-                placeholder="EMAIL ADDRESS"
-                className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg  px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight"
+                placeholder="example@gmail.com..."
+                className="w-full bg-input-field dark:border-b dark:border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                 name="email"
                 value={loginForm.email}
                 onChange={getInputValue}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#A8A8A0] mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
                 Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-highest border-b border-white/10 rounded-lg px-4 py-3 text-sm focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                  className="w-full bg-input-field dark:border-b dark:border-primary-container  rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
                   name="password"
                   value={loginForm.password}
                   onChange={getInputValue}
@@ -224,7 +226,7 @@ export default function AdminLoginPage() {
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+              <p className="text-xs text-white/90 uppercase tracking-widest text-center">
                 Didn't receive the email?{" "}
                 <button
                   type="button"
@@ -244,17 +246,17 @@ export default function AdminLoginPage() {
                   alt="Google Logo"
                   className="w-5 h-5"
                 />
-                <span className="uppercase text-[10px] tracking-widest font-black">
+                <span className="uppercase text-xs tracking-widest font-black">
                   Sign in with Google
                 </span>
               </button>
-              <button className="w-full rounded-lg bg-primary-container text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-white/90 transition-all transform active:scale-[0.98]">
+              <button className="w-full bg-primary-container rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:scale-105  transition-all transform active:scale-[0.98]">
                 LOGIN
               </button>
             </div>
           </form>
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-            <p className="text-[10px] text-[#A8A8A0] uppercase tracking-widest text-center">
+            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
               Add Admin User?{" "}
               <Link
                 href="/admin/auth/register"

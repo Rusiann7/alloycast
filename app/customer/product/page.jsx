@@ -1,10 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ProductCard from "../../components/ProductCard";
-import CustomerFooter from "../../components/CustomerFooter";
 import { createClient } from "../../../lib/supabase/client";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 
+const DynamicProductCards = dynamic(
+  () => import("../../components/ProductCard"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicFooter = dynamic(() => import("../../components/CustomerFooter"), {
+  ssr: false,
+});
 export default function Product() {
   const [inventory, setInventory] = useState([]);
   const [searchQuery, setSearchQuery] = useState(""); // for searching products
@@ -84,11 +94,14 @@ export default function Product() {
     <div className="bg-background text-on-surface font-body min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
       <header className="relative py-28 px-12 lg:px-20 border-b border-white/5 overflow-hidden reveal-up">
         <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/70 to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 w-full  h-full pointer-events-none   grayscale animate-drive-in drop-shadow-lg/50">
-          <img
+        <div className="absolute right-0 top-0 w-full  h-full pointer-events-none  grayscale animate-drive-in drop-shadow-lg/50">
+          <Image
             className="w-full h-full object-cover "
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-iBE2bThpejE-k0yVjvD9_9bvpDi5E3-AIaZyaBgX3WPkoe0yeJqYYJiLR6JCLDq3vnmf9gRVTcYGP6rugVRMCVEGdqa5PtYQMotdtaVumU-aptncRp3o4KMv80mCpzkhu6pRz2Y7EXRwz2tb_tzNhTP79N5vKOqra706nIC6yxKh4_9faXMzKGTW5bC44JQUOglYXXBYJrh1xRWnR3ic2a5ACn4QsnLJi5euAjQ63XxuarlEUO048Nv5uAMWPT1YxMjhUDQEtJM"
+            src="/lamaghini.png"
             alt="Hero BG"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw" // 4. Add sizes for better optimization
           />
         </div>
 
@@ -106,7 +119,7 @@ export default function Product() {
       </header>
 
       {/* Main Catalog View */}
-      <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32">
+      <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32 ">
         {/* Sidebar Filters */}
         <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit sticky top-[100px] reveal-up drop-shadow-lg/50">
           <h2 className="font-headline text-2xl text-font-color dark:text-foreground font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
@@ -200,9 +213,9 @@ export default function Product() {
           <div className="flex-1">
             {loading ? (
               /* 1. THE LOADING STATE */
-              <div className="w-full py-32 flex flex-col items-center justify-center border border-white/5 bg-[#1A1A1A] rounded-sm reveal-up">
-                <div className="size-12 border-4 border-primary-container border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="font-headline text-2xl font-black uppercase italic text-white/40 animate-pulse">
+              <div className="w-full py-32 flex flex-col items-center justify-center  bg-background rounded-sm reveal-up">
+                <div className="size-12 border-4 border-secondary-container border-t-transparent rounded-full animate-spin mb-6"></div>
+                <h3 className="font-headline text-2xl font-black uppercase italic text-font-color animate-pulse">
                   Loading Products...
                 </h3>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-white/10 mt-2">
@@ -210,18 +223,18 @@ export default function Product() {
                 </p>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="w-full py-32 flex flex-col items-center justify-center border border-white/5 bg-[#1A1A1A] rounded-sm reveal-up">
-                <h3 className="font-headline text-2xl font-black uppercase  text-white/80">
+              <div className="w-full py-32 flex flex-col items-center justify-center bg-background rounded-lg reveal-up">
+                <h3 className="font-headline text-2xl font-black uppercase  text-white-font-color">
                   Product not available
                 </h3>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-white/70 mt-2">
+                <p className="text-sm font-bold uppercase tracking-[0.3em] text-font-color mt-2">
                   Adjust your search or brand filters
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 reveal-up">
                 {currentProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <DynamicProductCards key={product.id} product={product} />
                 ))}
               </div>
             )}
@@ -266,7 +279,7 @@ export default function Product() {
       </main>
 
       {/* Footer */}
-      <CustomerFooter />
+      <DynamicFooter />
 
       <style jsx global>{`
         .reveal-up {

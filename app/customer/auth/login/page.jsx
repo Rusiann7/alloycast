@@ -5,6 +5,9 @@ import { useState } from "react";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../../components/Toast"));
 
 function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
@@ -134,7 +137,7 @@ function LoginContent() {
 
   return (
     <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand">
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
@@ -240,7 +243,7 @@ function LoginContent() {
               </span>
             </button>
 
-            <button className="w-full bg-primary-container rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:bg-secondary-container hover:text-white/90 transition-all transform active:scale-[0.98]">
+            <button className="w-full bg-primary-container rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:scale-105 hover:text-white/90 transition-all transform active:scale-[0.98]">
               LOGIN
             </button>
           </form>

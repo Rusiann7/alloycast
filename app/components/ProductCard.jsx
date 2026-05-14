@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function ProductCard({ product, tag, tagColor, featured }) {
   if (!product) return null; // to prevent crash if no hardcoded products
@@ -12,12 +13,14 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
   };
 
   return (
-    <div className="flex flex-col h-full drop-shadow-lg/30 bg-secondary-container rounded-lg overflow-hidden group hover:bg-secondary-background hover:cursor-pointer transition-all duration-300">
+    <div className="flex flex-col h-full drop-shadow-lg/30 bg-secondary-container rounded-lg overflow-hidden group hover:bg-secondary-background hover:cursor-pointer transition-colors duration-300 isolate">
       <div className="relative aspect-[4/3]  overflow-hidden">
-        <img
+        <Image
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           src={product.item_image || "/placeholder-car.png"}
           alt={product.item_name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 transform-gpu"
         />
         {(tag || product.category) && (
           <div className="absolute top-4 left-4">
