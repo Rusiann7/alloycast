@@ -73,29 +73,28 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-hidden select-none">
+    <div className="bg-background text-font-color min-h-screen font-body relative overflow-hidden select-none">
       <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
           <div className="mb-10 sm:mb-14 reveal-up">
-            <h3 className="text-4xl sm:text-6xl text-primary-container font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
+            <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
               REVIEWS
             </h3>
+            <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+              TOTAL ITEMS:{" "}
+              <span className="text-font-color">{totalReviews}</span>
+            </p>
           </div>
-          <div className="hidden sm:block w-1 h-1 bg-white/20 rounded-full" />
-          <p className="text-[11px] sm:text-[13px] font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-white/40">
-            TOTAL ITEMS:{" "}
-            <span className="text-primary-container">{totalReviews}</span>
-          </p>
 
           {/* Review Table */}
           <div
-            className="bg-[#111111]/40 border border-white/[0.03] rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+            className="bg-secondary-container shadow-lg/30 rounded-lg  overflow-x-auto reveal-up scrollbar-hide"
             style={{ animationDelay: "0.2s" }}
           >
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="border-b border-white/[0.03] bg-[#131313]">
+                <tr className="bg-input-field">
                   <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                     PRODUCT NAME
                   </th>
@@ -120,18 +119,20 @@ export default function FeedbackPage() {
               <tbody className="divide-y divide-white/[0.02]">
                 {commentDB.map((comments) => (
                   <tr key={comments.id}>
-                    <td className="px-8 py-5 text-center">
+                    <td className="px-8 py-5 text-center text-white/90">
                       {comments.Inventory?.item_name}
                     </td>
-                    <td className="px-8 py-5 text-center">
+                    <td className="px-8 py-5 text-center text-white/90">
                       {comments.Inventory?.brand}
                     </td>
-                    <td className="px-8 py-5 text-center">
+                    <td className="px-8 py-5 text-center text-white/90">
                       {comments.Users?.Customer?.[0]?.firstname}{" "}
                       {comments.Users?.Customer?.[0]?.lastname}
                     </td>
-                    <td className="px-8 py-5 text-center">{comments.rating}</td>
-                    <td className="px-8 py-5 text-center">
+                    <td className="px-8 py-5 text-center text-white/90">
+                      {comments.rating}
+                    </td>
+                    <td className="px-8 py-5 text-center text-white/90">
                       {comments.comment}
                     </td>
                     <td className="px-8 py-5">

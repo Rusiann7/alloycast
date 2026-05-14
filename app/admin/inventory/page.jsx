@@ -442,11 +442,11 @@ export default function AdminInventory() {
                 ) : (
                   <tr>
                     <td colSpan="7" className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center gap-4 opacity-20">
+                      <div className="flex flex-col items-center gap-4 opacity-80">
                         <span className="material-symbols-outlined text-6xl">
                           inventory_2
                         </span>
-                        <p className="text-xl font-headline font-black uppercase tracking-[0.2em]">
+                        <p className="text-xl text-white/90 font-headline font-black uppercase tracking-[0.2em]">
                           Product not available
                         </p>
                       </div>

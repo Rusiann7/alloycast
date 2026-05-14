@@ -102,7 +102,7 @@ export default function AdminSidebar() {
     const clickedLink = linkName === href; // isave sa clickedLink ung linkName then kukunin ung url sa href na naclick
     return (
       <Link
-        className={`flex items-center space-x-3 rounded-lg px-4 py-3 mx-2 transition-all group ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105  hover:drop-shadow-lg/30 hover:opacity-100"}`}
+        className={`flex items-center space-x-3 rounded-lg px-4 py-3 mx-2 transition-all group ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105   hover:opacity-90"}`}
         href={href || "#"}
       >
         <span className="material-symbols-outlined">{icon}</span>
