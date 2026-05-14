@@ -215,25 +215,25 @@ function ProductDetail() {
         .from("Ratings")
         .select(
           `
-          id,
-          product_id,
-          user_id,
-          comment,
-          rating,
-          created_at,
-          Inventory!product_id (
-            id,
-            item_name,
-            brand
-          ),
-          Users (
-            id
-          ),
-          Customer!user_id (
-            firstname,
-            lastname
-          )
-        `,
+  id,
+  product_id,
+  user_id,
+  comment,
+  rating,
+  created_at,
+  Inventory!product_id (
+    id,
+    item_name,
+    brand
+  ),
+  Users (
+    id,
+    Customer (
+      firstname,
+      lastname
+    )
+  )
+`,
         )
         .eq("product_id", product_id);
 
@@ -262,6 +262,8 @@ function ProductDetail() {
         }, 4000);
         return;
       }
+
+      if (rating === 0 || !comment) return;
 
       const { error } = await supabase.from("Ratings").insert({
         product_id: productId,
@@ -426,6 +428,7 @@ function ProductDetail() {
                 <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
                   Provide Comment
                 </label>
+                <button>edit button</button>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}

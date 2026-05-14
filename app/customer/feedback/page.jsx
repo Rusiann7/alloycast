@@ -51,7 +51,7 @@ export default function Feedback() {
       }
 
       if (!comment) {
-        showToast("Please add comment", "success");
+        showToast("Please add comment");
         return;
       }
 

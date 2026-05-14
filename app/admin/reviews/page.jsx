@@ -18,10 +18,9 @@ export default function FeedbackPage() {
 
   const supabase = createClient();
 
-  useEffect(() => {
-    const getCommentsAuto = async () => {
-      const { data, error } = await supabase.from("Ratings").select(
-        `
+  const getCommentsAuto = async () => {
+    const { data, error } = await supabase.from("Ratings").select(
+      `
     id,
     product_id,
     user_id,
@@ -41,14 +40,32 @@ export default function FeedbackPage() {
       )
     )
   `,
-      );
+    );
 
-      if (error) throw error;
-      setCommentDB(data || []);
-      console.log(data);
+    if (error) throw error;
+    setCommentDB(data || []);
+    console.log(data);
+  };
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      await getCommentsAuto();
     };
-    getCommentsAuto();
+    fetchComments();
   }, []);
+
+  const deleteReview = async (reviewId) => {
+    const { error } = await supabase
+      .from("Ratings")
+      .delete()
+      .eq("id", reviewId);
+
+    if (error) throw error;
+    console.log(reviewId);
+
+    await getCommentsAuto();
+    showToast("Review deleted", "success");
+  };
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -120,7 +137,7 @@ export default function FeedbackPage() {
                     <td className="px-8 py-5">
                       <div className="flex items-center justify-center gap-3">
                         <button
-                          // onClick={() => deleteProduct(item.id)}
+                          onClick={() => deleteReview(comments.id)}
                           className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                         >
                           <span className="material-symbols-outlined text-sm">
