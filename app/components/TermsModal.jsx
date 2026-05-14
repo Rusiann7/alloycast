@@ -7,28 +7,28 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm -z-10"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm -z-10"
         onClick={onClose}
       />
 
       {/* Modal Content */}
-      <div className="bg-surface border border-white/10 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl animate-reveal-up flex flex-col max-h-[80vh]">
+      <div className="bg-background drop-shadow-lg/30 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl animate-reveal-up flex flex-col max-h-[80vh]">
         {/* Header */}
-        <div className="p-6 border-b border-white/5 bg-primary-container/10 flex justify-between items-center">
+        <div className="p-6  bg-input-field flex justify-between items-center">
           <h3 className="font-headline font-black uppercase italic tracking-widest text-primary-container">
             Terms of Service
           </h3>
           <button
             onClick={onClose}
-            className="text-[#A8A8A0] hover:text-white transition-colors"
+            className="text-white/90  transition-colors"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
         {/* Dummy Content */}
-        <div className="p-6 overflow-y-auto text-sm text-[#A8A8A0] space-y-4 leading-relaxed font-body">
-          <p className="font-bold text-white uppercase italic">
+        <div className="p-6 overflow-y-auto text-sm bg-secondary-container text-white/90 space-y-4 leading-relaxed font-body">
+          <p className="font-bold  text-primary-container uppercase italic">
             1. Acceptance of Terms
           </p>
           <p>
@@ -37,7 +37,7 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
             integrity of our elite diecast community.
           </p>
 
-          <p className="font-bold text-white uppercase italic">
+          <p className="font-bold  text-primary-container uppercase italic">
             2. Account Responsibility
           </p>
           <p>
@@ -45,7 +45,7 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
             actions taken through your account are your responsibility.
           </p>
 
-          <p className="font-bold text-white uppercase italic">
+          <p className="font-bold text-primary-container uppercase italic">
             3. Reservation Policy
           </p>
           <p>
@@ -54,7 +54,7 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
             the Diecast Vault authorities.
           </p>
 
-          <p className="font-bold text-white uppercase italic">
+          <p className="font-bold  text-primary-container uppercase italic">
             4. Code of Conduct
           </p>
           <p>
@@ -64,16 +64,16 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/5 bg-surface-container-high flex gap-3">
+        <div className="p-6 bg-input-field flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-lg py-3 text-[10px] font-black uppercase tracking-widest text-white/90 border border-primary-container outline-none hover:bg-primary-container hover:text-black/90 transition-all"
+            className="flex-1 rounded-lg py-3 text-xs font-black uppercase tracking-widest text-white/90 border border-primary-container outline-none hover:scale-105 transition-all"
           >
             Close
           </button>
           <button
             onClick={onAgree}
-            className="flex-1 rounded-lg py-3 text-[10px] font-black uppercase tracking-widest bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 transition-all"
+            className="flex-1 rounded-lg py-3 text-xs font-black uppercase tracking-widest bg-primary-container text-black/90 hover:scale-105 transition-all"
           >
             I Agree
           </button>

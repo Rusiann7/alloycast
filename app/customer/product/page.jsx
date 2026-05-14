@@ -93,11 +93,11 @@ export default function Product() {
   return (
     <div className="bg-background text-on-surface font-body min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
       <header className="relative py-28 px-12 lg:px-20 border-b border-white/5 overflow-hidden reveal-up">
-        <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/70 to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 w-full  h-full pointer-events-none  grayscale animate-drive-in drop-shadow-lg/50">
+        <div className="absolute inset-0 bg-black/60 to-transparent z-10"></div>
+        <div className="absolute right-0 top-0 w-full  h-full pointer-events-none  animate-drive-in drop-shadow-lg/50">
           <Image
             className="w-full h-full object-cover "
-            src="/lamaghini.png"
+            src="/porsche-grayscale.jpg"
             alt="Hero BG"
             fill
             priority
@@ -179,16 +179,21 @@ export default function Product() {
             className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12 bg-secondary-container backdrop-blur-xl p-8 rounded-lg border border-white/5 reveal-up drop-shadow-lg/50"
             style={{ animationDelay: "0.2s" }}
           >
-            <div className="flex-1 w-full max-w-xl relative group">
-              <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary-container group-focus-within:text-primary-container transition-colors">
-                search
-              </span>
-              <input
-                type="text"
-                className="w-full bg-input-field border-b-2 border-transparent focus:border-primary-container focus:outline-none py-4 pl-14 pr-6 rounded-lg text-md text-white/90 font-headline tracking-widest placeholder:text-white/80 transition-all font-bold"
-                placeholder="SEARCH PRODUCTS"
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex-1 w-full max-w-xl relative">
+              <p className="text-sm font-black uppercase tracking-[0.4em] text-primary-container mb-3 ml-1">
+                Search Products
+              </p>
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 ...">
+                  search
+                </span>
+                <input
+                  type="text"
+                  className="w-full bg-input-field border-b-2 border-transparent focus:border-primary-container focus:outline-none py-4 pl-14 pr-6 rounded-lg text-md text-white/90 font-headline tracking-widest placeholder:text-white/80 transition-all font-bold"
+                  placeholder="Hot Wheels, Bburago, etc..."
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
             <div className="w-full lg:w-64">
               <p className="text-sm font-black uppercase tracking-[0.4em] text-primary-container  mb-3 ml-1">

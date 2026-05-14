@@ -69,7 +69,7 @@ export default function LandingPage() {
              filter drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)] 
              dark:grayscale-75 dark:brightness-90 dark:contrast-[1.1] dark:drop-shadow-none
              opacity-0 animate-drive-in-stop max-w-none lg:max-w-full 
-             dark:lg:[-webkit-box-reflect:below_-225px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
+             dark:[-webkit-box-reflect:below_-225px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
              -translate-y-[20%] lg:translate-y-0"
               src="/nissan-skyline.png"
               fill
@@ -86,13 +86,11 @@ export default function LandingPage() {
             style={{ animationDelay: "0.4s" }}
           >
             <h1 className="font-headline font-black uppercase italic leading-[0.92] text-[clamp(44px,12vw,96px)] tracking-tighter">
-              <span className="block text-font-color dark:text-foreground">
-                Hunt
+              <span className="block text-font-color">Hunt</span>
+              <span className="block text-secondary-container dark:text-primary-container drop-shadow-lg/50">
+                Reserve
               </span>
-              <span className="block text-primary-container">Reserve</span>
-              <span className="block  text-font-color dark:text-foreground">
-                Collect
-              </span>
+              <span className="block  text-font-color ">Collect</span>
             </h1>
           </div>
           {/* Subheadline */}
@@ -108,12 +106,12 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto reveal-up"
             style={{ animationDelay: "0.8s" }}
           >
-            <button className="w-full sm:min-w-[220px] h-[52px] bg-primary-container text-black/60  font-black uppercase tracking-widest text-sm rounded-lg btn-premium">
+            <button className="w-full sm:min-w-[220px] h-[52px] drop-shadow-lg/50 bg-primary-container text-black/60  font-black uppercase tracking-widest text-sm rounded-lg btn-premium">
               <Link href="/customer/product">Browse Products</Link>
             </button>
             <button
               onClick={() => setHowItWorksModal(true)}
-              className="w-full sm:min-w-[220px] h-[52px]  bg-secondary-container text-white  font-black uppercase tracking-widest text-sm rounded-lg btn-premium hover:bg-primary-container hover:text-black/60"
+              className="w-full sm:min-w-[220px] h-[52px]  bg-secondary-container text-white  font-black uppercase tracking-widest text-sm rounded-lg btn-premium drop-shadow-lg/50"
             >
               How It Works
             </button>
@@ -122,7 +120,7 @@ export default function LandingPage() {
           {/* Ticker Section */}
           <div className="mt-16 w-full lg:max-w-[600px] overflow-hidden">
             <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
-              <span className="text-sm uppercase tracking-[0.3em] font-black text-font-color dark:text-foreground">
+              <span className="text-sm uppercase tracking-[0.3em] font-black text-font-color">
                 THE PRODUCTS WE SELL
               </span>
             </div>
@@ -131,7 +129,7 @@ export default function LandingPage() {
                 {[1].map((i) => (
                   <span
                     key={i}
-                    className="flex items-center gap-4 px-4 whitespace-nowrap text-font-color dark:text-primary-container font-black"
+                    className="flex items-center gap-4 px-4 whitespace-nowrap text-font-color font-black"
                   >
                     Hot Wheels{" "}
                     <span className="material-symbols-outlined text-[14px] ">
@@ -170,13 +168,13 @@ export default function LandingPage() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>
-              <h2 className="font-headline font-black text-4xl uppercase italic tracking-tight mb-2 text-font-color dark:text-foreground">
+              <h2 className="font-headline font-black text-4xl uppercase italic tracking-tight mb-2 text-font-color">
                 Top Selling Products
               </h2>
             </div>
             <button
               onClick={() => router.push("/customer/product")}
-              className="group flex items-center gap-2 text-md font-black uppercase tracking-widest text-secondary-container"
+              className="group flex items-center gap-2 text-md font-black uppercase tracking-widest text-font-color"
             >
               View More
               <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
@@ -198,7 +196,7 @@ export default function LandingPage() {
       </section>
 
       {/* Brands Grid */}
-      <section className="bg-surface-container-low py-12 border-t border-white/5">
+      <section className="bg-surface-container-low py-12">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
@@ -212,9 +210,9 @@ export default function LandingPage() {
             ].map((brand) => (
               <div
                 key={brand}
-                className="flex flex-col items-center justify-center gap-3 rounded-lg drop-shadow-lg/50 bg-primary-container p-6 hover:bg-secondary-container transition-all cursor-pointer group"
+                className="flex flex-col items-center justify-center gap-3 rounded-lg drop-shadow-lg/50 bg-primary-container p-6 hover:scale-105 transition-all cursor-pointer group"
               >
-                <span className="material-symbols-outlined text-secondary-container hover:text-primary-container   transition-transform group-hover:scale-110">
+                <span className="material-symbols-outlined text-secondary-container   transition-transform group-hover:scale-110">
                   flare
                 </span>
                 <h4 className="text-[10px]  font-black uppercase tracking-widest text-black text-center">

@@ -364,7 +364,7 @@ function ProductDetail() {
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
             <div className="space-y -12">
               <div>
-                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-[10px] tracking-[0.4em] px-4 py-2  drop-shadow-lg/30 rounded-lg mb-8 uppercase italic">
+                <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-sm tracking-[0.4em] px-4 py-2  drop-shadow-lg/30 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
                 </span>
                 <h1 className="text-[60px] lg:text-[80px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
@@ -380,10 +380,10 @@ function ProductDetail() {
               <div className=" p-6 rounded-lg carbon-noise relative group">
                 <div className="flex justify-between items-end mb-10">
                   <div>
-                    <p className="font-headline text-sm  text-font-color dark:text-foreground  uppercase tracking-[0.5em] mb-3 font-bold">
+                    <p className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
                       ITEM PRICE:
                     </p>
-                    <p className="text-6xl lg:text-6xl font-headline font-black ext-font-color dark:text-foreground  tracking-tighter italic tabular-nums">
+                    <p className="text-6xl lg:text-6xl font-headline font-black ext-font-color  tracking-tighter italic tabular-nums">
                       ₱{Number(product.price).toLocaleString()}
                     </p>
                   </div>
@@ -408,10 +408,10 @@ function ProductDetail() {
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
-                  className={`w-full rounded-lg py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge shadow-2xl ${
+                  className={`w-full rounded-lg py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge drop-shadow-lg/50 ${
                     product.stock === 0
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed grayscale" // 2. "Sold Out" styling
-                      : "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90 active:scale-[0.98]" // regular styling
+                      : "bg-primary-container text-black/90 hover:scale-105 active:scale-[0.98]" // regular styling
                   }`}
                 >
                   {product.stock === 0 ? "Out of Stock" : "Reserve Product"}
@@ -435,7 +435,7 @@ function ProductDetail() {
                       className={`material-symbols-outlined text-4xl transition-all duration-300${
                         rating >= star
                           ? "text-primary-container [font-variation-settings:'FILL'_1]"
-                          : "text-font-color dark:text-foreground hover:text-secondary-container [font-variation-settings:'FILL'_0]"
+                          : "text-font-color hover:text-secondary-container [font-variation-settings:'FILL'_0]"
                       }`}
                     >
                       star
@@ -448,42 +448,82 @@ function ProductDetail() {
                 <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
                   Provide Comment
                 </label>
-                <button>edit button</button>
+                <button className="flex  items-center gap-2 bg-primary-container text-black/90 text-sm p-2 rounded-lg drop-shadow-lg/50 font-bold uppercase  hover:scale-105 active:scale-[0.98] transition-all">
+                  <span className="material-symbols-outlined">edit</span>
+                  Edit
+                </button>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Share your thoughts on performance and quality..."
-                  className="w-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-6 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
+                  className="w-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-4 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
                 />
               </div>
 
               <button
-                className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]"
+                className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105  transition-all active:scale-[0.98]"
                 onClick={() => insertComment(rating, comment)}
               >
                 Submit Review
               </button>
             </div>
-            <div>
-              <table>
+            <div
+              className="mt-12 overflow-x-auto rounded-lg bg-secondary-container p-1 shadow-lg/30 reveal-up"
+              style={{ animationDelay: "0.6s" }}
+            >
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Rating</th>
-                    <th>Comment</th>
+                  <tr className="border-b border-white/10">
+                    <th className="px-6 py-4 font-headline font-black uppercase tracking-widest text-xs text-primary-container">
+                      User
+                    </th>
+                    <th className="px-6 py-4 font-headline font-black uppercase tracking-widest text-xs text-primary-container text-center">
+                      Rating
+                    </th>
+                    <th className="px-6 py-4 font-headline font-black uppercase tracking-widest text-xs text-primary-container">
+                      Comment
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                   {commentDB.map((comments) => (
-                    <tr key={comments.id}>
-                      <td>
-                        {comments.Users?.Customer?.[0]?.firstname}{" "}
-                        {comments.Users?.Customer?.[0]?.lastname}
+                    <tr
+                      key={comments.id}
+                      className="hover:bg-white/5 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-sm text-white/90">
+                          {comments.Users?.Customer?.[0]?.firstname}{" "}
+                          {comments.Users?.Customer?.[0]?.lastname}
+                        </p>
                       </td>
-                      <td>{comments.rating}</td>
-                      <td>{comments.comment}</td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-center items-center gap-1">
+                          <span className="font-black text-sm text-primary-container">
+                            {comments.rating}
+                          </span>
+                          <span className="material-symbols-outlined text-xs text-primary-container [font-variation-settings:'FILL'_1]">
+                            star
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-light text-sm text-white/80 leading-relaxed max-w-md">
+                          {comments.comment}
+                        </p>
+                      </td>
                     </tr>
                   ))}
+                  {commentDB.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="px-6 py-12 text-center text-white/40 font-headline uppercase tracking-widest text-xs italic"
+                      >
+                        No reviews yet. Be the first to share your experience.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -511,7 +551,7 @@ function ProductDetail() {
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-md bg-background  border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-font-color dark:text-foreground my-auto shadow-2xl">
+          <div className="relative w-full max-w-md bg-background  border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-font-color my-auto shadow-2xl">
             {/* Header */}
             <div className="flex justify-between items-start mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">

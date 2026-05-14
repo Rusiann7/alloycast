@@ -436,7 +436,7 @@ export default function RegisterPage() {
             <div className="flex flex-col gap-4">
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
+                className="w-full flex items-center justify-center gap-3 bg-white hover:scale-105 shadow-lg/30  text-black font-bold py-3 px-4 rounded-lg  transition-all mb-2 border border-gray-300"
                 onClick={googleSignUp}
               >
                 <img
@@ -450,9 +450,9 @@ export default function RegisterPage() {
               </button>
               <button
                 disabled={!isAgreed || !isPrivacyAgreed}
-                className={`w-full py-3 px-4 rounded-lg font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
+                className={`w-full py-3 px-4 rounded-lg shadow-lg/30 font-headline font-black uppercase tracking-[0.2em] text-sm transition-all transform active:scale-[0.98] ${
                   isAgreed && isPrivacyAgreed
-                    ? "bg-primary-container text-black/90 hover:bg-secondary-container hover:text-white/90  cursor-pointer"
+                    ? "bg-primary-container text-black/90 hover:scale-105  cursor-pointer"
                     : "bg-input-field text-white/90 opacity-50 cursor-not-allowed"
                 }`}
               >

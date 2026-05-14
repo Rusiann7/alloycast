@@ -192,7 +192,7 @@ export default function Account() {
             <h1 className="font-headline font-black text-4xl lg:text-6xl uppercase italic tracking-tighter leading-[0.9] mb-4 drop-shadow-lg/30">
               {firstName} {lastName}
             </h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm tracking-[0.2em] text-font-color dark:text-foreground">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm tracking-[0.2em] text-font-color">
               <span className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">mail</span>{" "}
                 {email}
@@ -205,7 +205,7 @@ export default function Account() {
           </div>
           <button
             onClick={showLogoutModal}
-            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:border-secondary-container hover:bg-primary-container text-xs text-white/90 hover:text-black/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 drop-shadow-lg/25"
+            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:scale-105 text-xs text-white/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 drop-shadow-lg/25"
           >
             <span className="material-symbols-outlined text-sm">logout</span>
             Sign Out
@@ -247,10 +247,10 @@ export default function Account() {
           >
             <div className="flex flex-col lg:flex-row lg:items-end justify-between border-b border-white/5 pb-6 gap-6">
               <div>
-                <h2 className="font-headline font-black text-2xl sm:text-3xl uppercase italic tracking-tight mb-1 text-primary-container dark:text-secondary-container">
+                <h2 className="font-headline font-black text-2xl sm:text-3xl uppercase italic tracking-tight mb-1 text-font-color">
                   Your Reservations
                 </h2>
-                <p className="text-xs font-black uppercase tracking-widest text-font-color dark:text-foreground sm:text-white/20">
+                <p className="text-xs font-black uppercase tracking-widest text-font-color">
                   Manage and track your diecast reservations status
                 </p>
               </div>
@@ -278,7 +278,7 @@ export default function Account() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredReservations.length === 0 ? (
                 <div className="lg:col-span-2 py-20 text-center border border-dashed border-secondary-container rounded-lg">
-                  <p className="font-headline text-font-color dark:text-foreground uppercase tracking-widest text-md px-6">
+                  <p className="font-headline text-font-color  uppercase tracking-widest text-md px-6">
                     No {filter !== "All" ? filter : ""} Reservations Found
                   </p>
                   <Link
