@@ -4,9 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Toast from "../../components/Toast";
-import ProductCard from "../../components/ProductCard";
-import CustomerFooter from "../../components/CustomerFooter";
 import emailjs from "@emailjs/browser";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -376,7 +373,7 @@ function ProductDetail() {
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-headline font-black text-on-primary dark:text-red-500 uppercase tracking-tight animate-pulse">
-                      {product.stock} STOCKS LEFT
+                      {product.stock} STOCKS LEFT!
                     </p>
                   </div>
                 </div>
@@ -557,7 +554,7 @@ function ProductDetail() {
             <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
               <p className="font-light text-lg sm:text-sm text-on-surface-variant leading-relaxed">
                 How many &nbsp;
-                <span className="text-primary-container dark:text-secondary-container font-bold">
+                <span className="text-white/90 font-bold">
                   {product.item_name}
                 </span>
                 &nbsp; you want to reserve?
@@ -583,10 +580,10 @@ function ProductDetail() {
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg sm:text-md text-on-surface-variant">
+                  <span className="text-lg sm:text-md text-white/90">
                     Product:
                   </span>
-                  <span className="text-lg sm:text-md font-bold text-primary-container dark:text-secondary-container">
+                  <span className="text-lg sm:text-md font-bold text-white/90">
                     {product.item_name}
                   </span>
                 </div>
@@ -604,7 +601,7 @@ function ProductDetail() {
             {/* Action Buttons */}
             <div className="space-y-3 sm:space-y-4">
               <button
-                className="w-full py-4 sm:py-5 md:py-6 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-sm sm:text-base hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
+                className="w-full py-4 sm:py-5 md:py-6 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-sm sm:text-base hover:scale-105  transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
                 onClick={insertReservationToTable}
               >
                 Confirm My Reservation
