@@ -37,6 +37,7 @@ function ProductDetail() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [commentDB, setCommentDB] = useState([]);
+  const [submitBtn, setSubmitBtn] = useState(true);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -112,10 +113,8 @@ function ProductDetail() {
     checkUser(); // calls the checkUser function
   }, []);
 
-  useEffect(() => {
-    if (!productId) return;
-
-    const getCommentsAuto = async () => {
+  const getComments = async (product_id) => {
+    try {
       const { data, error } = await supabase
         .from("Ratings")
         .select(
@@ -140,16 +139,38 @@ function ProductDetail() {
   )
 `,
         )
-        .eq("product_id", productId);
+        .eq("product_id", product_id);
 
       if (error) throw error;
       setCommentDB(data || []);
       console.log(data);
-      setComment("");
-      setRating(1);
-    };
-    getCommentsAuto();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getComments(productId);
   }, [productId]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const userCommented = () => {
+      const userCheck = commentDB.find((item) => item.user_id === user.id);
+
+      if (!userCheck) {
+        setSubmitBtn(true);
+      } else {
+        setSubmitBtn(false);
+        const userComment = commentDB.find((item) => item.user_id === user.id);
+        console.log(userComment?.comment, userComment?.rating);
+        setComment(userComment?.comment);
+        setRating(userComment?.rating);
+      }
+    };
+    userCommented();
+  }, [user, commentDB]);
 
   // for product reservation
   const productReservation = () => {
@@ -226,44 +247,6 @@ function ProductDetail() {
     }
   };
 
-  const getComments = async (product_id) => {
-    try {
-      const { data, error } = await supabase
-        .from("Ratings")
-        .select(
-          `
-  id,
-  product_id,
-  user_id,
-  comment,
-  rating,
-  created_at,
-  Inventory!product_id (
-    id,
-    item_name,
-    brand
-  ),
-  Users (
-    id,
-    Customer (
-      firstname,
-      lastname
-    )
-  )
-`,
-        )
-        .eq("product_id", product_id);
-
-      if (error) throw error;
-      setCommentDB(data || []);
-      console.log(data);
-      setComment("");
-      setRating(1);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const insertComment = async (rating, comment) => {
     try {
       if (!user) {
@@ -323,6 +306,10 @@ function ProductDetail() {
         </p>
       </div>
     );
+  }
+
+  if (!submitBtn) {
+    console.log("Fuck you");
   }
 
   return (
