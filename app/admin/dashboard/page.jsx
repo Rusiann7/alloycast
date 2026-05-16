@@ -556,14 +556,14 @@ export default function AdminDashboard() {
                       border: "none",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    itemStyle={{ color: "var(--primary-container)" }}
+                    itemStyle={{ color: "#22C55E" }}
                     formatter={(value) => `₱${Number(value).toFixed(2)}`}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="var(--primary-container)"
-                    strokeWidth={4}
+                    stroke="#22C55E"
+                    strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorRev)"
                     animationDuration={1500}
