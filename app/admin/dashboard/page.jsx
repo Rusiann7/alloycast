@@ -15,6 +15,20 @@ import {
 } from "recharts";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicCriticalStockModal = dynamic(() => import("../../components/CriticalStockModal"), {
+  ssr: false
+})
+
+const DynamicOrderStatusConfirmationModal = dynamic(() => import("../../components/OrderStatusConfirmationModal"), {
+  ssr: false
+})
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false
+})
 
 export default function AdminDashboard() {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
@@ -486,12 +500,12 @@ export default function AdminDashboard() {
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="5%"
-                        stopColor="var(--primary-container)"
+                        stopColor="#22C55E"
                         stopOpacity={0.4}
                       />
                       <stop
                         offset="95%"
-                        stopColor="var(--primary-container)"
+                        stopColor="#22C55E"
                         stopOpacity={0}
                       />
                     </linearGradient>
@@ -523,14 +537,14 @@ export default function AdminDashboard() {
                       border: "none",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    itemStyle={{ color: "var(--primary-container)" }}
+                    itemStyle={{ color: "#22C55E"  }}
                     formatter={(value) => `₱${Number(value).toFixed(2)}`}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="var(--primary-container)"
-                    strokeWidth={4}
+                    stroke="#22C55E"
+                    strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorRev)"
                     animationDuration={1500}
@@ -633,9 +647,9 @@ export default function AdminDashboard() {
                             ? "bg-green-500/10 text-green-500"
                             : activity.status === "Pending"
                               ? "bg-primary-container/10 text-primary-container"
-                              : // : activeReservation.status === "Cancelled"
-                                //   ? "bg-on-primary text-white/90 "
-                                "bg-secondary-container/10 text-secondary-container"
+                               : activity.status === "Cancelled"
+                                ? "bg-on-primary text-white/90 "
+                               : "bg-on-primary text-white/90 "
                         }
                         refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
                         img={activity.Inventory?.item_image}
@@ -692,7 +706,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <CriticalStockModal
+      <DynamicCriticalStockModal
         isOpen={isStockModalOpen}
         onClose={() => setIsStockModalOpen(false)}
         items={lowStockProducts}
@@ -726,10 +740,13 @@ export default function AdminDashboard() {
               {/* Product Side */}
               <div className="flex flex-col sm:flex-row gap-6 p-6 bg-secondary-container border border-white/5 rounded-lg shadow-lg/30">
                 <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0">
-                  <img
+                  <Image
                     src={activeReservation.Inventory?.item_image}
                     className="w-full h-full object-cover rounded-lg shadow-2xl"
                     alt=""
+                    width={220}
+                    height={100}
+                    loading="lazy"
                   />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -836,12 +853,12 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <OrderStatusConfirmationModal
+      <DynamicOrderStatusConfirmationModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
@@ -941,10 +958,13 @@ const TableRow = ({
     <td className="px-6 py-4 border-primary-container border-b-2 border-r-2">
       <div className="flex items-center space-x-3">
         <div className="w-20 h-10 bg-surface-container-highest rounded-[2px] overflow-hidden flex items-center justify-center">
-          <img
+          <Image
             className="object-cover w-full h-full transition-all"
             src={img}
             alt=""
+            width={80}
+            height={40}
+            loading="lazy"
           />
         </div>
         <p className="text-sm font-bold font-headline uppercase tracking-tight">
@@ -970,10 +990,13 @@ const TableRow = ({
 
 const InventoryItem = ({ name, price, img }) => (
   <div className="flex items-center space-x-4 p-3 bg-surface-container-highest/20 rounded-[4px] group cursor-pointer hover:bg-surface-container-highest transition-all border border-transparent hover:border-primary-container/20">
-    <img
+    <Image
       className="w-20 h-10 rounded-[2px] object-cover transition-all"
       src={img}
       alt=""
+      width={80}
+      height={40}
+      loading="lazy"
     />
     <div className="flex-1">
       <p className="text-md text-white/90 font-headline font-bold uppercase tracking-tight truncate">

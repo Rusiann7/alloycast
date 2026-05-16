@@ -1,10 +1,19 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import AddProductModal from "../../components/AddProductModal";
 import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 
+
+const DynamicAddProductModal = dynamic(() => import("../../components/AddProductModal"), {
+  ssr: false
+})
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false
+})
 export default function AdminInventory() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
@@ -271,17 +280,22 @@ export default function AdminInventory() {
                                 onChange={editProduct}
                               />
                             )}
-                            <img
+                            <Image
+                            fill
                               src={
                                 editingProductId === item.id &&
                                 editProductForm.preview
                                   ? editProductForm.preview
                                   : item.item_image || "/placeholder-car.png"
+
                               }
+
                               alt={item.item_name}
-                              className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700 ${
+                              className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700  ${
                                 editingProductId === item.id ? "opacity-40" : ""
                               }`}
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              loading="lazy"
                             />
                             {editingProductId === item.id && (
                               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
@@ -500,7 +514,7 @@ export default function AdminInventory() {
       </main>
 
       {/* --- Add Product Modal --- */}
-      <AddProductModal
+      <DynamicAddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         showToast={showToast}
@@ -508,7 +522,7 @@ export default function AdminInventory() {
         inventory={inventory}
       />
 
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}

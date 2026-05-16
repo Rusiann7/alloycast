@@ -4,8 +4,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
-import Toast from "./Toast";
-import SessionModal from "./SessionModal";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicToast = dynamic(() => import("./Toast"));
+const DynamicSessionModal = dynamic(() => import("./SessionModal"));
 
 export default function LandingPageNavbar() {
   const router = useRouter();
@@ -67,7 +70,7 @@ export default function LandingPageNavbar() {
   };
   return (
     <>
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
@@ -78,10 +81,13 @@ export default function LandingPageNavbar() {
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3 text-font-color">
               <div className="size-10 text-primary-container">
-                <img
+                <Image
+                  width={100}
+                  height={100}
                   src="/logo.jpg"
                   alt="Ethan Marcus Diecast"
                   className="border-black/70 border-1 rounded-lg"
+                  loading="lazy"
                 />
               </div>
               <h2 className="font-headline text-lg text-black/90  font-bold uppercase tracking-tight hover:cursor-pointer hover:text-secondary-container">
@@ -205,7 +211,7 @@ export default function LandingPageNavbar() {
           </nav>
         </div>
       </div>
-      <SessionModal
+      <DynamicSessionModal
         isOpen={showSessionModal}
         onClose={() => setShowSessionModal(false)}
         onConfirm={logoutAccount}
