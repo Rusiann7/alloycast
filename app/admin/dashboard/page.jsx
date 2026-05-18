@@ -2,9 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
-import CriticalStockModal from "../../components/CriticalStockModal";
-import OrderStatusConfirmationModal from "../../components/OrderStatusConfirmationModal";
-import Toast from "../../components/Toast";
 import {
   AreaChart,
   Area,
@@ -18,17 +15,23 @@ import * as XLSX from "xlsx";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-const DynamicCriticalStockModal = dynamic(() => import("../../components/CriticalStockModal"), {
-  ssr: false
-})
+const DynamicCriticalStockModal = dynamic(
+  () => import("../../components/CriticalStockModal"),
+  {
+    ssr: false,
+  },
+);
 
-const DynamicOrderStatusConfirmationModal = dynamic(() => import("../../components/OrderStatusConfirmationModal"), {
-  ssr: false
-})
+const DynamicOrderStatusConfirmationModal = dynamic(
+  () => import("../../components/OrderStatusConfirmationModal"),
+  {
+    ssr: false,
+  },
+);
 
 const DynamicToast = dynamic(() => import("../../components/Toast"), {
-  ssr: false
-})
+  ssr: false,
+});
 
 export default function AdminDashboard() {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
@@ -298,6 +301,7 @@ export default function AdminDashboard() {
     customerEmail,
     customerName,
     productName,
+    reasonCancellation = "",
   ) => {
     // 1. Update Supabase
     const { error } = await supabase
@@ -312,22 +316,44 @@ export default function AdminDashboard() {
 
     // 2. Send Email via EmailJS
     try {
-      await emailjs.send(
-        "service_mu3qrbd",
-        "template_uhrasxf",
-        {
-          to_email: customerEmail,
-          customerName: customerName,
-          productName: productName,
-          status: newStatus,
-          message:
-            newStatus === "Approved"
-              ? "Great news! Your order is approved. Please visit the store for pickup."
-              : "Unfortunately, your reservation could not be accommodated.",
-        },
-        "3ilQZwBk_Cxjfohab", // Your Public Key
-      );
-      showToast("Order updated and email sent to customer!", "success");
+      if (newStatus === "Approved") {
+        await emailjs.send(
+          "service_mu3qrbd",
+          "template_uhrasxf",
+          {
+            to_email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            status: newStatus,
+            message:
+              newStatus === "Approved"
+                ? "Great news! Your order is approved. Please visit the store for pickup."
+                : "Unfortunately, your reservation could not be accommodated.",
+          },
+          "3ilQZwBk_Cxjfohab", // Your Public Key
+        );
+        showToast("Order updated and email sent to customer!", "success");
+      } else if (newStatus === "Rejected") {
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to_email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            status: newStatus,
+            reasonCancellation: reasonCancellation,
+          }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          showToast("Cancellation email sent to customer", "success");
+        } else {
+          throw new Error(result.error);
+        }
+      }
     } catch (err) {
       showToast("Status updated, but email failed to send.", "error");
     }
@@ -342,7 +368,7 @@ export default function AdminDashboard() {
   };
 
   // Functions to handle the Confirmation Modal buttons
-  const handleConfirm = () => {
+  const handleConfirm = (reasonCancellation) => {
     const {
       reservationId,
       newStatus,
@@ -357,6 +383,7 @@ export default function AdminDashboard() {
       customerEmail,
       customerName,
       productName,
+      reasonCancellation,
     );
   };
 
@@ -498,16 +525,8 @@ export default function AdminDashboard() {
                 >
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor="#22C55E"
-                        stopOpacity={0.4}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="#22C55E"
-                        stopOpacity={0}
-                      />
+                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis
@@ -537,7 +556,7 @@ export default function AdminDashboard() {
                       border: "none",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    itemStyle={{ color: "#22C55E"  }}
+                    itemStyle={{ color: "#22C55E" }}
                     formatter={(value) => `₱${Number(value).toFixed(2)}`}
                   />
                   <Area
@@ -647,9 +666,9 @@ export default function AdminDashboard() {
                             ? "bg-green-500/10 text-green-500"
                             : activity.status === "Pending"
                               ? "bg-primary-container/10 text-primary-container"
-                               : activity.status === "Cancelled"
+                              : activity.status === "Cancelled"
                                 ? "bg-on-primary text-white/90 "
-                               : "bg-on-primary text-white/90 "
+                                : "bg-on-primary text-white/90 "
                         }
                         refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
                         img={activity.Inventory?.item_image}
@@ -853,11 +872,13 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
       <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
+
       <DynamicOrderStatusConfirmationModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}

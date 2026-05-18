@@ -552,9 +552,9 @@ function ProductDetail() {
 
             {/* Quantity Section */}
             <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
-              <p className="font-light text-lg sm:text-sm text-on-surface-variant leading-relaxed">
+              <p className="font-light text-lg sm:text-sm text-font-color leading-relaxed">
                 How many &nbsp;
-                <span className="text-white/90 font-bold">
+                <span className="text-font-color font-bold">
                   {product.item_name}
                 </span>
                 &nbsp; you want to reserve?
@@ -580,10 +580,10 @@ function ProductDetail() {
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg sm:text-md text-white/90">
+                  <span className="text-lg sm:text-md text-font-color">
                     Product:
                   </span>
-                  <span className="text-lg sm:text-md font-bold text-white/90">
+                  <span className="text-lg sm:text-md font-bold text-font-color">
                     {product.item_name}
                   </span>
                 </div>
@@ -607,7 +607,7 @@ function ProductDetail() {
                 Confirm My Reservation
               </button>
               <button
-                className="w-full py-3 sm:py-4 bg-surface-container border border-white/10 font-headline font-bold uppercase tracking-wider text-sm sm:text-base text-on-surface hover:bg-surface transition-all rounded-lg"
+                className="w-full py-3 sm:py-4 bg-surface-container border border-white/10 font-headline font-bold uppercase tracking-wider text-sm sm:text-base text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancel
