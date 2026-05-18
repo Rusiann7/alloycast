@@ -119,25 +119,25 @@ function ProductDetail() {
         .from("Ratings")
         .select(
           `
-  id,
-  product_id,
-  user_id,
-  comment,
-  rating,
-  created_at,
-  Inventory!product_id (
-    id,
-    item_name,
-    brand
-  ),
-  Users (
-    id,
-    Customer (
-      firstname,
-      lastname
-    )
-  )
-`,
+          id,
+          product_id,
+          user_id,
+          comment,
+          rating,
+          created_at,
+          Inventory!product_id (
+            id,
+            item_name,
+            brand
+          ),
+          Users (
+            id,
+            Customer (
+              firstname,
+              lastname
+            )
+          )
+        `,
         )
         .eq("product_id", product_id);
 

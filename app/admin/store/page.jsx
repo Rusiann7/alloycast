@@ -11,11 +11,13 @@ export default function StorePage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
+  const [posDB, setPos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
   const [scannedBarCode, setScannedBarCode] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateRange, setDateRange] = useState("Last 30 Days");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -59,6 +61,67 @@ export default function StorePage() {
       setLoading(false);
     }
   };
+
+  const fetchPOSData = async (dateRange) => {
+    try {
+      const now = new Date();
+      let startDate = new Date();
+      let endDate = new Date();
+
+      switch (dateRange) {
+        case "Today":
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case "Yesterday":
+          startDate.setDate(now.getDate() - 1);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(startDate);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case "This Week":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "This Month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case "All Time":
+          startDate = new Date(0); // Year 1970
+          endDate = new Date();
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
+      }
+      const { data, error } = await supabase
+        .from("POS")
+        .select(
+          `
+          id,
+          product_id,
+          quantity,
+          created_at, 
+          name,
+          email,
+          Inventory!product_id (
+          id,
+          item_name,
+          brand,
+          item_image,
+          price,
+          category)`,
+        )
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      if (error) throw error;
+      setPos(data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPOSData("All Time");
+  }, []);
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -385,7 +448,35 @@ export default function StorePage() {
             </>
           ) : (
             /* DUMMY REPORTS VIEW */
+
             <div className="space-y-10 reveal-up">
+              {/* Sticky Date Range Control */}
+              <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
+                <div className="flex items-center  p-1 rounded-lg border border-primary-container">
+                  {[
+                    "Today",
+                    "Yesterday",
+                    "This Week",
+                    "This Month",
+                    "All Time",
+                  ].map((label) => (
+                    <button
+                      key={label}
+                      onClick={() => {
+                        setDateRange(label);
+                        fetchPOSData(label);
+                      }}
+                      className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
+                        dateRange === label
+                          ? "bg-primary-container text-black/90 shadow-lg"
+                          : "text-white/90 opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {/* KPI Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
@@ -400,18 +491,6 @@ export default function StorePage() {
                     value: "24",
                     icon: "receipt_long",
                     color: "text-blue-400",
-                  },
-                  {
-                    label: "Top Brand",
-                    value: "Hot Wheels",
-                    icon: "stars",
-                    color: "text-yellow-400",
-                  },
-                  {
-                    label: "Avg. Ticket",
-                    value: "₱518",
-                    icon: "analytics",
-                    color: "text-purple-400",
                   },
                 ].map((kpi, i) => (
                   <div
@@ -440,18 +519,48 @@ export default function StorePage() {
 
               {/* Dummy Chart Placeholder */}
               <div className="bg-secondary-container shadow-lg/30 rounded-lg border border-white/5 p-10 flex flex-col items-center justify-center min-h-[400px]">
-                <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                  <span className="material-symbols-outlined text-4xl text-primary-container animate-pulse">
-                    monitoring
-                  </span>
+                <div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Product Image</th>
+                        <th>Product Name</th>
+                        <th>Brand</th>
+                        <th>Category/Series</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Date Purchase</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {posDB.map((pos) => (
+                        <tr key={pos.id}>
+                          <td>
+                            <div>
+                              <img
+                                src={pos.Inventory?.item_image}
+                                alt={pos.Inventory?.item_name}
+                              />
+                            </div>
+                          </td>
+                          <td>{pos.Inventory?.item_name}</td>
+                          <td>{pos.Inventory?.brand}</td>
+                          <td>{pos.Inventory?.category}</td>
+                          <td>
+                            {pos.Inventory?.price * pos.quantity} (
+                            {pos.Inventory?.price})
+                          </td>
+                          <td>{pos.quantity}</td>
+                          <td>{pos.name || "Name not provided"} </td>
+                          <td>{pos.email || "Email not provided"}</td>
+                          <td>{pos.created_at}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <h4 className="text-2xl font-headline font-black text-white uppercase tracking-tighter italic mb-2">
-                  Sales Overview Coming Soon
-                </h4>
-                <p className="text-white/40 text-sm font-bold uppercase tracking-widest text-center max-w-md">
-                  Detailed transaction analytics and financial forecasting
-                  modules are currently under development.
-                </p>
               </div>
             </div>
           )}
