@@ -17,7 +17,11 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
           <h3 className="font-headline font-black uppercase italic tracking-[0.2em] text-font-color text-2xl">
             Confirm Logout
           </h3>
+<<<<<<< HEAD
           <p className="font-body text-font-color text-md leading-relaxed">
+=======
+          <p className="font-body text-white/90 text-md leading-relaxed">
+>>>>>>> 7402ee556ed2faa027efa20d896483badb390955
             Are you sure you want to logout?
           </p>
         </div>
