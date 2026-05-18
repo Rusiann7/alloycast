@@ -15,6 +15,26 @@ import {
 } from "recharts";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicCriticalStockModal = dynamic(
+  () => import("../../components/CriticalStockModal"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicOrderStatusModal = dynamic(
+  () => import("../../components/OrderStatusConfirmationModal"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false,
+});
 
 export default function AdminDashboard() {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
@@ -633,9 +653,9 @@ export default function AdminDashboard() {
                             ? "bg-green-500/10 text-green-500"
                             : activity.status === "Pending"
                               ? "bg-primary-container/10 text-primary-container"
-                              : // : activeReservation.status === "Cancelled"
-                                //   ? "bg-on-primary text-white/90 "
-                                "bg-secondary-container/10 text-secondary-container"
+                              : activeReservation.status === "Cancelled"
+                                ? "bg-on-primary text-white/90 "
+                                : "bg-on-primary text-white/90"
                         }
                         refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
                         img={activity.Inventory?.item_image}
@@ -692,7 +712,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <CriticalStockModal
+      <DynamicCriticalStockModal
         isOpen={isStockModalOpen}
         onClose={() => setIsStockModalOpen(false)}
         items={lowStockProducts}
@@ -726,10 +746,13 @@ export default function AdminDashboard() {
               {/* Product Side */}
               <div className="flex flex-col sm:flex-row gap-6 p-6 bg-secondary-container border border-white/5 rounded-lg shadow-lg/30">
                 <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0">
-                  <img
+                  <Image
                     src={activeReservation.Inventory?.item_image}
                     className="w-full h-full object-cover rounded-lg shadow-2xl"
-                    alt=""
+                    alt={activeReservation.Inventory?.item_name}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    loading="lazy"
+                    fill
                   />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -836,12 +859,12 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <OrderStatusConfirmationModal
+      <DynamicOrderStatusModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
