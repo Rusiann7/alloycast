@@ -38,7 +38,7 @@ export default function POSModal({
               <span className="text-font-color">₱{selectedItem?.price}</span>
             </p>
             <p className="text-lg font-bold text-font-color">
-              Stock:{" "}
+              Quantity:{" "}
               <span className="text-font-color">{selectedItem?.stock}</span>
             </p>
 

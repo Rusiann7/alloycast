@@ -17,7 +17,7 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
           <h3 className="font-headline font-black uppercase italic tracking-[0.2em] text-font-color text-2xl">
             Confirm Logout
           </h3>
-          <p className="font-body text-secondary-container text-md leading-relaxed">
+          <p className="font-body text-font-color text-md leading-relaxed">
             Are you sure you want to logout?
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
           </button>
           <button
             onClick={onConfirm}
-            className="w-full py-4 bg-primary-container text-black/90 font-headline font-black uppercase text-sm tracking-[0.2em] hover:bg-secondary-container hover:scale-105 transition-all duration-300 rounded-lg"
+            className="w-full py-4 bg-primary-container text-black/90 font-headline font-black uppercase text-sm tracking-[0.2em]  hover:scale-105 transition-all duration-300 rounded-lg"
           >
             Yes
           </button>

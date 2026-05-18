@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 
 export default function OrderStatusConfirmationModal({
   isOpen,
@@ -8,9 +9,22 @@ export default function OrderStatusConfirmationModal({
   customerName,
   productName,
 }) {
-  if (!isOpen) return null;
+  const [reasonCancellation, setReasonCancellation] = useState("");
 
+  // resets the text area if the modal is closed
+  useEffect(() => {
+    if (!isOpen) setReasonCancellation("");
+  }, [isOpen]);
+
+  if (!isOpen) return null;
   const isApprove = status === "Approved";
+
+  // disables reject button if textarea is empty
+  // const rejectBtnDisabled = !isApprove && reasonCancellation.trim() === "";
+
+  const confirmRejectOrder = () => {
+    onConfirm(reasonCancellation);
+  };
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in">
@@ -51,6 +65,22 @@ export default function OrderStatusConfirmationModal({
           </div>
         </div>
 
+        {!isApprove && (
+          <div className="mb-6">
+            <label className="block text-font-color text-xs font-black uppercase tracking-widest mb-2">
+              Reason for Cancellation{" "}
+              <span className="text-red-500">(Optional)</span>
+            </label>
+            <textarea
+              value={reasonCancellation}
+              onChange={(e) => setReasonCancellation(e.target.value)}
+              placeholder="Type the cancellation reason here..."
+              rows="4"
+              className="w-full bg-secondary-container border border-white/10 rounded-lg p-3 text-white text-sm focus:border-primary-container outline-none transition-colors"
+            />
+          </div>
+        )}
+
         <div className="flex items-start gap-3 bg-secondary-container shadow-lg/30 p-4 rounded-lg border border-primary-container/10 mb-10">
           <span className="material-symbols-outlined text-primary-container text-sm mt-0.5">
             info
@@ -69,8 +99,8 @@ export default function OrderStatusConfirmationModal({
             Go Back
           </button>
           <button
-            onClick={onConfirm}
-            className="w-full sm:flex-1 px-6 h-14 shadow-lg/30 bg-primary-container text-black/90 text-xs font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all rounded-lg  shadow-primary-container/20"
+            onClick={confirmRejectOrder}
+            className="w-full sm:flex-1 px-6 h-14 shadow-lg/30 text-black/90 text-xs font-black uppercase tracking-[0.2em] transition-all rounded-lg bg-primary-container hover:scale-105 active:scale-95 cursor-pointer"
           >
             {isApprove ? "Approve" : "Reject"}
           </button>

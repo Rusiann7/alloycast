@@ -2,9 +2,6 @@
 import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
-import CriticalStockModal from "../../components/CriticalStockModal";
-import OrderStatusConfirmationModal from "../../components/OrderStatusConfirmationModal";
-import Toast from "../../components/Toast";
 import {
   AreaChart,
   Area,
@@ -25,7 +22,7 @@ const DynamicCriticalStockModal = dynamic(
   },
 );
 
-const DynamicOrderStatusModal = dynamic(
+const DynamicOrderStatusConfirmationModal = dynamic(
   () => import("../../components/OrderStatusConfirmationModal"),
   {
     ssr: false,
@@ -304,6 +301,7 @@ export default function AdminDashboard() {
     customerEmail,
     customerName,
     productName,
+    reasonCancellation = "",
   ) => {
     // 1. Update Supabase
     const { error } = await supabase
@@ -318,22 +316,44 @@ export default function AdminDashboard() {
 
     // 2. Send Email via EmailJS
     try {
-      await emailjs.send(
-        "service_mu3qrbd",
-        "template_uhrasxf",
-        {
-          to_email: customerEmail,
-          customerName: customerName,
-          productName: productName,
-          status: newStatus,
-          message:
-            newStatus === "Approved"
-              ? "Great news! Your order is approved. Please visit the store for pickup."
-              : "Unfortunately, your reservation could not be accommodated.",
-        },
-        "3ilQZwBk_Cxjfohab", // Your Public Key
-      );
-      showToast("Order updated and email sent to customer!", "success");
+      if (newStatus === "Approved") {
+        await emailjs.send(
+          "service_mu3qrbd",
+          "template_uhrasxf",
+          {
+            to_email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            status: newStatus,
+            message:
+              newStatus === "Approved"
+                ? "Great news! Your order is approved. Please visit the store for pickup."
+                : "Unfortunately, your reservation could not be accommodated.",
+          },
+          "3ilQZwBk_Cxjfohab", // Your Public Key
+        );
+        showToast("Order updated and email sent to customer!", "success");
+      } else if (newStatus === "Rejected") {
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to_email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            status: newStatus,
+            reasonCancellation: reasonCancellation,
+          }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          showToast("Cancellation email sent to customer", "success");
+        } else {
+          throw new Error(result.error);
+        }
+      }
     } catch (err) {
       showToast("Status updated, but email failed to send.", "error");
     }
@@ -348,7 +368,7 @@ export default function AdminDashboard() {
   };
 
   // Functions to handle the Confirmation Modal buttons
-  const handleConfirm = () => {
+  const handleConfirm = (reasonCancellation) => {
     const {
       reservationId,
       newStatus,
@@ -363,6 +383,7 @@ export default function AdminDashboard() {
       customerEmail,
       customerName,
       productName,
+      reasonCancellation,
     );
   };
 
@@ -504,16 +525,8 @@ export default function AdminDashboard() {
                 >
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor="var(--primary-container)"
-                        stopOpacity={0.4}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="var(--primary-container)"
-                        stopOpacity={0}
-                      />
+                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis
@@ -543,14 +556,14 @@ export default function AdminDashboard() {
                       border: "none",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
-                    itemStyle={{ color: "var(--primary-container)" }}
+                    itemStyle={{ color: "#22C55E" }}
                     formatter={(value) => `₱${Number(value).toFixed(2)}`}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="var(--primary-container)"
-                    strokeWidth={4}
+                    stroke="#22C55E"
+                    strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorRev)"
                     animationDuration={1500}
@@ -653,9 +666,9 @@ export default function AdminDashboard() {
                             ? "bg-green-500/10 text-green-500"
                             : activity.status === "Pending"
                               ? "bg-primary-container/10 text-primary-container"
-                              : activeReservation.status === "Cancelled"
+                              : activity.status === "Cancelled"
                                 ? "bg-on-primary text-white/90 "
-                                : "bg-on-primary text-white/90"
+                                : "bg-on-primary text-white/90 "
                         }
                         refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
                         img={activity.Inventory?.item_image}
@@ -749,10 +762,10 @@ export default function AdminDashboard() {
                   <Image
                     src={activeReservation.Inventory?.item_image}
                     className="w-full h-full object-cover rounded-lg shadow-2xl"
-                    alt={activeReservation.Inventory?.item_name}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    alt=""
+                    width={220}
+                    height={100}
                     loading="lazy"
-                    fill
                   />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -859,12 +872,14 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
       <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <DynamicOrderStatusModal
+
+      <DynamicOrderStatusConfirmationModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
@@ -964,10 +979,13 @@ const TableRow = ({
     <td className="px-6 py-4 border-primary-container border-b-2 border-r-2">
       <div className="flex items-center space-x-3">
         <div className="w-20 h-10 bg-surface-container-highest rounded-[2px] overflow-hidden flex items-center justify-center">
-          <img
+          <Image
             className="object-cover w-full h-full transition-all"
             src={img}
             alt=""
+            width={80}
+            height={40}
+            loading="lazy"
           />
         </div>
         <p className="text-sm font-bold font-headline uppercase tracking-tight">
@@ -993,10 +1011,13 @@ const TableRow = ({
 
 const InventoryItem = ({ name, price, img }) => (
   <div className="flex items-center space-x-4 p-3 bg-surface-container-highest/20 rounded-[4px] group cursor-pointer hover:bg-surface-container-highest transition-all border border-transparent hover:border-primary-container/20">
-    <img
+    <Image
       className="w-20 h-10 rounded-[2px] object-cover transition-all"
       src={img}
       alt=""
+      width={80}
+      height={40}
+      loading="lazy"
     />
     <div className="flex-1">
       <p className="text-md text-white/90 font-headline font-bold uppercase tracking-tight truncate">
