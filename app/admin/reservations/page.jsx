@@ -1,21 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import { useState, useEffect, use } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
-import Toast from "../../components/Toast";
-import OrderStatusConfirmationModal from "../../components/OrderStatusConfirmationModal";
 import * as XLSX from "xlsx";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
 const DynamicOrderStatusConfirmationModal = dynamic(
-  () => import("../../components/OrderStatusConfirmationModal")
+  () => import("../../components/OrderStatusConfirmationModal"),
 );
 
-const DynamicToast = dynamic(
-  () => import("../../components/Toast")
-);
+const DynamicToast = dynamic(() => import("../../components/Toast"));
 
 export default function AdminReservations() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -154,6 +150,7 @@ export default function AdminReservations() {
       customerEmail,
       customerName,
       productName,
+      reasonCancellation,
     );
   };
 
@@ -167,6 +164,7 @@ export default function AdminReservations() {
     customerEmail,
     customerName,
     productName,
+    reasonCancellation = "",
   ) => {
     const { error } = await supabase
       .from("Reservation")
@@ -179,28 +177,51 @@ export default function AdminReservations() {
     }
 
     try {
-      await emailjs.send(
-        "service_mu3qrbd",
-        "template_uhrasxf",
-        {
-          to_email: customerEmail,
-          customerName: customerName,
-          productName: productName,
-          status: newStatus,
-          message:
-            newStatus === "Approved"
-              ? "Great news! Your order is approved. Please visit the store to complete your pickup."
-              : "Unfortunately, your reservation could not be accommodated at this time.",
-        },
-        "3ilQZwBk_Cxjfohab",
-      );
+      if (newStatus === "Approved") {
+        await emailjs.send(
+          "service_mu3qrbd",
+          "template_uhrasxf",
+          {
+            to_email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            status: newStatus,
+            message:
+              newStatus === "Approved"
+                ? "Great news! Your order is approved. Please visit the store to complete your pickup."
+                : "Unfortunately, your reservation could not be accommodated at this time.",
+          },
+          "3ilQZwBk_Cxjfohab",
+        );
 
-      showToast(
-        "An email will be sent to customer about the order status",
-        "success",
-      );
+        showToast(
+          "An email will be sent to customer about the order status",
+          "success",
+        );
+      } else if (newStatus === "Rejected") {
+        const response = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to_email: customerEmail,
+            customerName: customerName,
+            productName: productName,
+            status: newStatus,
+            reasonCancellation: reasonCancellation,
+          }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          showToast("Cancellation email sent to customer", "success");
+        } else {
+          throw new Error(result.error);
+        }
+      }
     } catch (emailError) {
-      showToast("Failed to send email to customer. Try again later", "error");
+      console.error("Email Sending Error:", emailError);
+      showToast("Failed to send email notification to customer.", "error");
     }
 
     setReservation((prevReservations) =>
