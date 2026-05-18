@@ -728,7 +728,6 @@ export default function AdminDashboard() {
       </main>
 
       <DynamicCriticalStockModal
-      <DynamicCriticalStockModal
         isOpen={isStockModalOpen}
         onClose={() => setIsStockModalOpen(false)}
         items={lowStockProducts}
@@ -763,13 +762,9 @@ export default function AdminDashboard() {
               <div className="flex flex-col sm:flex-row gap-6 p-6 bg-secondary-container border border-white/5 rounded-lg shadow-lg/30">
                 <div className="w-full sm:w-32 h-48 sm:h-32 flex-shrink-0">
                   <Image
-                  <Image
                     src={activeReservation.Inventory?.item_image}
                     className="w-full h-full object-cover rounded-lg shadow-2xl"
                     alt=""
-                    width={220}
-                    height={100}
-                    loading="lazy"
                     width={220}
                     height={100}
                     loading="lazy"
@@ -879,13 +874,13 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      <DynamicToast
+
       <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <DynamicOrderStatusConfirmationModal
+
       <DynamicOrderStatusConfirmationModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}
@@ -987,13 +982,9 @@ const TableRow = ({
       <div className="flex items-center space-x-3">
         <div className="w-20 h-10 bg-surface-container-highest rounded-[2px] overflow-hidden flex items-center justify-center">
           <Image
-          <Image
             className="object-cover w-full h-full transition-all"
             src={img}
             alt=""
-            width={80}
-            height={40}
-            loading="lazy"
             width={80}
             height={40}
             loading="lazy"
@@ -1023,13 +1014,9 @@ const TableRow = ({
 const InventoryItem = ({ name, price, img }) => (
   <div className="flex items-center space-x-4 p-3 bg-surface-container-highest/20 rounded-[4px] group cursor-pointer hover:bg-surface-container-highest transition-all border border-transparent hover:border-primary-container/20">
     <Image
-    <Image
       className="w-20 h-10 rounded-[2px] object-cover transition-all"
       src={img}
       alt=""
-      width={80}
-      height={40}
-      loading="lazy"
       width={80}
       height={40}
       loading="lazy"

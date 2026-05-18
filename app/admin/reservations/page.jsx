@@ -248,12 +248,10 @@ export default function AdminReservations() {
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
-      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <DynamicOrderStatusConfirmationModal
       <DynamicOrderStatusConfirmationModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}
@@ -394,15 +392,11 @@ export default function AdminReservations() {
                         <div className="flex items-center  gap-4">
                           <div className="w-auto h-30 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
                             <Image
-                            <Image
                               src={res.img}
                               alt={res.model}
                               width={100}
                               height={100}
-                              width={100}
-                              height={100}
                               className="w-xs h-full object-cover filter group-hover:scale-110 transition-all duration-700"
-                              loading="lazy"
                               loading="lazy"
                             />
                           </div>
@@ -570,13 +564,8 @@ export default function AdminReservations() {
               <div className="flex gap-6 relative z-10">
                 <div className="w-24 h-24 bg-black/40 border border-white/5 rounded-[1px] overflow-hidden">
                   <Image
-                  <Image
                     src={activeReservation?.img}
                     className="w-full h-full object-cover  hover:-0 transition-all duration-700 hover:scale-110"
-                    alt={activeReservation?.model}
-                    width={100}
-                    height={100}
-                    loading="lazy"
                     alt={activeReservation?.model}
                     width={100}
                     height={100}

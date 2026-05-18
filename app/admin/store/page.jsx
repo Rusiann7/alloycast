@@ -3,8 +3,6 @@
 import { useState, useEffect, useActionState } from "react";
 import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
-import POSModal from "../../components/POSModal";
-import Scanner from "../../components/Scanner";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 

@@ -554,11 +554,7 @@ function ProductDetail() {
             <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
               <p className="font-light text-lg sm:text-sm text-font-color leading-relaxed">
                 How many &nbsp;
-<<<<<<< HEAD
                 <span className="text-font-color font-bold">
-=======
-                <span className="text-white/90 font-bold">
->>>>>>> 7402ee556ed2faa027efa20d896483badb390955
                   {product.item_name}
                 </span>
                 &nbsp; you want to reserve?
@@ -584,17 +580,10 @@ function ProductDetail() {
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-<<<<<<< HEAD
                   <span className="text-lg sm:text-md text-font-color">
                     Product:
                   </span>
                   <span className="text-lg sm:text-md font-bold text-font-color">
-=======
-                  <span className="text-lg sm:text-md text-white/90">
-                    Product:
-                  </span>
-                  <span className="text-lg sm:text-md font-bold text-white/90">
->>>>>>> 7402ee556ed2faa027efa20d896483badb390955
                     {product.item_name}
                   </span>
                 </div>
