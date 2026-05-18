@@ -564,8 +564,6 @@ export default function AdminDashboard() {
                     dataKey="revenue"
                     stroke="#22C55E"
                     strokeWidth={3}
-                    stroke="#22C55E"
-                    strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorRev)"
                     animationDuration={1500}
