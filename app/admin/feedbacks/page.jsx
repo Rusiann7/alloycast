@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../components/Toast"));
 
 export default function FeedbackPage() {
   const [feedbacks, setFeedback] = useState([]);
@@ -161,7 +164,7 @@ export default function FeedbackPage() {
         </div>
       </main>
 
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}

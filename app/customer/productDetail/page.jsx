@@ -4,9 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Toast from "../../components/Toast";
-import ProductCard from "../../components/ProductCard";
-import CustomerFooter from "../../components/CustomerFooter";
 import emailjs from "@emailjs/browser";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -37,6 +34,7 @@ function ProductDetail() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [commentDB, setCommentDB] = useState([]);
+  const [submitBtn, setSubmitBtn] = useState(true);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -112,10 +110,8 @@ function ProductDetail() {
     checkUser(); // calls the checkUser function
   }, []);
 
-  useEffect(() => {
-    if (!productId) return;
-
-    const getCommentsAuto = async () => {
+  const getComments = async (product_id) => {
+    try {
       const { data, error } = await supabase
         .from("Ratings")
         .select(
@@ -140,16 +136,38 @@ function ProductDetail() {
   )
 `,
         )
-        .eq("product_id", productId);
+        .eq("product_id", product_id);
 
       if (error) throw error;
       setCommentDB(data || []);
       console.log(data);
-      setComment("");
-      setRating(1);
-    };
-    getCommentsAuto();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getComments(productId);
   }, [productId]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const userCommented = () => {
+      const userCheck = commentDB.find((item) => item.user_id === user.id);
+
+      if (!userCheck) {
+        setSubmitBtn(true);
+      } else {
+        setSubmitBtn(false);
+        const userComment = commentDB.find((item) => item.user_id === user.id);
+        console.log(userComment?.comment, userComment?.rating);
+        setComment(userComment?.comment);
+        setRating(userComment?.rating);
+      }
+    };
+    userCommented();
+  }, [user, commentDB]);
 
   // for product reservation
   const productReservation = () => {
@@ -226,44 +244,6 @@ function ProductDetail() {
     }
   };
 
-  const getComments = async (product_id) => {
-    try {
-      const { data, error } = await supabase
-        .from("Ratings")
-        .select(
-          `
-  id,
-  product_id,
-  user_id,
-  comment,
-  rating,
-  created_at,
-  Inventory!product_id (
-    id,
-    item_name,
-    brand
-  ),
-  Users (
-    id,
-    Customer (
-      firstname,
-      lastname
-    )
-  )
-`,
-        )
-        .eq("product_id", product_id);
-
-      if (error) throw error;
-      setCommentDB(data || []);
-      console.log(data);
-      setComment("");
-      setRating(1);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const insertComment = async (rating, comment) => {
     try {
       if (!user) {
@@ -323,6 +303,10 @@ function ProductDetail() {
         </p>
       </div>
     );
+  }
+
+  if (!submitBtn) {
+    console.log("Fuck you");
   }
 
   return (
@@ -389,7 +373,7 @@ function ProductDetail() {
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-headline font-black text-on-primary dark:text-red-500 uppercase tracking-tight animate-pulse">
-                      {product.stock} STOCKS LEFT
+                      {product.stock} STOCKS LEFT!
                     </p>
                   </div>
                 </div>
@@ -570,7 +554,7 @@ function ProductDetail() {
             <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
               <p className="font-light text-lg sm:text-sm text-on-surface-variant leading-relaxed">
                 How many &nbsp;
-                <span className="text-primary-container dark:text-secondary-container font-bold">
+                <span className="text-white/90 font-bold">
                   {product.item_name}
                 </span>
                 &nbsp; you want to reserve?
@@ -596,10 +580,10 @@ function ProductDetail() {
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg sm:text-md text-on-surface-variant">
+                  <span className="text-lg sm:text-md text-white/90">
                     Product:
                   </span>
-                  <span className="text-lg sm:text-md font-bold text-primary-container dark:text-secondary-container">
+                  <span className="text-lg sm:text-md font-bold text-white/90">
                     {product.item_name}
                   </span>
                 </div>
@@ -617,7 +601,7 @@ function ProductDetail() {
             {/* Action Buttons */}
             <div className="space-y-3 sm:space-y-4">
               <button
-                className="w-full py-4 sm:py-5 md:py-6 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-sm sm:text-base hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
+                className="w-full py-4 sm:py-5 md:py-6 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-sm sm:text-base hover:scale-105  transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
                 onClick={insertReservationToTable}
               >
                 Confirm My Reservation

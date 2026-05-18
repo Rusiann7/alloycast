@@ -5,6 +5,12 @@ import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 import POSModal from "../../components/POSModal";
 import Scanner from "../../components/Scanner";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicToast = dynamic(() => import("../../components/Toast"));
+const DynamicPOSModal = dynamic(() => import("../../components/POSModal"));
+const DynamicScanner = dynamic(() => import("../../components/Scanner"));
 
 export default function StorePage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -263,12 +269,15 @@ export default function StorePage() {
                             {/* IMAGE */}
                             <td className="px-8 py-5">
                               <div className="w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative">
-                                <img
+                                <Image
                                   src={
                                     item.item_image || "/placeholder-car.png"
                                   }
                                   alt={item.item_name}
                                   className="w-full h-40 object-cover group-hover:scale-110 transition-all duration-700"
+                                  width={100}
+                                  height={100}
+                                  loading="lazy"
                                 />
                               </div>
                             </td>
@@ -458,20 +467,20 @@ export default function StorePage() {
         </div>
       </main>
 
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
 
-      <POSModal
+      <DynamicPOSModal
         isOpen={isOpen}
         isClose={() => setIsOpen(false)}
         selectedItem={selectedItem}
         onPurchase={(formData) => purchaseItems(selectedItem?.id, formData)}
       />
 
-      <Scanner
+      <DynamicScanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}
         onScan={handelScannedBarCode}

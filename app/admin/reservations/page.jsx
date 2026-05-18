@@ -6,6 +6,16 @@ import emailjs from "@emailjs/browser";
 import Toast from "../../components/Toast";
 import OrderStatusConfirmationModal from "../../components/OrderStatusConfirmationModal";
 import * as XLSX from "xlsx";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+
+const DynamicOrderStatusConfirmationModal = dynamic(
+  () => import("../../components/OrderStatusConfirmationModal")
+);
+
+const DynamicToast = dynamic(
+  () => import("../../components/Toast")
+);
 
 export default function AdminReservations() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -216,12 +226,12 @@ export default function AdminReservations() {
 
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
-      <Toast
+      <DynamicToast
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
       />
-      <OrderStatusConfirmationModal
+      <DynamicOrderStatusConfirmationModal
         isOpen={confirmModal.isOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
@@ -360,10 +370,13 @@ export default function AdminReservations() {
                       <td className="p-6">
                         <div className="flex items-center  gap-4">
                           <div className="w-auto h-30 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
-                            <img
+                            <Image
                               src={res.img}
                               alt={res.model}
+                              width={100}
+                              height={100}
                               className="w-xs h-full object-cover filter group-hover:scale-110 transition-all duration-700"
+                              loading="lazy"
                             />
                           </div>
                         </div>
@@ -529,10 +542,13 @@ export default function AdminReservations() {
               </div>
               <div className="flex gap-6 relative z-10">
                 <div className="w-24 h-24 bg-black/40 border border-white/5 rounded-[1px] overflow-hidden">
-                  <img
+                  <Image
                     src={activeReservation?.img}
                     className="w-full h-full object-cover  hover:-0 transition-all duration-700 hover:scale-110"
-                    alt=""
+                    alt={activeReservation?.model}
+                    width={100}
+                    height={100}
+                    loading="lazy"
                   />
                 </div>
                 <div>
