@@ -148,8 +148,11 @@ function ProductDetail() {
     }
   };
 
+  //fella this shyte works the clear functons
   useEffect(() => {
     getComments(productId);
+    setComment("");
+    setRating(0);
   }, [productId]);
 
   useEffect(() => {

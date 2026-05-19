@@ -596,7 +596,7 @@ export default function StorePage() {
                           <p className="text-2xl  text-primary-container">
                             ₱{pos.Inventory?.price * pos.quantity}{" "}
                             <span className="text-sm text-white/80 italic block">
-                              (₱{pos.Inventory?.price} ea)
+                              (₱{pos.Inventory?.price} each)
                             </span>
                           </p>
                         </td>

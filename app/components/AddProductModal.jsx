@@ -97,7 +97,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
       const sanitizeImage = (file) => {
         const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
         const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-        const maxSize = 2 * 1024 * 1024; // 2MB
+        const maxSize = 25 * 1024 * 1024; // 2MB
         const fileExtension = file.name.split(".").pop().toLowerCase();
         if (
           !allowedExtensions.includes(fileExtension) ||
@@ -108,7 +108,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
           );
         }
         if (file.size > maxSize) {
-          throw new Error("File is too large. Maximum size is 2MB.");
+          throw new Error("File is too large. Maximum size is 20MB.");
         }
         const safeName = file.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase();
 
