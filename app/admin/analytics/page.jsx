@@ -179,7 +179,7 @@ export default function AdminAnalytics() {
               ANALYTICS
             </h3>
             <div className="flex items-center gap-3">
-              <span className="bg-primary-container text-black/90 px-3 py-1 text-sm font-mono font-bold rounded-lg uppercase tracking-widest">
+              <span className="bg-primary-container text-black/90 px-3 py-1 text-sm font-mono font-bold rounded-lg uppercase tracking-widest drop-shadow-lg/50">
                 ANALYSIS REPORT
               </span>
             </div>

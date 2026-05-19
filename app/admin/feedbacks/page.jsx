@@ -69,57 +69,73 @@ export default function FeedbackPage() {
 
           {/* Review Table */}
           <div
-            className="bg-secondary-container rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+            className="bg-secondary-container shadow-lg/30 rounded-lg overflow-hidden reveal-up border border-white/5"
             style={{ animationDelay: "0.2s" }}
           >
-            <table className="w-full text-left border-collapse min-w-[1000px]">
-              <thead>
-                <tr className="bg-input-field">
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    FEEDBACK
-                  </th>
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    RATING
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.02]">
-                {feedbacks.length === 0 ? (
-                  <tr>
-                    <td colSpan="2" className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center gap-4 opacity-20">
-                        <span className="material-symbols-outlined text-6xl">
-                          search_off
-                        </span>
-                        <p className="text-xl font-headline font-black uppercase tracking-[0.2em]">
-                          Feedback not available
-                        </p>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className="w-full text-left border-collapse min-w-[600px] md:min-w-[1000px]">
+                <thead>
+                  <tr className="bg-input-field">
+                    <th className="px-4 sm:px-8 py-4 sm:py-5 text-center text-sm sm:text-lg font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-container">
+                      RATING
+                    </th>
+                    <th className="px-4 sm:px-8 py-4 sm:py-5 text-center text-sm sm:text-lg font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-container">
+                      FEEDBACK
+                    </th>
                   </tr>
-                ) : (
-                  feedbacks
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )
-                    .map((feedback, index) => (
-                      <tr key={index}>
-                        <td className="px-8 py-5 text-center">
-                          <p className="text-lg text-white font-bold font-headline uppercase tracking-tight">
-                            {feedback.rating}
+                </thead>
+                <tbody className="divide-y divide-white/[0.02]">
+                  {feedbacks.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="2"
+                        className="px-4 sm:px-8 py-20 text-center"
+                      >
+                        <div className="flex flex-col items-center gap-4 opacity-20">
+                          <span className="material-symbols-outlined text-6xl">
+                            search_off
+                          </span>
+                          <p className="text-lg sm:text-xl font-headline font-black uppercase tracking-[0.2em]">
+                            Feedback not available
                           </p>
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <p className="text-lg text-white font-bold font-headline uppercase tracking-tight">
-                            {feedback.comment}
-                          </p>
-                        </td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    feedbacks
+                      .slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )
+                      .map((feedback, index) => (
+                        <tr key={index}>
+                          <td className="px-4 sm:px-8 py-4 sm:py-5 text-center">
+                            <div className="flex justify-center items-center gap-0.5 sm:gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span
+                                  key={star}
+                                  className={`material-symbols-outlined text-lg sm:text-2xl transition-all duration-300 ${
+                                    feedback.rating >= star
+                                      ? "text-primary-container [font-variation-settings:'FILL'_1]"
+                                      : "text-white/20 [font-variation-settings:'FILL'_0]"
+                                  }`}
+                                >
+                                  star
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-4 sm:px-8 py-4 sm:py-5 text-center">
+                            <p className="text-sm sm:text-lg text-white font-bold font-headline uppercase tracking-tight">
+                              {feedback.comment}
+                            </p>
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
             {/* Pagination */}
             <div className="flex items-center justify-center p-8 bg-input-field ">
               <div className="flex items-center gap-3">
