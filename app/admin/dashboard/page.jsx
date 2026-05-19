@@ -1011,14 +1011,18 @@ const TableRow = ({
 
 const InventoryItem = ({ name, price, img }) => (
   <div className="flex items-center space-x-4 p-3 bg-surface-container-highest/20 rounded-[4px] group cursor-pointer hover:bg-surface-container-highest transition-all border border-transparent hover:border-primary-container/20">
-    <Image
-      className="w-20 h-10 rounded-[2px] object-cover transition-all"
-      src={img}
-      alt=""
-      width={80}
-      height={40}
-      loading="lazy"
-    />
+    {img ? (
+      <Image
+        className="..."
+        src={img}
+        alt={name}
+        width={80}
+        height={40}
+        loading="lazy"
+      />
+    ) : (
+      <div className="w-20 h-10 bg-white/10 rounded-[2px]" />
+    )}
     <div className="flex-1">
       <p className="text-md text-white/90 font-headline font-bold uppercase tracking-tight truncate">
         {name}
