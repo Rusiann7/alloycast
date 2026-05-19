@@ -19,6 +19,8 @@ export default function AdminReservations() {
   const [activeTab, setActiveTab] = useState("All Items");
   const [activeReservation, setActiveReservation] = useState(null);
   const [reservation, setReservation] = useState([]);
+  const [reservationDB, setReservationDB] = useState([]);
+  const [todayCount, setTodayCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [toast, setToast] = useState({
@@ -38,6 +40,8 @@ export default function AdminReservations() {
   const supabase = createClient();
 
   const itemsPerPage = 5;
+
+  const transaction = reservationDB.length;
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -94,6 +98,23 @@ export default function AdminReservations() {
       }
     };
     fetchTableData();
+  }, []);
+
+  useEffect(() => {
+    let startDate = new Date();
+
+    startDate.setHours(0, 0, 0, 0);
+
+    const todayCountGetter = async () => {
+      const { count } = await supabase
+        .from("Reservation")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", startDate.toISOString());
+
+      setTodayCount(count || 0);
+    };
+
+    todayCountGetter();
   }, []);
 
   const exportToExcel = () => {
@@ -246,12 +267,90 @@ export default function AdminReservations() {
     );
   };
 
-  const reservationDataDB = async () => {
+  const reservationDataDB = async (dateRange) => {
     try {
+      const now = new Date();
+      let startDate = new Date();
+      let endDate = new Date();
+
+      switch (dateRange) {
+        case "Today":
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case "Yesterday":
+          startDate.setDate(now.getDate() - 1);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(startDate);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case "This Week":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "This Month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case "All Time":
+          startDate = new Date(0); // Year 1970
+          endDate = new Date();
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
+      }
+      const { data: reservationData, error: reservationError } = await supabase
+        .from("Reservation")
+        .select("*, Users(id, email), Inventory(item_name, item_image, brand)")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      const { data: customerData, error: customerError } = await supabase
+        .from("Customer")
+        .select("user_id, firstname, lastname");
+
+      if (reservationData && customerData) {
+        const mergedTables = reservationData.map((reservation) => {
+          const matchCustomer = customerData.find(
+            (customer) => customer.user_id === reservation.user_id,
+          );
+
+          return {
+            id: reservation.id,
+            customer: matchCustomer
+              ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
+              : "Unknown Customer",
+            customer_email: reservation.Users?.email,
+            item_name: reservation.Inventory?.item_name,
+            brand: reservation.Inventory?.brand || "Unkownd Brand",
+            qty: (reservation.quantity || 0).toString().padStart(2, "0"),
+            date: new Date(reservation.created_at).toLocaleDateString(),
+            status: reservation.status || "Pending",
+            statusColor:
+              reservation.status === "Approved"
+                ? "bg-green-700 text-white/90 border-green-500/20"
+                : reservation.status === "Rejected" ||
+                    reservation.status === "Cancelled"
+                  ? "bg-red-400/50 text-red-300 border-red-500/20"
+                  : "bg-primary-container text-secondary-container border-white/10",
+            statusDot:
+              reservation.status === "Approved"
+                ? "bg-green-500"
+                : reservation.status === "Rejected" ||
+                    reservation.status === "Cancelled"
+                  ? "bg-red-500"
+                  : "bg-secondary-container",
+
+            img: reservation.Inventory?.item_image || "/logo.jpg",
+          };
+        });
+        setReservationDB(mergedTables);
+      }
     } catch (error) {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    reservationDataDB(dateRange);
+  }, [dateRange]);
 
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
@@ -543,7 +642,6 @@ export default function AdminReservations() {
             </div>
           </div>
         ) : (
-          /* DUMMY REPORTS VIEW */
           <div className="space-y-10 reveal-up">
             {/* Sticky Date Range Control */}
             <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
@@ -559,6 +657,7 @@ export default function AdminReservations() {
                     key={label}
                     onClick={() => {
                       setDateRange(label);
+                      reservationDataDB(label);
                     }}
                     className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
                       dateRange === label
@@ -576,13 +675,13 @@ export default function AdminReservations() {
               {[
                 {
                   label: "Today's Reservations",
-                  value: "12",
+                  value: todayCount,
                   icon: "book_online",
                   color: "text-green-400",
                 },
                 {
                   label: "Transactions",
-                  value: "24",
+                  value: transaction,
                   icon: "receipt_long",
                   color: "text-blue-400",
                 },
@@ -638,7 +737,7 @@ export default function AdminReservations() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.02]">
-                    {reservation.map((res) => (
+                    {reservationDB.map((res) => (
                       <tr
                         key={res.id}
                         className="group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer border-l-4 border-l-transparent"
