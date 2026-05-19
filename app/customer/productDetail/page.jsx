@@ -50,6 +50,8 @@ function ProductDetail() {
     setTimeout(() => setToast({ ...toast, visible: false }), 4000);
   };
 
+  const commentCount = commentDB.length;
+
   // for querying selected product from Inventory Table
   useEffect(() => {
     if (productId) {
@@ -280,6 +282,44 @@ function ProductDetail() {
     }
   };
 
+  const updateComment = async (rating, comment) => {
+    try {
+      if (!user) {
+        // is user is not logged in
+        showToast("You must login first to comment on this product", "error");
+        const captureCurrentPath =
+          window.location.pathname + window.location.search; // capture current page url with product id
+        setTimeout(() => {
+          router.push(
+            // pass the captured current path url to login page
+            `/customer/auth/login?redirectTo=${encodeURIComponent(captureCurrentPath)}`,
+          );
+        }, 4000);
+        return;
+      }
+
+      if (rating === 0 || !comment) return;
+
+      const { error } = await supabase
+        .from("Ratings")
+        .update({
+          comment: comment,
+          rating: rating,
+        })
+        .eq("product_id", productId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      getComments(productId);
+      showToast("Comment Updated", "success");
+
+      console.log(rating, comment);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // for loading product
   if (loading) {
     return (
@@ -409,7 +449,7 @@ function ProductDetail() {
             >
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-xl uppercase tracking-widest italic">
-                  Customer Review
+                  Customer Review ({commentCount})
                 </h3>
               </div>
 
@@ -475,10 +515,6 @@ function ProductDetail() {
               </div>
 
               <div className="space-y-4 bg-secondary-container p-4 rounded-lg shadow-lg/30">
-                <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
-                  Provide Comment
-                </label>
-
                 <div className="flex items-center gap-1">
                   <p className="text-font-color text-lg uppercase font-bold">
                     Rating:{" "}
@@ -500,6 +536,9 @@ function ProductDetail() {
                     ))}
                   </span>
                 </div>
+                <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
+                  Provide Comment
+                </label>
 
                 <textarea
                   value={comment}
@@ -509,7 +548,10 @@ function ProductDetail() {
                 />
                 <div className="flex gap-2 justify-end">
                   {!submitBtn ? (
-                    <button className="flex  items-center gap-2 bg-primary-container text-black/90 text-sm p-2 rounded-lg drop-shadow-lg/50 font-bold uppercase  hover:scale-105 active:scale-[0.98] transition-all">
+                    <button
+                      className="flex  items-center gap-2 bg-primary-container text-black/90 text-sm p-2 rounded-lg drop-shadow-lg/50 font-bold uppercase  hover:scale-105 active:scale-[0.98] transition-all"
+                      onClick={() => updateComment(rating, comment)}
+                    >
                       <span className="material-symbols-outlined">edit</span>
                       Edit Comment
                     </button>
