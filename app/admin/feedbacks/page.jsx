@@ -107,7 +107,7 @@ export default function FeedbackPage() {
                       <tr key={index}>
                         <td className="px-8 py-5 text-center">
                           <p className="text-lg text-white font-bold font-headline uppercase tracking-tight">
-                            {feedback.rating}
+                            {feedback.rating} / 5
                           </p>
                         </td>
                         <td className="px-8 py-5 text-center">
@@ -120,46 +120,6 @@ export default function FeedbackPage() {
                 )}
               </tbody>
             </table>
-            {/* Pagination */}
-            <div className="flex items-center justify-center p-8 bg-input-field ">
-              <div className="flex items-center gap-3">
-                {/* Previous */}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
-                >
-                  <span className="material-symbols-outlined text-md">
-                    chevron_left
-                  </span>
-                </button>
-
-                {/* Current Page Indicator */}
-                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
-                  {currentPage}
-                </button>
-
-                {/* Next */}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) =>
-                      Math.min(
-                        p + 1,
-                        Math.ceil(feedbacks.length / itemsPerPage),
-                      ),
-                    )
-                  }
-                  disabled={
-                    currentPage >= Math.ceil(feedbacks.length / itemsPerPage)
-                  }
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
-                >
-                  <span className="material-symbols-outlined text-md">
-                    chevron_right
-                  </span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>
