@@ -4,9 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
-import SessionModal from "./SessionModal";
-import AddProductModal from "./AddProductModal";
-import Toast from "./Toast";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
@@ -163,7 +160,7 @@ export default function AdminSidebar() {
             </div>
             <div>
               <h1 className="text-xl font-black text-black font-headline uppercase leading-none ">
-                {adminName}
+                {adminName ? adminName : "AlloyDash"} {""} Admin
               </h1>
               <p className="font-headline uppercase text-xs font-black tracking-[0.3em] text-secondary-container mt-1">
                 SHOP ADMIN

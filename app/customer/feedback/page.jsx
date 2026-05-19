@@ -97,41 +97,43 @@ export default function Feedback() {
 
       {/* Main Catalog View */}
       <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32">
-        <h1>rating</h1>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => setRating(star)}
-              className={`material-symbols-outlined text-4xl transition-all duration-300${
-                rating >= star
-                  ? "text-primary-container [font-variation-settings:'FILL'_1]"
-                  : "text-font-color dark:text-foreground hover:text-secondary-container [font-variation-settings:'FILL'_0]"
-              }`}
-            >
-              star
-            </button>
-          ))}
-        </div>
+        <div className="flex flex-col items-center">
+          <h1>Rating</h1>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(star)}
+                className={`material-symbols-outlined text-4xl transition-all duration-300${
+                  rating >= star
+                    ? "text-primary-container [font-variation-settings:'FILL'_1]"
+                    : "text-font-color dark:text-foreground hover:text-secondary-container [font-variation-settings:'FILL'_0]"
+                }`}
+              >
+                star
+              </button>
+            ))}
+          </div>
 
-        <div className="space-y-4">
-          <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
-            Provide Comment
-          </label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your thoughts on performance and quality..."
-            className="w-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-6 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
-          />
-        </div>
+          <div className="space-y-4">
+            <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
+              Provide Comment
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Share your thoughts on performance and quality..."
+              className="w-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-6 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
+            />
+          </div>
 
-        <button
-          className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]"
-          onClick={() => insertFeedback(rating, comment)}
-        >
-          Submit
-        </button>
+          <button
+            className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]"
+            onClick={() => insertFeedback(rating, comment)}
+          >
+            Submit
+          </button>
+        </div>
       </main>
 
       {/* Footer */}
