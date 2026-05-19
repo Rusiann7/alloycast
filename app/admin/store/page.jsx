@@ -19,6 +19,7 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
   const [scannedBarCode, setScannedBarCode] = useState(null);
+  const [todayCount, setTodayCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState("Last 30 Days");
@@ -33,8 +34,27 @@ export default function StorePage() {
 
   const itemsPerPage = 5;
 
+  const transaction = posDB.length;
+
   useEffect(() => {
     fetchInventoryProduct();
+  }, []);
+
+  useEffect(() => {
+    let startDate = new Date();
+
+    startDate.setHours(0, 0, 0, 0);
+
+    const todayCountGetter = async () => {
+      const { count } = await supabase
+        .from("POS")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", startDate.toISOString());
+
+      setTodayCount(count || 0);
+    };
+
+    todayCountGetter();
   }, []);
 
   const totalProductStock = inventory.reduce(
@@ -454,8 +474,6 @@ export default function StorePage() {
               </div>
             </>
           ) : (
-            /* DUMMY REPORTS VIEW */
-
             <div className="space-y-10 reveal-up">
               {/* Sticky Date Range Control */}
               <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
@@ -491,13 +509,13 @@ export default function StorePage() {
                 {[
                   {
                     label: "Today's Sales",
-                    value: "₱12,450",
+                    value: todayCount,
                     icon: "payments",
                     color: "text-green-400",
                   },
                   {
                     label: "Transactions",
-                    value: "24",
+                    value: transaction,
                     icon: "receipt_long",
                     color: "text-blue-400",
                   },
