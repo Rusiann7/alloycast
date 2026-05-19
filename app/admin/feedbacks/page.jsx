@@ -11,7 +11,6 @@ export default function FeedbackPage() {
   const [feedbacks, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({
     visible: false,
