@@ -477,7 +477,10 @@ function ProductDetail() {
                 </table>
               </div>
 
-              <div className="flex gap-2">
+              <div className="space-y-4 bg-secondary-container p-4 rounded-lg shadow-lg/30">
+                <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
+                  Provide Comment
+                </label>
                 <p className="text-font-color text-lg uppercase font-bold">
                   Rating
                 </p>
@@ -494,12 +497,6 @@ function ProductDetail() {
                     star
                   </button>
                 ))}
-              </div>
-
-              <div className="space-y-4 bg-secondary-container p-4 rounded-lg shadow-lg/30">
-                <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
-                  Provide Comment
-                </label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}

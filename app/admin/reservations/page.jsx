@@ -274,30 +274,35 @@ export default function AdminReservations() {
           className="flex items-center gap-10  mb-10 overflow-x-auto scrollbar-hide reveal-up"
           style={{ animationDelay: "0.1s" }}
         >
-          {["All Items", "Pending", "Approved", "Rejected", "Cancelled"].map(
-            (tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setCurrentPage(1);
-                }}
-                className={`pb-5  text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
-                  activeTab === tab
-                    ? "text-secondary-container"
-                    : "text-font-color opacity-40 hover:opacity-80"
-                }`}
-              >
-                {tab}
-                {tab === "Pending" && (
-                  <span className="ml-2 w-2 h-2 rounded-full bg-secondary-container inline-block" />
-                )}
-                {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-secondary-container animate-scale-in" />
-                )}
-              </button>
-            ),
-          )}
+          {[
+            "All Items",
+            "Pending",
+            "Approved",
+            "Rejected",
+            "Cancelled",
+            "Reports",
+          ].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setCurrentPage(1);
+              }}
+              className={`pb-5  text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
+                activeTab === tab
+                  ? "text-secondary-container"
+                  : "text-font-color opacity-40 hover:opacity-80"
+              }`}
+            >
+              {tab}
+              {tab === "Pending" && (
+                <span className="ml-2 w-2 h-2 rounded-full bg-secondary-container inline-block" />
+              )}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 w-full h-[3px] bg-secondary-container animate-scale-in" />
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Reservations Table */}
