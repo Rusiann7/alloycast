@@ -246,6 +246,13 @@ export default function AdminReservations() {
     );
   };
 
+  const reservationDataDB = async () => {
+    try {
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
