@@ -83,31 +83,6 @@ export default function FeedbackPage() {
                       FEEDBACK
                     </th>
                   </tr>
-<<<<<<< HEAD
-                ) : (
-                  feedbacks
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )
-                    .map((feedback, index) => (
-                      <tr key={index}>
-                        <td className="px-8 py-5 text-center">
-                          <p className="text-lg text-white font-bold font-headline uppercase tracking-tight">
-                            {feedback.rating} / 5
-                          </p>
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <p className="text-lg text-white font-bold font-headline uppercase tracking-tight">
-                            {feedback.comment}
-                          </p>
-                        </td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
-=======
                 </thead>
                 <tbody className="divide-y divide-white/[0.02]">
                   {feedbacks.length === 0 ? (
@@ -201,7 +176,6 @@ export default function FeedbackPage() {
                 </button>
               </div>
             </div>
->>>>>>> 2c463caaa290c198364e31cb3af0910660c38364
           </div>
         </div>
       </main>
