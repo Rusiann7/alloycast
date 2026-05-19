@@ -478,22 +478,29 @@ function ProductDetail() {
                 <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
                   Provide Comment
                 </label>
-                <p className="text-font-color text-lg uppercase font-bold">
-                  Rating
-                </p>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRating(star)}
-                    className={`material-symbols-outlined text-4xl transition-all duration-300${
-                      rating >= star
-                        ? "text-primary-container [font-variation-settings:'FILL'_1]"
-                        : "text-font-color hover:text-secondary-container [font-variation-settings:'FILL'_0]"
-                    }`}
-                  >
-                    star
-                  </button>
-                ))}
+
+                <div className="flex items-center gap-1">
+                  <p className="text-font-color text-lg uppercase font-bold">
+                    Rating:{" "}
+                  </p>
+                  <span>
+                    {" "}
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setRating(star)}
+                        className={`material-symbols-outlined text-4xl transition-all duration-300${
+                          rating >= star
+                            ? "text-primary-container [font-variation-settings:'FILL'_1]"
+                            : "text-font-color hover:text-secondary-container [font-variation-settings:'FILL'_0]"
+                        }`}
+                      >
+                        star
+                      </button>
+                    ))}
+                  </span>
+                </div>
+
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
