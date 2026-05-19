@@ -458,22 +458,24 @@ export default function StorePage() {
 
             <div className="space-y-10 reveal-up">
               {/* Sticky Date Range Control */}
-              <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
-                <div className="flex items-center  p-1 rounded-lg border border-primary-container">
+              <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
+                <div className="grid grid-cols-2 md:flex items-center p-1 rounded-lg border border-primary-container bg-input-field gap-1 md:gap-0 w-full md:w-auto">
                   {[
                     "Today",
                     "Yesterday",
                     "This Week",
                     "This Month",
                     "All Time",
-                  ].map((label) => (
+                  ].map((label, index) => (
                     <button
                       key={label}
                       onClick={() => {
                         setDateRange(label);
                         fetchPOSData(label);
                       }}
-                      className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
+                      className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
+                        index === 4 ? "col-span-2 md:col-span-1" : ""
+                      } ${
                         dateRange === label
                           ? "bg-primary-container text-black/90 shadow-lg"
                           : "text-white/90 opacity-80 hover:opacity-100"
@@ -485,7 +487,7 @@ export default function StorePage() {
                 </div>
               </div>
               {/* KPI Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2  gap-6">
                 {[
                   {
                     label: "Today's Sales",
@@ -502,72 +504,120 @@ export default function StorePage() {
                 ].map((kpi, i) => (
                   <div
                     key={i}
-                    className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:border-primary-container/30 transition-all"
+                    className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:scale-105 transition-all"
                   >
                     <div className="flex items-center justify-between mb-4">
                       <span
-                        className={`material-symbols-outlined ${kpi.color} text-3xl`}
+                        className={`material-symbols-outlined ${kpi.color} text-4xl`}
                       >
                         {kpi.icon}
                       </span>
-                      <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-                        Live
-                      </span>
                     </div>
-                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                    <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">
                       {kpi.label}
                     </p>
-                    <p className="text-2xl font-headline font-black text-white italic tracking-tighter">
+                    <p className="text-4xl font-headline font-black text-primary-container italic tracking-tighter">
                       {kpi.value}
                     </p>
                   </div>
                 ))}
               </div>
 
-              {/* Dummy Chart Placeholder */}
-              <div className="bg-secondary-container shadow-lg/30 rounded-lg border border-white/5 p-10 flex flex-col items-center justify-center min-h-[400px]">
-                <div>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Product Image</th>
-                        <th>Product Name</th>
-                        <th>Brand</th>
-                        <th>Category/Series</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Date Purchase</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {posDB.map((pos) => (
-                        <tr key={pos.id}>
-                          <td>
-                            <div>
-                              <img
-                                src={pos.Inventory?.item_image}
-                                alt={pos.Inventory?.item_name}
+              {/* Reports Table */}
+              <div className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide border border-white/5">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-input-field">
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Product Image
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Product Name
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Brand
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Category/Series
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Price
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Quantity
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Customer Details
+                      </th>
+                      <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                        Date Purchase
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.02]">
+                    {posDB.map((pos) => (
+                      <tr
+                        key={pos.id}
+                        className="group hover:bg-white/[0.01] transition-all duration-300"
+                      >
+                        <td className="px-8 py-5">
+                          <div className="flex items-center justify-center">
+                            <div className="w-32 h-20 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
+                              <Image
+                                src={
+                                  pos.Inventory?.item_image ||
+                                  "/placeholder-car.png"
+                                }
+                                alt={pos.Inventory?.item_name || "Image"}
+                                width={100}
+                                height={100}
+                                className="w-full h-full object-cover filter group-hover:scale-110 transition-all duration-700"
+                                loading="lazy"
                               />
                             </div>
-                          </td>
-                          <td>{pos.Inventory?.item_name}</td>
-                          <td>{pos.Inventory?.brand}</td>
-                          <td>{pos.Inventory?.category}</td>
-                          <td>
-                            {pos.Inventory?.price * pos.quantity} (
-                            {pos.Inventory?.price})
-                          </td>
-                          <td>{pos.quantity}</td>
-                          <td>{pos.name || "Name not provided"} </td>
-                          <td>{pos.email || "Email not provided"}</td>
-                          <td>{pos.created_at}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <p className="font-bold text-md tracking-tight uppercase text-primary-container transition-colors">
+                            {pos.Inventory?.item_name}
+                          </p>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <span className="inline-block px-2.5 py-1 bg-white/5 border border-white/10 text-sm font-black tracking-[0.1em] text-white/90 rounded-lg uppercase">
+                            {pos.Inventory?.brand}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
+                            {pos.Inventory?.category}
+                          </p>
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <p className="text-2xl  text-primary-container">
+                            ₱{pos.Inventory?.price * pos.quantity}{" "}
+                            <span className="text-sm text-white/80 italic block">
+                              (₱{pos.Inventory?.price} ea)
+                            </span>
+                          </p>
+                        </td>
+                        <td className="px-8 py-5 text-center font-black text-md tabular-nums text-white">
+                          {pos.quantity}
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <p className="font-black text-md text-primary-container tracking-tight uppercase transition-colors">
+                            {pos.name || "Name not provided"}
+                          </p>
+                          <p className="font-body text-sm text-white/80 mt-1 tabular-nums italic">
+                            {pos.email || "Email not provided"}
+                          </p>
+                        </td>
+                        <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest transition-colors">
+                          {new Date(pos.created_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
