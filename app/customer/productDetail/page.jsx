@@ -35,6 +35,7 @@ function ProductDetail() {
   const [comment, setComment] = useState("");
   const [commentDB, setCommentDB] = useState([]);
   const [submitBtn, setSubmitBtn] = useState(true);
+  const [canReview, setCanReview] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -154,6 +155,28 @@ function ProductDetail() {
     setComment("");
     setRating(0);
   }, [productId]);
+
+  useEffect(() => {
+    if (!user || !productId) return;
+
+    const checkReservationStatus = async () => {
+      const { data, error } = await supabase
+        .from("Reservation")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("inventory_id", productId)
+        .eq("status", "Approved")
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setCanReview(true);
+      } else {
+        setCanReview(false);
+      }
+    };
+
+    checkReservationStatus();
+  }, [user, productId]);
 
   useEffect(() => {
     if (!user) return;
@@ -327,7 +350,7 @@ function ProductDetail() {
   if (loading) {
     return (
       <div className="bg-background min-h-screen flex items-center justify-center">
-        <h1 className="text-white font-headline animate-pulse uppercase tracking-widest">
+        <h1 className="text-font-color text-lg font-headline animate-pulse uppercase tracking-widest">
           Loading Product Data...
         </h1>
       </div>
@@ -517,57 +540,75 @@ function ProductDetail() {
                 </table>
               </div>
 
-              <div className="space-y-4 bg-secondary-container p-4 rounded-lg shadow-lg/30">
-                <div className="flex items-center gap-1">
-                  <p className="text-font-color text-lg uppercase font-bold">
-                    Rating:{" "}
-                  </p>
-                  <span>
-                    {" "}
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setRating(star)}
-                        className={`material-symbols-outlined text-4xl transition-all duration-300${
-                          rating >= star
-                            ? "text-primary-container [font-variation-settings:'FILL'_1]"
-                            : "text-font-color hover:text-secondary-container [font-variation-settings:'FILL'_0]"
-                        }`}
-                      >
-                        star
-                      </button>
-                    ))}
-                  </span>
-                </div>
-                <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
-                  Provide Comment
-                </label>
+              {canReview ? (
+                <div className="space-y-4 bg-secondary-container p-4 rounded-lg shadow-lg/30">
+                  <div className="flex items-center gap-1">
+                    <p className="text-font-color text-lg uppercase font-bold">
+                      Rating:{" "}
+                    </p>
+                    <span>
+                      {" "}
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setRating(star)}
+                          className={`material-symbols-outlined text-4xl transition-all duration-300${
+                            rating >= star
+                              ? "text-primary-container [font-variation-settings:'FILL'_1]"
+                              : "text-font-color hover:text-secondary-container [font-variation-settings:'FILL'_0]"
+                          }`}
+                        >
+                          star
+                        </button>
+                      ))}
+                    </span>
+                  </div>
+                  <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-white/90">
+                    Provide Comment
+                  </label>
 
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Share your comments about the product quality..."
-                  className="w-full h-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-4 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
-                />
-                <div className="flex gap-2 justify-end">
-                  {!submitBtn ? (
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Share your comments about the product quality..."
+                    className="w-full h-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-4 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    {!submitBtn && (
+                      <button
+                        className="flex items-center gap-2 bg-secondary-container text-white/90 text-sm px-4 py-3 rounded-lg drop-shadow-lg/50 font-bold uppercase hover:scale-105 active:scale-[0.98] transition-all"
+                        onClick={() => {
+                          const textarea = document.querySelector("textarea");
+                          if (textarea) textarea.focus();
+                        }}
+                      >
+                        <span className="material-symbols-outlined">edit</span>
+                        Edit Comment
+                      </button>
+                    )}
                     <button
-                      className="flex  items-center gap-2 bg-primary-container text-black/90 text-sm p-2 rounded-lg drop-shadow-lg/50 font-bold uppercase  hover:scale-105 active:scale-[0.98] transition-all"
-                      onClick={() => updateComment(rating, comment)}
-                    >
-                      <span className="material-symbols-outlined">edit</span>
-                      Edit Comment
-                    </button>
-                  ) : (
-                    <button
-                      className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105  transition-all active:scale-[0.98]"
-                      onClick={() => insertComment(rating, comment)}
+                      className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-[0.98]"
+                      onClick={() =>
+                        !submitBtn
+                          ? updateComment(rating, comment)
+                          : insertComment(rating, comment)
+                      }
                     >
                       Submit Review
                     </button>
-                  )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-secondary-container p-8 rounded-lg shadow-lg/30 text-center flex flex-col items-center justify-center border border-white/5">
+                  <span className="material-symbols-outlined text-5xl text-primary-container mb-4 opacity-50">
+                    lock
+                  </span>
+                  <p className="font-headline font-bold uppercase tracking-widest text-sm text-white/70">
+                    Only customers with an approved reservation can leave a
+                    review.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

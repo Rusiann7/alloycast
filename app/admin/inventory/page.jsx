@@ -6,17 +6,28 @@ import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-
-const DynamicAddProductModal = dynamic(() => import("../../components/AddProductModal"), {
-  ssr: false
-})
+const DynamicAddProductModal = dynamic(
+  () => import("../../components/AddProductModal"),
+  {
+    ssr: false,
+  },
+);
 
 const DynamicToast = dynamic(() => import("../../components/Toast"), {
-  ssr: false
-})
+  ssr: false,
+});
+
+const DynamicDeleteConfirmationModal = dynamic(
+  () => import("../../components/DeleteConfirmationModal"),
+  { ssr: false },
+);
+
 export default function AdminInventory() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingProductId, setEditingProductId] = useState(null); // holds the id of EACH product
   const [editProductForm, setEditProductForm] = useState({}); // holds the temporary form data from editing fields
@@ -144,17 +155,25 @@ export default function AdminInventory() {
   };
 
   // delete product
-  const deleteProduct = async (id) => {
-    if (!confirm("Are you sure you want to remove this item?")) return;
+  const confirmDeleteProduct = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
 
     try {
-      const { error } = await supabase.from("Inventory").delete().eq("id", id); // .eq delete only the selected product
+      const { error } = await supabase
+        .from("Inventory")
+        .delete()
+        .eq("id", itemToDelete.id); // .eq delete only the selected product
       if (error) throw error;
       showToast("Product removed!", "success");
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
       fetchInventoryProduct(); // reload the page to display updated products
     } catch (error) {
       showToast("Failed to remove product");
       console.error(error.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
   return (
@@ -281,17 +300,15 @@ export default function AdminInventory() {
                               />
                             )}
                             <Image
-                            fill
+                              fill
                               src={
                                 editingProductId === item.id &&
                                 editProductForm.preview
                                   ? editProductForm.preview
                                   : item.item_image || "/placeholder-car.png"
-
                               }
-
                               alt={item.item_name}
-                              className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700  ${
+                              className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700   ${
                                 editingProductId === item.id ? "opacity-40" : ""
                               }`}
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -440,7 +457,10 @@ export default function AdminInventory() {
                                   </span>
                                 </button>
                                 <button
-                                  onClick={() => deleteProduct(item.id)}
+                                  onClick={() => {
+                                    setItemToDelete(item);
+                                    setDeleteModalOpen(true);
+                                  }}
                                   className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                                 >
                                   <span className="material-symbols-outlined text-sm">
@@ -520,6 +540,18 @@ export default function AdminInventory() {
         showToast={showToast}
         onSuccess={fetchInventoryProduct} // refresh kaagad once na may bagong added na product
         inventory={inventory}
+      />
+
+      <DynamicDeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={confirmDeleteProduct}
+        itemName={itemToDelete?.item_name}
+        itemType="Product"
+        isDeleting={isDeleting}
       />
 
       <DynamicToast

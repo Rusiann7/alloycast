@@ -18,6 +18,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   const [preview, setPreview] = useState(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedBarCode, setScannedBarCode] = useState(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -27,11 +28,84 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
+  const videoRef = React.useRef(null); // opens camera to capture image of product
+  const canvasRef = React.useRef(null); // converts the video to img file
+
+  // completely stops the camera
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      // Loop through all active camera streams (tracks) and turn them off
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+    }
+    setCameraOpen(false);
+  };
+
+  // closes the camera when X button is clicked
+  React.useEffect(() => {
+    if (!isOpen) {
+      stopCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  const startCamera = async () => {
+    setCameraOpen(true);
+    try {
+      // Request permission and access the rear camera ("environment")
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream; // Feed the stream into the <video> tag
+        videoRef.current.play(); // Start playing the video
+      }
+    } catch (err) {
+      showToast("Error accessing camera: " + err.message, "error");
+      setCameraOpen(false);
+    }
+  };
+
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      // Match the canvas size to the actual video resolution
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      // "Draw" the current video frame onto the canvas
+      const context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Convert the drawn canvas into a Blob (raw data), then into a File
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            // We create a File object so it perfectly mimics a user uploading a file
+            const file = new File([blob], `camera_capture_${Date.now()}.jpg`, {
+              type: "image/jpeg",
+            });
+            setAddFormData((prev) => ({
+              ...prev,
+              item_image: file,
+            }));
+            setPreview(URL.createObjectURL(file));
+            // / Show the preview thumbnail
+            stopCamera();
+            showToast("Item image captured successfully", "success");
+          }
+        },
+        "image/jpeg",
+        0.9, // 0.9 is the image quality (90%)
+      );
+    }
   };
 
   const getInputValue = (e) => {
@@ -342,9 +416,21 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
 
           {/* Item Image */}
           <div className="space-y-3">
-            <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
-              ITEM IMAGE
-            </label>
+            <div className="flex justify-between items-center">
+              <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em] inline-block border-l-2 border-secondary-container pl-2">
+                ITEM IMAGE
+              </label>
+              <button
+                type="button"
+                onClick={startCamera}
+                className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-secondary-container hover:bg-secondary-container/80 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-lg/30"
+              >
+                <span className="material-symbols-outlined text-sm sm:text-base">
+                  photo_camera
+                </span>
+                OPEN CAMERA
+              </button>
+            </div>
             <div
               onClick={() => fileInputRef.current.click()}
               className="w-full h-48 bg-input-field border border-dashed border-white/10 rounded-lg flex flex-col items-center justify-center group cursor-pointer hover:border-primary-container transition-all duration-500 rounded-[2px] relative overflow-hidden"
@@ -407,6 +493,45 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
         type={toast.type}
         visible={toast.visible}
       />
+      {cameraOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-lg bg-background rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+            <div className="p-4 flex justify-between items-center border-b border-white/10">
+              <h4 className="text-lg text-white font-bold font-headline uppercase tracking-wider">
+                Take Photo
+              </h4>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined text-white text-sm">
+                  close
+                </span>
+              </button>
+            </div>
+            <div className="relative bg-black w-full aspect-square flex items-center justify-center">
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                playsInline
+                muted
+              />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+            <div className="p-6 flex justify-center bg-background border-t border-white/10">
+              <button
+                type="button"
+                onClick={captureImage}
+                className="w-16 h-16 rounded-full border-4 border-primary-container bg-white/10 hover:bg-primary-container transition-colors flex items-center justify-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-white transition-all scale-90 hover:scale-100" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Scanner
         scannerOpen={scannerOpen}
         scannerClose={() => setScannerOpen(false)}

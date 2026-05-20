@@ -600,18 +600,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Activity Table */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 items-start">
           <div
             className="xl:col-span-3  text-white/90 bg-secondary-container rounded-lg  shadow-lg/30 overflow-hidden reveal-up"
             style={{ animationDelay: "0.7s" }}
           >
-            <div className="p-6 border-b-2 border-primary-container  flex justify-between items-center">
-              <h4 className="text-xl text-white/90 font-black font-headline uppercase tracking-tighter">
+            <div className="p-6 border-b-2 border-primary-container bg-primary-container flex justify-between items-center">
+              <h4 className="text-xl text-black/90 font-black font-headline uppercase tracking-tighter">
                 Activity Ledger
               </h4>
               <button
                 onClick={() => router.push("/admin/reservations")}
-                className="text-md sm:text-sm font-headline font-bold uppercase tracking-widest text-white/90 hover:text-primary-container hover:underline transition-colors"
+                className="text-md sm:text-sm font-headline font-bold uppercase tracking-widest text-black/90 hover:text-input-field hover:underline transition-colors"
               >
                 View All Reservations
               </button>
@@ -1024,7 +1024,7 @@ const InventoryItem = ({ name, price, img }) => (
       <div className="w-20 h-10 bg-white/10 rounded-[2px]" />
     )}
     <div className="flex-1">
-      <p className="text-md text-white/90 font-headline font-bold uppercase tracking-tight truncate">
+      <p className="text-md text-white/90 font-headline font-bold uppercase tracking-tight break-words">
         {name}
       </p>
       <p className="text-md font-headline text-primary-container font-black tracking-widest uppercase">

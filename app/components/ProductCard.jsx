@@ -13,7 +13,7 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
   };
 
   return (
-    <div className="flex flex-col h-full drop-shadow-lg/30 bg-secondary-container rounded-lg overflow-hidden group hover:scale-105 hover:cursor-pointer transition-all duration-300 isolate">
+    <div className="flex flex-col h-full shadow-lg/30 bg-secondary-container rounded-lg overflow-hidden group hover:scale-105 hover:cursor-pointer transition-all duration-300 isolate">
       <div className="relative aspect-[4/3]  overflow-hidden">
         <Image
           fill

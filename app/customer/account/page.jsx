@@ -3,13 +3,90 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import SessionModal from "../../components/SessionModal";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
 const DynamicSessionModal = dynamic(
   () => import("../../components/SessionModal"),
 );
+
+const DynamicToast = dynamic(() => import("../../components/Toast"));
+
+const OrderCancellationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  itemName = "this item",
+  isCanceling = false,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-md bg-background rounded-lg p-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-white/5 flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-error-container/20 border border-error-container/20 flex items-center justify-center flex-shrink-0">
+            <span className="material-symbols-outlined text-error-container text-2xl">
+              cancel
+            </span>
+          </div>
+          <div>
+            <h4 className="text-2xl text-on-primary font-black font-headline uppercase tracking-wider">
+              Cancel Order
+            </h4>
+            <p className="text-md text-font-color mt-1">
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 bg-secondary-container drop-shadow-lg/30 rounded-lg">
+          <p className="text-white/90 text-md leading-relaxed">
+            Are you sure you want to cancel your reservation for{" "}
+            <span className="font-bold text-primary-container">
+              "{itemName}"
+            </span>
+            ?
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-white/5 flex gap-3 justify-end bg-background">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isCanceling}
+            className="px-6 py-2.5 rounded-lg text-sm font-bold bg-secondary-container text-white/90 hover:scale-105 transition-all disabled:opacity-50"
+          >
+            KEEP ORDER
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isCanceling}
+            className="px-6 py-2.5 rounded-lg text-sm font-bold bg-on-primary hover:scale-105 text-white/90 transition-all flex items-center gap-2 disabled:opacity-50"
+          >
+            {isCanceling ? (
+              <>
+                <span className="material-symbols-outlined text-sm animate-spin">
+                  progress_activity
+                </span>
+                CANCELING...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-sm">close</span>
+                CONFIRM CANCEL
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Account() {
   const supabase = createClient();
@@ -19,6 +96,19 @@ export default function Account() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [reservationToCancel, setReservationToCancel] = useState(null);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+  };
 
   useEffect(() => {
     const fetchAccountData = async () => {
@@ -86,14 +176,13 @@ export default function Account() {
     router.push("/");
   };
 
-  const handleCancelReservation = async (
-    reservationId,
-    inventoryId,
-    quantity,
-  ) => {
-    if (!confirm("Are you sure you want to cancel this reservation?")) return;
+  const confirmCancelReservation = async () => {
+    if (!reservationToCancel) return;
+    setIsCanceling(true);
 
     try {
+      const { reservationId, inventoryId, quantity } = reservationToCancel;
+
       // 1. Update reservation status to Cancelled
       const { error: updateError } = await supabase
         .from("Reservation")
@@ -123,9 +212,14 @@ export default function Account() {
           r.id === reservationId ? { ...r, status: "Cancelled" } : r,
         ),
       );
+      showToast("Order Cancellation Successful!", "success");
+      setCancelModalOpen(false);
+      setReservationToCancel(null);
     } catch (error) {
       console.error("Cancellation Failed: ", error.message);
-      alert("Failed to cancel reservation");
+      showToast("Failed to cancel reservation, try again later", "error");
+    } finally {
+      setIsCanceling(false);
     }
   };
 
@@ -205,7 +299,7 @@ export default function Account() {
           </div>
           <button
             onClick={showLogoutModal}
-            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:scale-105 text-xs text-white/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 drop-shadow-lg/25"
+            className="px-6 py-3 border-secondary-container bg-secondary-container rounded-lg hover:scale-105 text-xs text-white/90 font-black uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg/25"
           >
             <span className="material-symbols-outlined text-sm">logout</span>
             Sign Out
@@ -292,7 +386,7 @@ export default function Account() {
                 filteredReservations.map((res) => (
                   <div
                     key={res.id}
-                    className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 drop-shadow-lg/30 transition-colors"
+                    className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-colors"
                   >
                     <div className="relative w-full sm:w-40 h-64 sm:h-40 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
                       <Image
@@ -334,13 +428,16 @@ export default function Account() {
                         </span>
                         {(res.status === "Pending" || !res.status) && (
                           <button
-                            onClick={() =>
-                              handleCancelReservation(
-                                res.id,
-                                res.inventory_id,
-                                res.quantity,
-                              )
-                            }
+                            onClick={() => {
+                              setReservationToCancel({
+                                reservationId: res.id,
+                                inventoryId: res.inventory_id,
+                                quantity: res.quantity,
+                                itemName:
+                                  res.Inventory?.item_name || "this item",
+                              });
+                              setCancelModalOpen(true);
+                            }}
                             className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
                           >
                             <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
@@ -366,6 +463,21 @@ export default function Account() {
           </div>
         </div>
       </div>
+      <DynamicToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
+      <OrderCancellationModal
+        isOpen={cancelModalOpen}
+        onClose={() => {
+          setCancelModalOpen(false);
+          setReservationToCancel(null);
+        }}
+        onConfirm={confirmCancelReservation}
+        itemName={reservationToCancel?.itemName}
+        isCanceling={isCanceling}
+      />
       <DynamicSessionModal
         isOpen={showSessionModal}
         onClose={() => setShowSessionModal(false)}
