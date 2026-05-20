@@ -3,6 +3,13 @@
 import { useState, useEffect } from "react";
 import CustomerFooter from "../../components/CustomerFooter";
 import { createClient } from "../../../lib/supabase/client";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false,
+});
 
 export default function Feedback() {
   const [rating, setRating] = useState(0);
@@ -16,6 +23,7 @@ export default function Feedback() {
   });
 
   const supabase = createClient();
+  const router = useRouter();
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -73,12 +81,15 @@ export default function Feedback() {
   return (
     <div className="bg-background text-on-surface font-body min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
       <header className="relative py-28 px-12 lg:px-20 border-b border-white/5 overflow-hidden reveal-up">
-        <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/70 to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 w-full  h-full pointer-events-none   grayscale animate-drive-in drop-shadow-lg/50">
-          <img
-            className="w-full h-full object-cover "
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-iBE2bThpejE-k0yVjvD9_9bvpDi5E3-AIaZyaBgX3WPkoe0yeJqYYJiLR6JCLDq3vnmf9gRVTcYGP6rugVRMCVEGdqa5PtYQMotdtaVumU-aptncRp3o4KMv80mCpzkhu6pRz2Y7EXRwz2tb_tzNhTP79N5vKOqra706nIC6yxKh4_9faXMzKGTW5bC44JQUOglYXXBYJrh1xRWnR3ic2a5ACn4QsnLJi5euAjQ63XxuarlEUO048Nv5uAMWPT1YxMjhUDQEtJM"
+        <div className="absolute inset-0 bg-black/60 to-transparent z-10"></div>
+        <div className="absolute right-0 top-0 w-full h-full pointer-events-none animate-drive-in drop-shadow-lg/30">
+          <Image
+            className="w-full h-full object-cover"
+            src="/porsche-grayscale.jpg"
             alt="Hero BG"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw"
           />
         </div>
 
@@ -95,44 +106,60 @@ export default function Feedback() {
         </div>
       </header>
 
-      {/* Main Catalog View */}
-      <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32">
-        <div className="flex flex-col items-center">
-          <h1>Rating</h1>
-          <div className="flex gap-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => setRating(star)}
-                className={`material-symbols-outlined text-4xl transition-all duration-300${
-                  rating >= star
-                    ? "text-primary-container [font-variation-settings:'FILL'_1]"
-                    : "text-font-color dark:text-foreground hover:text-secondary-container [font-variation-settings:'FILL'_0]"
-                }`}
-              >
-                star
-              </button>
-            ))}
+      <DynamicToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
+
+      {/* Main Feedback View */}
+      <main className="flex-1 flex flex-col items-center justify-center max-w-[800px] w-full mx-auto p-6 lg:p-12 gap-10 pt-12 lg:pt-20 mb-20">
+        <div className="w-full bg-secondary-container backdrop-blur-xl p-8 lg:p-12 rounded-lg border border-white/5 reveal-up shadow-lg/30 carbon-noise">
+          <div className="text-center mb-10">
+            <h2 className="font-headline text-2xl lg:text-3xl text-primary-container font-black uppercase tracking-widest italic mb-2">
+              Rate Your Experience
+            </h2>
+            <p className="text-sm font-black uppercase tracking-[0.3em] text-white/90">
+              Help us improve our service
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-font-color">
-              Provide Comment
-            </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Share your thoughts on performance and quality..."
-              className="w-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-6 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
-            />
-          </div>
+          <div className="flex flex-col items-center gap-8">
+            <div className="flex gap-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`material-symbols-outlined text-5xl sm:text-6xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+                    rating >= star
+                      ? "text-primary-container [font-variation-settings:'FILL'_1] drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]"
+                      : "text-white/60 hover:text-primary-container/50 [font-variation-settings:'FILL'_0]"
+                  }`}
+                >
+                  star
+                </button>
+              ))}
+            </div>
 
-          <button
-            className="w-full sm:w-auto px-12 py-4 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-xs text-black uppercase tracking-[0.2em] hover:bg-secondary-container  transition-all active:scale-[0.98]"
-            onClick={() => insertFeedback(rating, comment)}
-          >
-            Submit
-          </button>
+            <div className="w-full space-y-4 mt-4">
+              <label className="block font-headline font-black text-sm uppercase tracking-[0.3em] text-primary-container ml-1">
+                Provide Comment
+              </label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Share your thoughts on the order reservation process..."
+                className="w-full bg-input-field border-b-2 border-transparent focus:border-primary-container py-6 px-6 rounded-lg text-md text-white/90 font-headline tracking-widest placeholder:text-white/40 focus:outline-none transition-all min-h-[180px] resize-none font-bold"
+              />
+            </div>
+
+            <button
+              className="w-full py-5 mt-6 bg-primary-container drop-shadow-lg/30 rounded-lg font-headline font-black text-sm text-black uppercase tracking-[0.3em] hover:scale-105 transition-all active:scale-[0.98]"
+              onClick={() => insertFeedback(rating, comment)}
+            >
+              Submit Feedback
+            </button>
+          </div>
         </div>
       </main>
 

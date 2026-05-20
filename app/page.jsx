@@ -69,7 +69,7 @@ export default function LandingPage() {
              filter drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)] 
              dark:grayscale-75 dark:brightness-90 dark:contrast-[1.1] dark:drop-shadow-none
              opacity-0 animate-drive-in-stop max-w-none lg:max-w-full 
-             dark:[-webkit-box-reflect:below_-225px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
+             lg:[-webkit-box-reflect:below_-850px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
              -translate-y-[20%] lg:translate-y-0"
               src="/011.png"
               fill
@@ -86,20 +86,24 @@ export default function LandingPage() {
             style={{ animationDelay: "0.4s" }}
           >
             <h1 className="font-headline font-black uppercase italic leading-[0.92] text-[clamp(44px,12vw,96px)] tracking-tighter">
-              <span className="block text-font-color">Hunt</span>
-              <span className="block text-secondary-container dark:text-primary-container drop-shadow-lg/50">
+              <span className="block text-landing-text drop-shadow-lg/20">
+                Hunt
+              </span>
+              <span className="block text-reserve-text drop-shadow-lg/60">
                 Reserve
               </span>
-              <span className="block  text-font-color ">Collect</span>
+              <span className="block text-collect-text drop-shadow-lg/80">
+                Collect
+              </span>
             </h1>
           </div>
           {/* Subheadline */}
           <p
-            className="text-lg sm:text-lg font-light lg:bg-transparent bg-black/60 text-white lg:text-font-color max-w-[440px] mb-10  p-2 leading-relaxed reveal-up rounded-lg"
+            className="text-lg sm:text-lg font-bold lg:bg-transparent lg:shadow-none shadow-lg/30 bg-secondary-container/80 text-white/90 lg:text-font-color max-w-[440px] mb-10  p-2 leading-relaxed reveal-up rounded-lg"
             style={{ animationDelay: "0.6s" }}
           >
-            Your Source For Premium Hot Wheels, Tomica, and other Diecast
-            brands. Exclusive for Elite Collectors.
+            Your Source of Exclusive Limited Diecast brands. Exclusive for Elite
+            Collectors.
           </p>
           {/* CTA Row */}
           <div
@@ -164,7 +168,7 @@ export default function LandingPage() {
       </main>
 
       {/* Top Products */}
-      <section className="bg-background py-20">
+      <section className="bg-background py-10">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>

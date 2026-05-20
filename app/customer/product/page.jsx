@@ -122,7 +122,7 @@ export default function Product() {
       <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32 ">
         {/* Sidebar Filters */}
         <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit sticky top-[100px] reveal-up drop-shadow-lg/50">
-          <h2 className="font-headline text-2xl text-font-color dark:text-foreground font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
+          <h2 className="font-headline text-2xl text-white/90 font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
             Filter by Brand
           </h2>
 
@@ -184,7 +184,7 @@ export default function Product() {
                 Search Products
               </p>
               <div className="relative group">
-                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 ...">
+                <span className="material-symbols-outlined text-white/90 absolute left-5 top-1/2 -translate-y-1/2 ...">
                   search
                 </span>
                 <input
@@ -337,7 +337,7 @@ const FilterCheckbox = ({ label, checked, onChange }) => (
       )}
     </div>
     <span
-      className={`font-headline text-sm font-black uppercase tracking-widest transition-colors ${checked ? "text-white" : "text-font-color"} group-hover:text-white`}
+      className={`font-headline text-sm font-black uppercase tracking-widest transition-colors ${checked ? "text-white" : "text-white/90"} group-hover:text-white`}
     >
       {label}
     </span>

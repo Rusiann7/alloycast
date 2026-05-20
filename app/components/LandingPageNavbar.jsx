@@ -112,7 +112,7 @@ export default function LandingPageNavbar() {
               className="flex lg:hidden items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
               onClick={() => setNavbarOpen(!navbarOpen)}
             >
-              <span className="material-symbols-outlined transition-all duration-300">
+              <span className="material-symbols-outlined text-black/90 transition-all duration-300">
                 {navbarOpen ? "close" : "menu"}
               </span>
             </button>
@@ -171,14 +171,14 @@ export default function LandingPageNavbar() {
               <Link
                 key={navLink.id}
                 href={navLink.href}
-                className="text-2xl font-headline font-black uppercase italic hover:text-primary-container transition-colors tracking-tighter"
+                className="text-2xl font-headline font-black uppercase italic text-white/90 hover:text-primary-container transition-colors tracking-tighter"
                 onClick={() => setNavbarOpen(false)}
               >
                 {navLink.label}
               </Link>
             ))}
             {!user ? (
-              <button className="bg-primary-container text-black text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
+              <button className="bg-primary-container text-black/90 text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
                 <Link
                   href="/customer/auth/login"
                   onClick={() => setNavbarOpen(false)}
@@ -190,7 +190,7 @@ export default function LandingPageNavbar() {
               <>
                 <Link
                   href="/customer/account"
-                  className="text-2xl font-headline font-black uppercase italic text-primary-container"
+                  className="text-2xl font-headline font-black uppercase italic text-white/90"
                   onClick={() => setNavbarOpen(false)}
                 >
                   My Account
@@ -199,10 +199,10 @@ export default function LandingPageNavbar() {
                 {/* Mobile Logout Link */}
                 <button
                   onClick={() => {
-                    logoutAccount();
+                    showLogoutModal();
                     setNavbarOpen(false);
                   }}
-                  className="text-left text-2xl font-headline font-black uppercase italic text-on-surface hover:text-primary-container transition-colors tracking-tighter"
+                  className="text-left text-2xl font-headline font-black uppercase italic text-white/90 transition-colors tracking-tighter"
                 >
                   Log Out
                 </button>

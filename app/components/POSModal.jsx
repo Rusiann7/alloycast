@@ -44,6 +44,7 @@ export default function POSModal({
               <input
                 type="number"
                 placeholder="Enter Quantity"
+                className="bg-input-field text-white/90 p-2 rounded-lg"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
               />
