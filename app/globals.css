@@ -6,7 +6,10 @@
   --secondary-background: #f8f9fa;
   --foreground: #1a1a1a;
   --primary-container: #f8e408;
-  --secondary-container: #8d7a23;
+  --landing-text: #bbaf0ce7;
+  --reserve-text: #e9d500;
+  --collect-text: #ffea00;
+  --secondary-container: #a89127;
   --shit-container: #f8e408;
   --input-field: #504309;
   --font-color: #292727;
@@ -14,47 +17,6 @@
   --surface: #ffffff;
   --on-primary: #bb0725;
   --error-container: #c30410;
-
-  /* --secondary: #fff9ef;
-  --on-secondary: #3a3000;
-  --on-secondary-container: #725f00;
-  --secondary-fixed: #ffe16d;
-  --secondary-fixed-dim: #e9c400;
-  --on-secondary-fixed: #221b00;
-  --on-secondary-fixed-variant: #544600; */
-
-  /* --tertiary: #c7c7bf;
-  --tertiary-container: #64655f;
-  --on-tertiary: #2f312c;
-  --on-tertiary-container: #e3e3db;
-  --tertiary-fixed: #e3e3db;
-  --tertiary-fixed-dim: #c7c7bf;
-  --on-tertiary-fixed: #1a1c17;
-  --on-tertiary-fixed-variant: #464742; */
-
-  /* --error: #ffb4ab;
-
-  --on-error: #690005;
-  --on-error-container: #ffdad6;
-
-  --surface: #131313;
-  --surface-dim: #131313;
-  --surface-bright: #3a3939;
-  --surface-variant: #353534;
-  --on-surface: #e5e2e1;
-  --on-surface-variant: #e5bdbb;
-  --surface-container-lowest: #0e0e0e;
-  --surface-container-low: #1c1b1b;
-  --surface-container: #201f1f;
-  --surface-container-high: #2a2a2a;
-  --surface-container-highest: #353534;
-
-  --outline: #ac8887;
-  --outline-variant: #5c403f;
-  --inverse-surface: #e5e2e1;
-  --inverse-on-surface: #313030;
-  --inverse-primary: #bf0229;
-  --surface-tint: #ffb3b1; */
 }
 
 @theme {
@@ -62,6 +24,9 @@
   --color-secondary-background: var(--secondary-background);
   --color-foreground: var(--foreground);
   --color-primary-container: var(--primary-container);
+  --color-landing-text: var(--landing-text);
+  --color-collect-text: var(--collect-text);
+  --color-reserve-text: var(--reserve-text);
   --color-font-color: var(--font-color);
   --color-button-color: var(--button-color);
   --color-surface: var(--surface);
@@ -147,7 +112,10 @@
   /* --primary: #f07a0c; */
   --primary-container: #d0bf02;
   --secondary-container: #645a2f;
-  --shit-container: #f8e408;
+  --shit-container: #8f851f;
+  --landing-text: #ffea008c;
+  --reserve-text: #ffea00ce;
+  --collect-text: #fbff00f3;
 
   --font-color: #f3f3f3;
   --on-primary: #c51a37;
