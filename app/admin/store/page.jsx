@@ -187,7 +187,7 @@ export default function StorePage() {
     try {
       const { error } = await supabase.from("POS").insert({
         product_id: id,
-        quantity: 1,
+        quantity: formData.quantity,
         name: formData.userName || null,
         email: formData.emailAddr || null,
       });
@@ -206,7 +206,7 @@ export default function StorePage() {
     try {
       const { error } = await supabase
         .from("Inventory")
-        .update({ stock: selectedItem.stock - 1 }) // minus 1
+        .update({ stock: selectedItem.stock - formData.quantity }) // minus 1
         .eq("id", selectedItem.id);
 
       if (error) throw error;
