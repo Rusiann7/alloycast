@@ -204,6 +204,8 @@ export default function AdminSidebar() {
             label="FEEDBACK"
             href="/admin/feedbacks"
           />
+
+          <SidebarLink icon="people" label="USERS" href="/admin/users" />
         </nav>
 
         <div className="px-4 mt-auto space-y-4">
