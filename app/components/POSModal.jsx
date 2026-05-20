@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function POSModal({
   isOpen,
@@ -11,6 +11,7 @@ export default function POSModal({
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [stockCheck, setStockCheck] = useState(false);
 
   const handleConfirm = () => {
     onPurchase({ userName, emailAddr, quantity });
@@ -19,6 +20,13 @@ export default function POSModal({
     setQuantity(1);
   };
 
+  useEffect(() => {
+    if (selectedItem?.stock !== undefined && quantity > selectedItem.stock) {
+      setStockCheck(true); // over stock limit
+    } else {
+      setStockCheck(false);
+    }
+  }, [quantity, selectedItem]);
   if (!isOpen) return null;
 
   return (
@@ -81,6 +89,12 @@ export default function POSModal({
             >
               Cancel
             </button>
+
+            {stockCheck && (
+              <p className="text-red-500 text-sm">
+                Quantity exceeds available stock!
+              </p>
+            )}
             <button
               className="flex-1 py-2 shadow-lg/30 bg-primary-container rounded-lg text-black text-md font-bold hover:scale-105 transition-all"
               onClick={handleConfirm}
