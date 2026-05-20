@@ -157,7 +157,7 @@ export default function AdminReservations() {
     });
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = (reasonCancellation = "") => {
     const {
       reservationId,
       newStatus,

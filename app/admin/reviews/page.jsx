@@ -7,10 +7,20 @@ import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
+const DynamicDeleteConfirmationModal = dynamic(
+  () => import("../../components/DeleteConfirmationModal"),
+  {
+    ssr: false,
+  },
+);
+
 export default function FeedbackPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentDB, setCommentDB] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -57,17 +67,28 @@ export default function FeedbackPage() {
     fetchComments();
   }, []);
 
-  const deleteReview = async (reviewId) => {
-    const { error } = await supabase
-      .from("Ratings")
-      .delete()
-      .eq("id", reviewId);
+  const confirmDeleteReview = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
 
-    if (error) throw error;
-    console.log(reviewId);
+    try {
+      const { error } = await supabase
+        .from("Ratings")
+        .delete()
+        .eq("id", itemToDelete.id);
 
-    await getCommentsAuto();
-    showToast("Review deleted", "success");
+      if (error) throw error;
+
+      showToast("Review deleted", "success");
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
+      await getCommentsAuto();
+    } catch (error) {
+      showToast("Failed to remove review");
+      console.error(error.message);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const showToast = (message, type = "error") => {
@@ -141,7 +162,10 @@ export default function FeedbackPage() {
                     <td className="px-8 py-5">
                       <div className="flex items-center justify-center gap-3">
                         <button
-                          onClick={() => deleteReview(comments.id)}
+                          onClick={() => {
+                            setItemToDelete(comments);
+                            setDeleteModalOpen(true);
+                          }}
                           className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                         >
                           <span className="material-symbols-outlined text-sm">
@@ -162,6 +186,22 @@ export default function FeedbackPage() {
         message={toast.message}
         type={toast.type}
         visible={toast.visible}
+      />
+
+      <DynamicDeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={confirmDeleteReview}
+        itemName={
+          itemToDelete?.comment
+            ? `"${itemToDelete.comment.substring(0, 30)}..."`
+            : "this review"
+        }
+        itemType="Review"
+        isDeleting={isDeleting}
       />
     </div>
   );
