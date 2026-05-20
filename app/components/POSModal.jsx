@@ -10,11 +10,13 @@ export default function POSModal({
 }) {
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
+  const [quantity, setQuantity] = useState(1);
 
   const handleConfirm = () => {
-    onPurchase({ userName, emailAddr });
+    onPurchase({ userName, emailAddr, quantity });
     setUserName("");
     setEmailAddr("");
+    setQuantity(1);
   };
 
   if (!isOpen) return null;
@@ -38,7 +40,15 @@ export default function POSModal({
               <span className="text-font-color">₱{selectedItem?.price}</span>
             </p>
             <p className="text-lg font-bold text-font-color">
-              Quantity:{" "}
+              <label htmlFor="">Quantity: </label>
+              <input
+                type="number"
+                placeholder="Enter Quantity"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+              />
+
+              <label htmlFor="">Available Stocks: </label>
               <span className="text-font-color">{selectedItem?.stock}</span>
             </p>
 
