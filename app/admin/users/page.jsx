@@ -1,84 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createClient } from "../../../lib/supabase/client";
 
 export default function AdminCustomers() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true); // Open by default based on request visual
-  const [selectedCustomer, setSelectedCustomer] = useState({
-    id: "ER",
-    name: "Elias Rossi",
-    email: "elias.rossi@strada.io",
-    phone: "+39 342 901 1022",
-    memberSince: "JAN 14, 2023",
-    totalOrders: "08",
-    lifetimeValue: "₱ 28.5K",
-    initials: "ER",
-    color: "bg-[#C8102E]",
-  });
+  const [selectedCustomer, setSelectedCustomer] = useState([]);
+  const [customers, setCustomer] = useState([]);
 
-  const customers = [
-    {
-      id: "JD",
-      name: "Julian Draxler",
-      email: "j.draxler@motorsport.de",
-      reservations: 14,
-      activity: "2 HOURS AGO",
-      activityType: "Active Session",
-      portfolio: "₱ 42,450.00",
-      status: "Active",
-      initials: "JD",
-      color: "bg-[#2e3b4e]",
-      active: false,
-    },
-    {
-      id: "SH",
-      name: "Sienna Halloway",
-      email: "sienna.h@collection.co",
-      reservations: "03",
-      activity: "YESTERDAY",
-      activityType: "Checkout Abandoned",
-      portfolio: "₱ 12,100.00",
-      status: "Active",
-      initials: "SH",
-      color: "bg-[#4e2e2e]",
-      active: false,
-    },
-    {
-      id: "MK",
-      name: "Marcus Kaine",
-      email: "m.kaine@kainecapital.com",
-      reservations: 42,
-      activity: "3 DAYS AGO",
-      activityType: "Order Fulfillment",
-      portfolio: "₱ 184,200.00",
-      status: "Inactive",
-      initials: "MK",
-      color: "bg-[#2e4e3b]",
-      active: false,
-    },
-    {
-      id: "ER",
-      name: "Elias Rossi",
-      email: "elias.rossi@strada.io",
-      reservations: "08",
-      activity: "NOW ACTIVE",
-      activityType: "Viewing Details",
-      portfolio: "₱ 28,500.00",
-      status: "Active",
-      initials: "ER",
-      color: "bg-[#C8102E]",
-      active: true,
-    },
-  ];
+  const supabase = createClient();
 
-  const handleRowClick = (customer) => {
-    setSelectedCustomer({
-      ...customer,
-      phone: "+39 342 901 1022", // Mocking extra details
-      memberSince: "JAN 14, 2023",
-      totalOrders: customer.reservations,
-      lifetimeValue: "₱ 28.5K",
-    });
+  const totalUsers = customers.length;
+
+  const getCustomer = async () => {
+    try {
+      const { data, error } = await supabase.from("Customer").select(
+        `id, firstname, lastname, user_id, gender, dob,
+        Users!user_id( id, email, created_at,
+          Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
+            Inventory!inventory_id( id, item_name, item_image, price, brand, category )
+          )
+        )`,
+      );
+
+      if (error) throw error;
+
+      setCustomer(data || []);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getCustomer();
+  }, []);
+
+  const handleRowClick = (customerId) => {
+    const matchedCustomer = customers.find(
+      (item) => item.id === parseInt(customerId),
+    );
+
+    setSelectedCustomer(matchedCustomer);
+    console.log(matchedCustomer);
     setIsDrawerOpen(true);
   };
 
@@ -94,12 +58,12 @@ export default function AdminCustomers() {
           <div className="flex flex-col lg:flex-row justify-between lg:items-end gap-10 mb-16 reveal-up">
             <div className="space-y-4 px-10 flex flex-col">
               <h2 className="text-4xl sm:text-6xl font-black font-headline tracking-tighter uppercase italic leading-none">
-                Customers
+                Users
               </h2>
               <div className="flex items-center gap-3">
                 <span className="w-3 h-3 bg-primary-container shadow-[0_0_10px_rgba(200,16,46,0.3)]"></span>
                 <span className="bg-surface-container-high/60 text-primary-container px-3 py-1 text-[10px] font-mono font-bold border border-white/5 uppercase tracking-widest">
-                  128_REGISTERED_USERS
+                  TOTAL USERS: {totalUsers}
                 </span>
               </div>
             </div>
@@ -127,17 +91,14 @@ export default function AdminCustomers() {
                     <th className="px-10 py-6 font-headline text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
                       Identity
                     </th>
-                    <th className="px-10 py-6 font-headline text-[10px] font-black uppercase tracking-[0.3em] text-white/30 text-center">
+                    <th className="px-10 py-6 font-headline text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
                       Reservations
                     </th>
                     <th className="px-10 py-6 font-headline text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
-                      Activity
-                    </th>
-                    <th className="px-10 py-6 font-headline text-[10px] font-black uppercase tracking-[0.3em] text-white/30 text-right">
-                      Portfolio Value
+                      Gender
                     </th>
                     <th className="px-10 py-6 font-headline text-[10px] font-black uppercase tracking-[0.3em] text-white/30 text-center">
-                      Status
+                      Date of Birth
                     </th>
                     <th className="px-10 py-6"></th>
                   </tr>
@@ -146,61 +107,34 @@ export default function AdminCustomers() {
                   {customers.map((c) => (
                     <tr
                       key={c.id}
-                      onClick={() => handleRowClick(c)}
-                      className={`group hover:bg-[#1C1B1B] transition-all duration-300 cursor-pointer border-l-4 ${c.id === selectedCustomer.id ? "bg-[#1C1B1B] border-primary-container" : "border-transparent hover:border-primary-container"}`}
+                      onClick={() => handleRowClick(c.id)}
+                      className="group hover:bg-[#1C1B1B] transition-all duration-300 cursor-pointer border-l-4"
                     >
                       <td className="px-10 py-6">
                         <div className="flex items-center gap-5">
-                          <div
-                            className={`w-11 h-11 ${c.color} flex items-center justify-center font-headline font-black text-xs text-white border border-white/5 italic shadow-lg`}
-                          >
-                            {c.initials}
-                          </div>
                           <div>
-                            <div
-                              className={`font-headline font-black text-sm tracking-tight uppercase transition-colors ${c.id === selectedCustomer.id || c.active ? "text-white" : "group-hover:text-primary-container"}`}
-                            >
-                              {c.name}
+                            <div className="font-headline font-black text-sm tracking-tight uppercase transition-colors">
+                              {c.firstname} {c.lastname}
                             </div>
                             <div className="font-mono text-[10px] text-white/30 mt-1 tabular-nums italic lowercase">
-                              {c.email}
+                              {c.Users?.email}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-10 py-6 text-center">
                         <span className="font-mono text-xs bg-[#2a2a2a]/60 px-3 py-1.5 rounded-[1px] border border-white/5 tabular-nums">
-                          {c.reservations}
+                          1233
                         </span>
                       </td>
-                      <td className="px-10 py-6">
-                        <div
-                          className={`text-[11px] font-black font-headline uppercase leading-none ${c.activity === "NOW ACTIVE" ? "text-secondary-container" : "text-white"}`}
-                        >
-                          {c.activity}
-                        </div>
-                        <div className="text-[10px] font-mono text-white/20 uppercase mt-1.5 italic tracking-tighter">
-                          {c.activityType}
-                        </div>
+                      <td className="text-[11px] font-black font-headline uppercase leading-none">
+                        {c.gender}
                       </td>
                       <td className="px-10 py-6 text-right font-mono text-secondary-container font-black text-xs tabular-nums">
-                        {c.portfolio}
-                      </td>
-                      <td className="px-10 py-6 text-center">
-                        <span
-                          className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest border ${
-                            c.status === "Active"
-                              ? "bg-green-900/10 text-green-500 border-green-500/20"
-                              : "bg-white/[0.02] text-white/20 border-white/5"
-                          }`}
-                        >
-                          {c.status}
-                        </span>
+                        {c.dob}
                       </td>
                       <td className="px-10 py-6 text-right">
-                        <span
-                          className={`material-symbols-outlined transition-all ${c.id === selectedCustomer.id ? "text-primary-container" : "text-white/10 group-hover:text-primary-container"}`}
-                        >
+                        <span className="material-symbols-outlined transition-all">
                           {c.id === selectedCustomer.id
                             ? "arrow_forward_ios"
                             : "chevron_right"}
@@ -235,14 +169,14 @@ export default function AdminCustomers() {
                 </button>
               </div>
               <h2 className="text-4xl font-black font-headline uppercase tracking-tighter italic leading-none">
-                {selectedCustomer.name}
+                {selectedCustomer.firstname} {""} {selectedCustomer.lastname}
               </h2>
               <div className="flex items-center gap-3 mt-4">
                 <span className="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em]">
                   MEMBER SINCE:
                 </span>
                 <span className="text-[10px] font-mono text-white uppercase font-black tabular-nums">
-                  {selectedCustomer.memberSince}
+                  {selectedCustomer.Users?.created_at}
                 </span>
               </div>
             </div>
@@ -256,13 +190,8 @@ export default function AdminCustomers() {
                 <div className="space-y-3">
                   <DrawerContactCard
                     label="EMAIL"
-                    value={selectedCustomer.email}
+                    value={selectedCustomer.Users?.email}
                     icon="content_copy"
-                  />
-                  <DrawerContactCard
-                    label="PHONE"
-                    value={selectedCustomer.phone}
-                    icon="call"
                   />
                 </div>
               </section>
@@ -274,15 +203,7 @@ export default function AdminCustomers() {
                     TOTAL ORDERS
                   </span>
                   <span className="text-4xl font-black font-headline tracking-tighter italic tabular-nums">
-                    {selectedCustomer.totalOrders}
-                  </span>
-                </div>
-                <div className="p-6 bg-white/[0.01] border-b-4 border-secondary-container group hover:bg-white/[0.03] transition-all">
-                  <span className="text-[10px] font-mono text-white/20 block mb-3 uppercase tracking-widest">
-                    LIFETIME VALUE
-                  </span>
-                  <span className="text-2xl font-black font-headline tracking-tighter italic text-secondary-container tabular-nums">
-                    {selectedCustomer.lifetimeValue}
+                    temp data
                   </span>
                 </div>
               </div>
@@ -298,46 +219,19 @@ export default function AdminCustomers() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  <LogItem
-                    img="https://lh3.googleusercontent.com/aida-public/AB6AXuCFm3n44ExWcljFV1sx-50x7hOa36_SE-Wl-p8n0t3uubSUKajtFMLKe69WnSVNoo6ogO89T6uhNO1Ba4tl1AUbVyNZoQe7FUYbPKG73ESnj-TLPhQHO7LElJ9VylUpHKb382cbuFP4yjXKzEO1Jgr18CQbMDPaNzK7RJziMeQqH0vi5rTVX9amXurPakc7rVywMaW7XpKAJRnp0icpk7iE-JFTD-3Ft3J8Xr-sg8BiKRVtOZJErblc8kTXtoSEnJgERO0hLwgB4Xg"
-                    title="Ferrari F40 Competizione"
-                    meta="OCT 22, 2023 • SHIPPED"
-                    statusColor="bg-green-500"
-                  />
-                  <LogItem
-                    img="https://lh3.googleusercontent.com/aida-public/AB6AXuBGqmjtNU4fGdCht_QoMqlPVibJ5HAX3gmQ-BffdwrvxF1vunNE_Hz7eFjLChxEdszhUFqioLdI3W8yWEUeFmviNjcg82iow5lmXekUfe6f_TZTyIniGie1Sf5kUFCFjq0Q4OPOQyn1IgBd0h7tg18Pz4fWbjtJQhtXi7qsNDGBRpWk-JSwYXiIEzPgypbhik8fEmNWqYDn0-_c6kkEwrwhdU9dBAAlWLMEsvOXhEksc0q9bBIfcfog4rrrOn-Q2Y1_yE3as4mzwDE"
-                    title="Bugatti Chiron Pur Sport"
-                    meta="AUG 12, 2023 • CANCELLED"
-                    statusColor="bg-primary-container"
-                  />
-                </div>
-              </section>
-
-              {/* Admin Directives */}
-              <section>
-                <h3 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-white/30 mb-6 border-l-2 border-primary-container pl-4">
-                  Internal Directives
-                </h3>
-                <div className="relative group">
-                  <textarea
-                    className="w-full bg-[#161616] border-2 border-[#2a2a2a] focus:border-primary-container p-6 text-xs font-medium min-h-[120px] resize-none placeholder:opacity-10 outline-none transition-all font-body text-white/70"
-                    placeholder="LOG CUSTOMER INTERACTION..."
-                  ></textarea>
-                  <div className="absolute bottom-4 right-4 flex items-center gap-2 opacity-20 group-focus-within:opacity-60 transition-opacity">
-                    <span className="material-symbols-outlined text-xs">
-                      cloud_done
-                    </span>
-                    <span className="text-[8px] font-mono uppercase tracking-[0.2em] font-black">
-                      AUTOSAVED
-                    </span>
-                  </div>
+                  {selectedCustomer.Users?.Reservation.map((item) => (
+                    <div key={item.id}>
+                      {item.Inventory?.item_name}
+                      {item.Inventory?.brand}
+                    </div>
+                  ))}
                 </div>
               </section>
 
               {/* Footer Actions */}
               <div className="space-y-3 pt-4 pb-10">
                 <button className="w-full bg-primary-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-[1px] transition-all transform active:scale-[0.98] shadow-lg shadow-primary-container/20">
-                  SEND RE-ENGAGEMENT EMAIL
+                  REMOVE ACCOUNT
                 </button>
                 <button className="w-full bg-[#1C1B1B] hover:bg-[#2a2a2a] border border-white/5 text-white/40 hover:text-white font-headline font-black uppercase tracking-[0.2em] text-[10px] py-4 rounded-[1px] transition-all">
                   FLAG FOR REVIEW
