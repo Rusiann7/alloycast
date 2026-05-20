@@ -157,7 +157,13 @@ export default function StorePage() {
   };
 
   const confirmItems = (item) => {
+    if (item.stock <= 0) {
+      showToast("No Stock In The Inventory", "error");
+      return;
+    }
+
     setSelectedItem(item);
+
     setIsOpen(true);
   };
 
@@ -175,6 +181,17 @@ export default function StorePage() {
         (item) => item.barcode === parseInt(scannedBarCode),
       );
 
+      console.log(matchedItem?.stock);
+
+      if (!matchedItem) {
+        showToast("Item Not Found In The Inventory", "error");
+        throw new Error();
+      }
+
+      if (matchedItem?.stock === 0) {
+        showToast("No Stock In The Inventory", "error");
+        throw new Error();
+      }
       setSelectedItem(matchedItem);
       setIsOpen(true);
     } catch (error) {
@@ -194,7 +211,7 @@ export default function StorePage() {
 
       if (error) throw error;
 
-      showToast("OK", "success");
+      showToast("Successfully Reserved", "success");
       fetchInventoryProduct();
     } catch (error) {
       console.log(error);
@@ -204,6 +221,17 @@ export default function StorePage() {
   //sa button ito
   const purchaseItems = async (id, formData) => {
     try {
+      const matchedID = inventory.find(
+        (item) => item.id === parseInt(selectedItem.id),
+      );
+
+      console.log(matchedID?.stock);
+
+      if (matchedID?.stock === 0) {
+        showToast("No Stock In The Inventory", "error");
+        throw new Error();
+      }
+
       const { error } = await supabase
         .from("Inventory")
         .update({ stock: selectedItem.stock - formData.quantity }) // minus 1
@@ -215,7 +243,6 @@ export default function StorePage() {
 
       addSales(selectedItem.id, formData);
       setIsOpen(false);
-      showToast("Confirms", "success");
 
       console.log("It works");
     } catch (error) {
