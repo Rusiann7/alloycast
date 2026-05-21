@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("./Toast"));
 
 export default function POSModal({
   isOpen,
@@ -11,22 +14,59 @@ export default function POSModal({
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [stockCheck, setStockCheck] = useState(false);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  const handleQuantityChange = (e) => {
+    const value = e.target.value;
+    if (value === "") {
+      setQuantity("");
+    } else {
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed)) {
+        if (parsed > selectedItem?.stock) {
+          setQuantity(selectedItem.stock);
+          showToast(
+            `Quantity capped at maximum available stock (${selectedItem.stock})`,
+            "error",
+          );
+        } else if (parsed < 1) {
+          setQuantity(1);
+        } else {
+          setQuantity(parsed);
+        }
+      }
+    }
+  };
 
   const handleConfirm = () => {
-    onPurchase({ userName, emailAddr, quantity });
+    const parsedQuantity = parseInt(quantity, 10);
+    if (isNaN(parsedQuantity) || parsedQuantity < 1) {
+      showToast("Please enter a valid quantity of at least 1.", "error");
+      return;
+    }
+    if (parsedQuantity > selectedItem?.stock) {
+      showToast(
+        `Cannot purchase more than the available stock of ${selectedItem.stock} units.`,
+        "error",
+      );
+      return;
+    }
+
+    onPurchase({ userName, emailAddr, quantity: parsedQuantity });
     setUserName("");
     setEmailAddr("");
     setQuantity(1);
   };
 
-  useEffect(() => {
-    if (selectedItem?.stock !== undefined && quantity > selectedItem.stock) {
-      setStockCheck(true); // over stock limit
-    } else {
-      setStockCheck(false);
-    }
-  }, [quantity, selectedItem]);
   if (!isOpen) return null;
 
   return (
@@ -54,14 +94,16 @@ export default function POSModal({
                 placeholder="Enter Quantity"
                 className="bg-input-field text-white/90 p-2 rounded-lg"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={handleQuantityChange}
               />
 
-              <label htmlFor="">Available Stocks: </label>
+              <label htmlFor="" className="ml-2">
+                Available Stocks:{" "}
+              </label>
               <span className="text-font-color">{selectedItem?.stock}</span>
             </p>
 
-            <label className="text-font-color text-lg">
+            <label className="text-font-color text-lg mt-2">
               Customer Name (Optional):
             </label>
             <input
@@ -72,7 +114,7 @@ export default function POSModal({
               onChange={(e) => setUserName(e.target.value)}
             />
 
-            <label className="text-font-color text-lg">
+            <label className="text-font-color text-lg mt-2">
               Customer Email (Optional):
             </label>
             <input
@@ -83,7 +125,7 @@ export default function POSModal({
               onChange={(e) => setEmailAddr(e.target.value)}
             />
           </div>
-          <div className="flex gap-3 mt-2">
+          <div className="flex gap-3 mt-4">
             <button
               onClick={isClose}
               className="flex-1 py-2 shadow-lg/30 bg-secondary-container rounded-lg text-white text-md font-bold hover:scale-105 transition-all"
@@ -91,11 +133,6 @@ export default function POSModal({
               Cancel
             </button>
 
-            {stockCheck && (
-              <p className="text-red-500 text-sm">
-                Quantity exceeds available stock!
-              </p>
-            )}
             <button
               className="flex-1 py-2 shadow-lg/30 bg-primary-container rounded-lg text-black text-md font-bold hover:scale-105 transition-all"
               onClick={handleConfirm}
@@ -105,6 +142,11 @@ export default function POSModal({
           </div>
         </div>
       </div>
+      <DynamicToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
     </div>
   );
 }

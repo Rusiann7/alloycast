@@ -198,6 +198,27 @@ export default function AdminReservations() {
       return;
     }
 
+    // Update UI state immediately for responsive UX
+    setReservation((prevReservations) =>
+      prevReservations.map((res) => {
+        if (res.id === reservationId) {
+          const isApproved = newStatus === "Approved";
+          const isRejected = newStatus === "Rejected";
+          let statusColor = "bg-white/5 text-white/60 border-white/10";
+          let statusDot = "bg-white/40";
+          if (isApproved) {
+            statusColor = "bg-green-500/10 text-green-400 border-green-500/20";
+            statusDot = "bg-green-500";
+          } else if (isRejected) {
+            statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
+            statusDot = "bg-red-500";
+          }
+          return { ...res, status: newStatus, statusColor, statusDot };
+        }
+        return res;
+      }),
+    );
+
     try {
       if (newStatus === "Approved") {
         await emailjs.send(
@@ -218,6 +239,7 @@ export default function AdminReservations() {
 
         showToast(
           "An email will be sent to customer about the order status",
+          "success",
           "success",
         );
       } else if (newStatus === "Rejected") {
@@ -245,26 +267,6 @@ export default function AdminReservations() {
       console.error("Email Sending Error:", emailError);
       showToast("Failed to send email notification to customer.", "error");
     }
-
-    setReservation((prevReservations) =>
-      prevReservations.map((res) => {
-        if (res.id === reservationId) {
-          const isApproved = newStatus === "Approved";
-          const isRejected = newStatus === "Rejected";
-          let statusColor = "bg-white/5 text-white/60 border-white/10";
-          let statusDot = "bg-white/40";
-          if (isApproved) {
-            statusColor = "bg-green-500/10 text-green-400 border-green-500/20";
-            statusDot = "bg-green-500";
-          } else if (isRejected) {
-            statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
-            statusDot = "bg-red-500";
-          }
-          return { ...res, status: newStatus, statusColor, statusDot };
-        }
-        return res;
-      }),
-    );
   };
 
   const reservationDataDB = async (dateRange) => {

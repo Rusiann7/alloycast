@@ -22,7 +22,7 @@ export default function StorePage() {
   const [todayCount, setTodayCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [dateRange, setDateRange] = useState("Annual");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -108,8 +108,9 @@ export default function StorePage() {
         case "This Month":
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
-        case "All Time":
-          startDate = new Date(0); // Year 1970
+                case "Annual":
+          // Set start to Jan 1 of the current year
+          startDate = new Date(now.getFullYear(), 0, 1);
           endDate = new Date();
           break;
         default:
@@ -144,12 +145,64 @@ export default function StorePage() {
   };
 
   useEffect(() => {
-    fetchPOSData("All Time");
+    fetchPOSData("Annual");
   }, []);
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  const exportSalesData = () => {
+    try {
+      if (!posDB || posDB.length === 0) {
+        showToast("No data available to export.", "error");
+        return;
+      }
+
+      // Build CSV Header
+      let csvContent =
+        "Transaction ID,Date Purchased,Product Name,Brand,Category,Price (PHP),Quantity,Total Revenue (PHP),Customer Name,Customer Email\n";
+
+      let grandTotal = 0;
+
+      // Add Data Rows
+      posDB.forEach((pos) => {
+        const date = new Date(pos.created_at).toLocaleDateString();
+        const productName = `"${pos.Inventory?.item_name || "N/A"}"`;
+        const brand = `"${pos.Inventory?.brand || "N/A"}"`;
+        const category = `"${pos.Inventory?.category || "N/A"}"`;
+        const price = pos.Inventory?.price || 0;
+        const quantity = pos.quantity || 0;
+        const revenue = price * quantity;
+        const custName = `"${pos.name || "N/A"}"`;
+        const custEmail = `"${pos.email || "N/A"}"`;
+
+        grandTotal += revenue;
+
+        csvContent += `${pos.id},${date},${productName},${brand},${category},${price},${quantity},${revenue},${custName},${custEmail}\n`;
+      });
+
+      // Add Grand Total row
+      csvContent += `\n,,,,,,,GRAND TOTAL,${grandTotal}\n`;
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `Sales_Report_${dateRange.replace(/ /g, "_")}.csv`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast("Sales report exported successfully!", "success");
+    } catch (err) {
+      showToast("Failed to export sales data.", "error");
+      console.error(err);
+    }
   };
 
   const scannerModal = () => {
@@ -255,23 +308,39 @@ export default function StorePage() {
       <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
-          <div className="mb-10 sm:mb-14 reveal-up">
-            <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
-              POINT OF SALES
-            </h3>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
-                TOTAL STOCKS:{" "}
-                <span className="text-font-color font-bold">
-                  {totalProductStock.toLocaleString()}
-                </span>{" "}
-              </p>
-              <div className="hidden sm:block w-1 h-1 bg-white/20 rounded-full" />
-              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
-                TOTAL ITEMS:{" "}
-                <span className="text-font-color">{totalProducts}</span>
-              </p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 sm:mb-14 gap-6 reveal-up">
+            <div>
+              <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
+                POINT OF SALES
+              </h3>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
+                <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+                  TOTAL STOCKS:{" "}
+                  <span className="text-font-color font-bold">
+                    {totalProductStock.toLocaleString()}
+                  </span>{" "}
+                </p>
+                <div className="hidden sm:block w-1 h-1 bg-white/20 rounded-full" />
+                <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+                  TOTAL ITEMS:{" "}
+                  <span className="text-font-color">{totalProducts}</span>
+                </p>
+              </div>
             </div>
+
+            {activeTab === "Reports" && (
+              <div className="relative group">
+                <button
+                  onClick={exportSalesData}
+                  className="flex items-center gap-3 bg-primary-container shadow-lg/30 px-6 py-3 border border-white/5 text-black/90 font-bold text-md uppercase tracking-widest hover:scale-105 transition-all rounded-lg group relative overflow-hidden"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    download
+                  </span>
+                  <span>Export {dateRange} Sales</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div
@@ -510,7 +579,7 @@ export default function StorePage() {
                     "Yesterday",
                     "This Week",
                     "This Month",
-                    "All Time",
+                    "Annual",
                   ].map((label, index) => (
                     <button
                       key={label}
@@ -518,7 +587,7 @@ export default function StorePage() {
                         setDateRange(label);
                         fetchPOSData(label);
                       }}
-                      className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
+                      className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
                         index === 4 ? "col-span-2 md:col-span-1" : ""
                       } ${
                         dateRange === label

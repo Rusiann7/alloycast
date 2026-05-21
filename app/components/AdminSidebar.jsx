@@ -199,13 +199,13 @@ export default function AdminSidebar() {
 
           <SidebarLink icon="reviews" label="REVIEWS" href="/admin/reviews" />
 
-          <SidebarLink
+          {/* <SidebarLink
             icon="feedback"
             label="FEEDBACK"
             href="/admin/feedbacks"
           />
 
-          <SidebarLink icon="people" label="USERS" href="/admin/users" />
+          <SidebarLink icon="people" label="USERS" href="/admin/users" /> */}
         </nav>
 
         <div className="px-4 mt-auto space-y-4">

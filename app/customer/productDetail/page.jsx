@@ -222,12 +222,25 @@ function ProductDetail() {
 
   // This will insert the reserve product to Reservation Table using the confirmation Modal
   const insertReservationToTable = async () => {
+    const parsedQuantity = parseInt(quantity, 10);
+    if (isNaN(parsedQuantity) || parsedQuantity < 1) {
+      showToast("Please enter a valid quantity of at least 1.", "error");
+      return;
+    }
+    if (parsedQuantity > product.stock) {
+      showToast(
+        `Cannot reserve more than the available stock of ${product.stock} units.`,
+        "error",
+      );
+      return;
+    }
+
     try {
       const reservationDataInsert = {
         // these are the data that will be inserted into Reservation Table
         user_id: user.id, // user_id on Reservation Table
         inventory_id: product.id, // the reserved product id
-        quantity: quantity, // 1 for now, will add state for more latere
+        quantity: parsedQuantity, // use the validated parsed number
         discount: 0, // 0 for now since no discount for now
       };
 
@@ -253,10 +266,10 @@ function ProductDetail() {
       };
 
       await emailjs.send(
-        "service_mu3qrbd", // Found in "Email Services" page
-        "template_do3kcc3", // Found in "Email Templates" page
+        "service_mu3qrbd",
+        "template_do3kcc3",
         templateParams,
-        "3ilQZwBk_Cxjfohab", // Found in "Account" -> "API Keys"
+        "3ilQZwBk_Cxjfohab",
       );
       showToast(
         "Reservation Completed. An email will be sent to Admins",
@@ -661,7 +674,27 @@ function ProductDetail() {
               <input
                 type="number"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setQuantity("");
+                    return;
+                  }
+                  const parsed = parseInt(val, 10);
+                  if (isNaN(parsed)) {
+                    setQuantity("");
+                  } else if (parsed > product.stock) {
+                    setQuantity(product.stock);
+                    showToast(
+                      `Quantity capped at maximum available stock (${product.stock})`,
+                      "error",
+                    );
+                  } else if (parsed < 1) {
+                    setQuantity(1);
+                  } else {
+                    setQuantity(parsed);
+                  }
+                }}
                 max={product.stock}
                 min="1"
                 className="w-auto bg-input-field px-4 py-3 sm:py-4 border border-white/10 rounded-lg text-white font-headline text-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
@@ -706,7 +739,7 @@ function ProductDetail() {
                 Confirm My Reservation
               </button>
               <button
-                className="w-full py-3 sm:py-4 bg-surface-container border border-white/10 font-headline font-bold uppercase tracking-wider text-sm sm:text-base text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
+                className="w-full py-3 sm:py-4 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-sm sm:text-base text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancel
