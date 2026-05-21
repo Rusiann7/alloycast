@@ -108,7 +108,7 @@ export default function StorePage() {
         case "This Month":
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
-                case "Annual":
+        case "Annual":
           // Set start to Jan 1 of the current year
           startDate = new Date(now.getFullYear(), 0, 1);
           endDate = new Date();
@@ -305,7 +305,7 @@ export default function StorePage() {
 
   return (
     <div className="bg-background text-font-color min-h-screen font-body relative overflow-hidden select-none">
-      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
+      <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 sm:mb-14 gap-6 reveal-up">
@@ -375,8 +375,8 @@ export default function StorePage() {
                 className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up"
                 style={{ animationDelay: "0.1s" }}
               >
-                <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-white/5 sm:bg-transparent">
-                  <span className="material-symbols-outlined text-xl font-light opacity-40">
+                <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
+                  <span className="material-symbols-outlined text-xl font-light opacity-80 text-white/90">
                     search
                   </span>
                   <input

@@ -51,7 +51,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="bg-background text-font-color min-h-screen font-body relative overflow-hidden select-none">
-      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
+      <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
           <div className="mb-10 sm:mb-14 reveal-up">

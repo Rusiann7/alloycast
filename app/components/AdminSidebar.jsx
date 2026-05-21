@@ -28,11 +28,31 @@ export default function AdminSidebar() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("");
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
     type: "error",
   });
+
+  // for mobile sidebar
+  useEffect(() => {
+    const isMobile = window.innerWidth < 1024;
+
+    if (isMobile) {
+      document.documentElement.style.setProperty("--sidebar-width", "0rem");
+    } else {
+      const width = isCollapsed ? "5rem" : "16rem";
+      document.documentElement.style.setProperty("--sidebar-width", width);
+    }
+  }, [isCollapsed]);
+
+  // for collpasing sidebar in larger screens
+  useEffect(() => {
+    const width = isCollapsed ? "5rem" : "16rem"; // w‑64
+    document.documentElement.style.setProperty("--sidebar-width", width);
+  }, [isCollapsed]);
 
   // display admin firstname after every reload
   useEffect(() => {
@@ -96,20 +116,26 @@ export default function AdminSidebar() {
   console.log("Current Link:", linkName);
 
   const SidebarLink = ({ icon, label, href }) => {
-    const clickedLink = linkName === href; // isave sa clickedLink ung linkName then kukunin ung url sa href na naclick
+    const clickedLink = linkName === href;
+    const showLabel = !isCollapsed || isMobileOpen;
+
     return (
       <Link
-        className={`flex items-center space-x-3 rounded-lg px-4 py-3 mx-2 transition-all group ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105   hover:opacity-90"}`}
+        className={`flex items-center rounded-lg px-4 py-3 mx-2 transition-all group 
+      ${!showLabel ? "justify-center" : "space-x-3"} 
+      ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105 hover:opacity-90"}`}
         href={href || "#"}
       >
         <span className="material-symbols-outlined">{icon}</span>
-        <span className="font-headline uppercase text-xs font-black tracking-[0.2em]">
-          {label}
-        </span>
+
+        {showLabel && (
+          <span className="font-headline uppercase text-xs font-black tracking-[0.2em]">
+            {label}
+          </span>
+        )}
       </Link>
     );
   };
-
   const showLogoutModal = async () => {
     setShowSessionModal(true);
   };
@@ -127,45 +153,52 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* --- Mobile Header (Hamburger) --- */}
-      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-secondary-container backdrop-blur-md  px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg text-black/90 font-black font-headline uppercase leading-none italic">
-            {adminName ? adminName : "AlloyDash"} {""} Admin
-          </h1>
-        </div>
+      {/* Mobile header (hamburger)  */}
+      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-secondary-container backdrop-blur-md px-6 py-4 flex items-center justify-between">
+        <h1 className="text-lg text-black/90 font-black font-headline uppercase leading-none italic">
+          {adminName ? adminName : "AlloyDash"} Admin
+        </h1>
         <button
-          onClick={() => setActiveSidebar(!activeSidebar)}
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
           className="material-symbols-outlined text-white"
         >
-          {activeSidebar ? "close" : "menu"}
+          {isMobileOpen ? "close" : "menu"}{" "}
         </button>
       </div>
-
-      {/* --- SideNavBar --- */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 z-50 bg-primary-container flex flex-col py-6 transition-transform duration-300 border-r border-white/5 ${activeSidebar ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`
+    fixed top-0 left-0 h-full z-50 bg-primary-container flex flex-col py-6
+    transition-all duration-300 border-r border-white/5
+    
+    /* Mobile responsive positioning logic */
+    w-[16rem] lg:w-[var(--sidebar-width)]
+    ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} 
+    lg:translate-x-0
+  `}
       >
+        {/* Logo / title – hide when collapsed */}
         <div className="px-6 mb-10 hidden lg:block">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-container  flex items-center justify-center rounded-lg hover:scale-105">
+            <div className="w-10 h-10 bg-primary-container flex items-center justify-center rounded-lg hover:scale-105">
               <Image
                 src="/logo.jpg"
                 alt="Logo"
                 width={60}
                 height={60}
                 loading="lazy"
-                className="rounded-lg border-black/90 border-1"
+                className="rounded-lg border-black/90 border-1 shadow-lg/30"
               />
             </div>
-            <div>
-              <h1 className="text-xl font-black text-black font-headline uppercase leading-none ">
-                {adminName ? adminName : "AlloyDash"} {""} Admin
-              </h1>
-              <p className="font-headline uppercase text-xs font-black tracking-[0.3em] text-secondary-container mt-1">
-                SHOP ADMIN
-              </p>
-            </div>
+            {!isCollapsed && (
+              <div>
+                <h1 className="text-xl font-black text-black font-headline uppercase leading-none">
+                  {adminName ? adminName : "AlloyDash"} Admin
+                </h1>
+                <p className="font-headline uppercase text-xs font-black tracking-[0.3em] text-secondary-container mt-1">
+                  SHOP ADMIN
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -176,7 +209,7 @@ export default function AdminSidebar() {
             href="/admin/dashboard"
           />
           <SidebarLink
-            icon="grid_view"
+            icon="analytics"
             label="ANALYTICS"
             href="/admin/analytics"
           />
@@ -199,13 +232,17 @@ export default function AdminSidebar() {
 
           <SidebarLink icon="reviews" label="REVIEWS" href="/admin/reviews" />
 
-          {/* <SidebarLink
+          <SidebarLink
             icon="feedback"
             label="FEEDBACK"
             href="/admin/feedbacks"
           />
 
-          <SidebarLink icon="people" label="USERS" href="/admin/users" /> */}
+          <SidebarLink
+            icon="people"
+            label="Customers"
+            href="/admin/customers"
+          />
         </nav>
 
         <div className="px-4 mt-auto space-y-4">
@@ -216,17 +253,33 @@ export default function AdminSidebar() {
             <span className="material-symbols-outlined text-sm">
               add_circle
             </span>
-            <span>Add New Product</span>
+            {!isCollapsed && <span>Add New Product</span>}
           </button>
+          {/* Collapse/expand button */}
+          <div className="hidden lg:block">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-full bg-secondary-container text-white/90 py-3 rounded-lg font-headline text-xs font-bold uppercase tracking-tighter flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <span className="material-symbols-outlined">
+                {isCollapsed
+                  ? "horizontal_align_right"
+                  : "horizontal_align_left"}
+              </span>
+              {!isCollapsed && <span>Collapse Sidebar</span>}
+            </button>
+          </div>
           <div className="pt-4 border-t border-surface-container-highest">
             <button
               onClick={showLogoutModal}
-              className="flex items-center space-x-3  text-input-field px-4 py-2  hover:scale-105 transition-opacity"
+              className="w-full flex items-center space-x-3 rounded-lg border border-secondary-container text-input-field px-4 py-2 hover:bg-secondary-container hover:text-white/90  hover:scale-105 transition-all"
             >
               <span className="material-symbols-outlined">logout</span>
-              <span className="font-headline uppercase text-sm font-bold tracking-widest">
-                Logout
-              </span>
+              {!isCollapsed && (
+                <span className="font-headline uppercase text-sm font-bold tracking-widest">
+                  Logout
+                </span>
+              )}
             </button>
           </div>
         </div>

@@ -394,7 +394,8 @@ export default function AdminDashboard() {
   return (
     <div className="bg-background  font-body min-h-screen overflow-x-hidden select-none">
       {/* --- Main Content Canvas --- */}
-      <main className="lg:ml-64 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen">
+      <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5  pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
+        {" "}
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6 reveal-up">
           <div>
@@ -405,7 +406,7 @@ export default function AdminDashboard() {
           <div className="w-full lg:w-auto">
             <button
               onClick={exportToExcel}
-              className="w-full lg:w-auto bg-secondary-container text-white/90 px-6 py-3 rounded-lg text-sm font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform active:scale-95"
+              className="w-full lg:w-auto bg-primary-container text-black/90 shadow-lg/30 px-6 py-3 rounded-lg text-sm font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform active:scale-95"
             >
               <span className="material-symbols-outlined text-sm">
                 download
@@ -414,7 +415,6 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
-
         {/* KPI Bento Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <KPICard
@@ -456,7 +456,6 @@ export default function AdminDashboard() {
             onClick={() => setIsStockModalOpen(true)}
           />
         </div>
-
         {/* Primary Data Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div
@@ -598,7 +597,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
         {/* Activity Table */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 items-start">
           <div
@@ -663,7 +661,7 @@ export default function AdminDashboard() {
                         status={activity.status}
                         statusColor={
                           activity.status === "Approved"
-                            ? "bg-green-500/10 text-green-500"
+                            ? "bg-green-400 text-black/90"
                             : activity.status === "Pending"
                               ? "bg-primary-container/10 text-primary-container"
                               : activity.status === "Cancelled"
@@ -903,7 +901,7 @@ const KPICard = ({
 }) => (
   <div
     onClick={onClick}
-    className="bg-secondary-container  p-6 rounded-lg  dark:border-l-3 dark:border-primary-container relative overflow-hidden group reveal-up hover:cursor-pointer hover:scale-105 transition-all"
+    className="bg-secondary-container shadow-lg/30 p-6 rounded-lg  dark:border-l-3 dark:border-primary-container relative overflow-hidden group reveal-up hover:cursor-pointer hover:scale-105 transition-all"
     style={{ animationDelay: delay }}
   >
     <div className="flex justify-between items-start mb-4">
@@ -951,7 +949,7 @@ const ProgressBar = ({ label, value }) => (
         {value}
       </span>
     </div>
-    <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+    <div className="h-1.5 w-full bg-input-field rounded-full overflow-hidden">
       <div
         className="h-full bg-primary-container transition-all duration-1000"
         style={{ width: value }}
