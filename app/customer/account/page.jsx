@@ -417,7 +417,7 @@ export default function Account() {
                         <span
                           className={`p-2 rounded-lg text-md ${
                             res.status === "Approved"
-                              ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                              ? "bg-green-500 text-white/90 border border-green-500/20"
                               : res.status === "Rejected" ||
                                   res.status === "Cancelled"
                                 ? "bg-on-primary text-white/90  border border-red-500/20"

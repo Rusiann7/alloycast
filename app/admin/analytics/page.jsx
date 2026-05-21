@@ -12,6 +12,9 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import dynamic from "next/dynamic";
+
+const DynamicToast = dynamic(() => import("../../components/Toast"));
 
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
@@ -21,12 +24,25 @@ export default function AdminAnalytics() {
   const [topProducts, setTopProducts] = useState([]);
   const [lowProducts, setLowProducts] = useState([]);
   const [topBrands, setTopBrands] = useState([]);
+  const [posRevenue, setPosRevenue] = useState(0);
+  const [approvedReservationRevenue, setApprovedReservationRevenue] =
+    useState(0);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
   const [pipelineCounts, setPipelineCounts] = useState({
     Pending: 0,
     Approved: 0,
     Rejected: 0,
     Cancelled: 0,
   });
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+  };
 
   // for market share by brands
   const BRAND_COLORS = [
@@ -58,8 +74,9 @@ export default function AdminAnalytics() {
           startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
           endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
           break;
-        case "All Time":
-          startDate = new Date(0); // Year 1970
+        case "Annual":
+          startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
           break;
         default:
           startDate.setDate(now.getDate() - 30);
@@ -72,37 +89,109 @@ export default function AdminAnalytics() {
           "quantity, created_at, status, Inventory(item_name, brand, price)",
         )
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
-        .neq("status", "Pending")
-        .neq("status", "Rejected");
+        .lte("created_at", endDate.toISOString());
 
       if (error || !data) {
         console.error("Error fetching analytics:", error);
         return;
       }
 
-      // 3. Process Revenue
-      const dailyRevenue = {};
-      let sumRev = 0;
+      // Fetch POS
+      const { data: posData, error: posError } = await supabase
+        .from("POS")
+        .select("quantity, created_at, Inventory(price)")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      if (posError) {
+        showToast("Error fetching POS data:", posError);
+      }
+
+      // calculate POS revenue
+      let totalPosRevenue = 0;
+      if (posData) {
+        posData.forEach((item) => {
+          if (item.Inventory?.price) {
+            totalPosRevenue += item.quantity * item.Inventory.price;
+          }
+        });
+      }
+      setPosRevenue(totalPosRevenue);
+
+      // calculate approved reservation revenue
+      let totalApprovedRvenue = 0;
       data.forEach((res) => {
-        if (res.Inventory?.price) {
-          const rev = res.quantity * res.Inventory.price;
-          sumRev += rev;
-          const dateStr = res.created_at.split("T")[0];
-          dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
+        if (res.Inventory?.price && res.status === "Approved") {
+          totalApprovedRvenue += res.quantity * res.Inventory?.price;
         }
       });
+      setApprovedReservationRevenue(totalApprovedRvenue);
+
+      // 3. Process Revenue
+      const aggregatedRevenue = {};
+      let sumRev = 0;
+      if (posData) {
+        posData.forEach((res) => {
+          if (res.Inventory?.price) {
+            const rev = res.quantity * res.Inventory.price;
+            sumRev += rev;
+
+            let groupKey;
+            if (dateRange === "Annual") {
+              // Group by month (YYYY-MM)
+              const dateObj = new Date(res.created_at);
+              groupKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+            } else {
+              // Group by day (YYYY-MM-DD)
+              groupKey = res.created_at.split("T")[0];
+            }
+            aggregatedRevenue[groupKey] =
+              (aggregatedRevenue[groupKey] || 0) + rev;
+          }
+        });
+      }
       setTotalRevenue(sumRev);
-      const chartData = Object.keys(dailyRevenue)
+
+      const chartData = Object.keys(aggregatedRevenue)
         .sort((a, b) => new Date(a) - new Date(b))
-        .map((dateStr) => ({
-          name: new Date(dateStr).toLocaleDateString("en-US", {
-            month: "short",
-            day: "2-digit",
-          }),
-          revenue: dailyRevenue[dateStr],
-        }));
-      setRevenueData(chartData);
+        .map((key) => {
+          if (dateRange === "Annual") {
+            const [year, month] = key.split("-");
+            return {
+              name: new Date(year, month - 1).toLocaleDateString("en-US", {
+                month: "short",
+              }),
+              revenue: aggregatedRevenue[key],
+            };
+          } else {
+            return {
+              name: new Date(key).toLocaleDateString("en-US", {
+                month: "short",
+                day: "2-digit",
+              }),
+              revenue: aggregatedRevenue[key],
+            };
+          }
+        });
+
+      // For Annual, ensure all 12 months exist so the graph spans Jan-Dec
+      if (dateRange === "Annual") {
+        const fullYearData = [];
+        const currentYear = new Date().getFullYear();
+        for (let i = 0; i < 12; i++) {
+          const monthName = new Date(currentYear, i).toLocaleDateString(
+            "en-US",
+            {
+              month: "short",
+            },
+          );
+          const existing = chartData.find((d) => d.name === monthName);
+          fullYearData.push(existing || { name: monthName, revenue: 0 });
+        }
+        setRevenueData(fullYearData);
+      } else {
+        setRevenueData(chartData);
+      }
 
       // 4. Process Top and Low Products
       const productCounts = {};
@@ -169,8 +258,85 @@ export default function AdminAnalytics() {
     fetchAllAnalytics();
   }, [dateRange]);
 
+  const ExportTotalAnnualRevenue = async () => {
+    try {
+      const currentYear = new Date().getFullYear(); // Current Year
+      const startDate = new Date(currentYear, 0, 1).toISOString(); // January
+      const endDate = new Date(currentYear, 11, 31, 23, 59, 59).toISOString(); // December
+
+      // fetch approved reservations for current year
+      const { data, error } = await supabase
+        .from("Reservation")
+        .select("quantity, created_at, status, Inventory(price)")
+        .gte("created_at", startDate)
+        .lte("created_at", endDate)
+        .eq("status", "Approved");
+
+      if (error) throw error;
+
+      // creates array for each month, total of 12 months, 0 = January
+      const monthlyRevenue = Array(12).fill(0);
+      let annualTotal = 0;
+
+      // revenue per month calculation
+      data.forEach((res) => {
+        if (res.Inventory?.price) {
+          const revenue = res.quantity * res.Inventory.price;
+          const monthIndex = new Date(res.created_at).getMonth();
+          monthlyRevenue[monthIndex] += revenue; // adds result to specific MONTH
+          annualTotal += revenue; // adds same revenue grand total for YEAR
+        }
+      });
+
+      // format to data Excel
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      // build tabular data string
+      let csvContent = "Month, Total Revenue (PHP)\n"; // header row for excel file
+      monthNames.forEach((month, index) => {
+        csvContent += `${month},${monthlyRevenue[index]}\n`; // Appends a new row for each month
+      });
+
+      // grand total for year
+      csvContent += `\nTOTAL ANNUAL REVENUE,${annualTotal}\n`;
+
+      // file download trigger
+      // converts to physical excel file
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      // to download file
+      link.setAttribute("download", `Annual_Revenue_Report_${currentYear}.csv`);
+      document.body.appendChild(link);
+      link.click(); // clicks the button
+      document.body.removeChild(link); //cleans up link
+    } catch (err) {
+      showToast("Failed to export data. Try again later");
+      console.error("Failed to export data:", err);
+    }
+  };
+
   return (
     <div className="bg-background text-font-color min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
+      <DynamicToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+      />
       {/* --- Main Content --- */}
       <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen ">
         <div className="space-y-4 px-10 flex flex-col md:flex-row md:justify-between md:items-end">
@@ -184,17 +350,28 @@ export default function AdminAnalytics() {
               </span>
             </div>
           </div>
+          <div className="relative group">
+            <button
+              onClick={ExportTotalAnnualRevenue}
+              className="flex items-center gap-3 bg-primary-container shadow-lg/30 px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:scale-105 transition-all rounded-lg group relative overflow-hidden"
+            >
+              <span className="material-symbols-outlined text-lg">
+                download
+              </span>
+              <span>Export Annual Revenue</span>
+            </button>
+          </div>
         </div>
 
         {/* Sticky Date Range Control */}
         <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
           <div className="flex items-center  p-1 rounded-lg border border-primary-container">
-            {["Last 7 Days", "This Month", "Last Month", "All Time"].map(
+            {["Last 7 Days", "This Month", "Last Month", "Annual"].map(
               (label) => (
                 <button
                   key={label}
                   onClick={() => setDateRange(label)}
-                  className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
+                  className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
                     dateRange === label
                       ? "bg-primary-container text-black/90 shadow-lg"
                       : "text-white/90 opacity-80 hover:opacity-100"
@@ -225,46 +402,62 @@ export default function AdminAnalytics() {
             </div>
 
             <div className="h-[350px] w-full relative mt-8 ">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={revenueData}
-                  margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="name"
-                    stroke="#ffffff"
-                    fontSize={12}
-                    tickMargin={11}
-                  />
-                  <YAxis
-                    stroke="#ffffff"
-                    fontSize={12}
-                    tickFormatter={(value) => `₱${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#131313",
-                      borderColor: "#333",
-                    }}
-                    itemStyle={{ color: "#22C55E" }}
-                    formatter={(value) => `₱${Number(value).toFixed(2)}`}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#22C55E"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorRev)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {revenueData.length === 0 ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <p className="text-white/50 text-xl font-headline font-black uppercase tracking-widest italic">
+                    No data for {dateRange.toLowerCase()}
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={revenueData}
+                    margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop
+                          offset="5%"
+                          stopColor="#22C55E"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#22C55E"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="name"
+                      stroke="#ffffff"
+                      fontSize={12}
+                      tickMargin={11}
+                    />
+                    <YAxis
+                      stroke="#ffffff"
+                      fontSize={12}
+                      tickFormatter={(value) => `₱${value}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#131313",
+                        borderColor: "#333",
+                      }}
+                      itemStyle={{ color: "#22C55E" }}
+                      formatter={(value) => `₱${Number(value).toFixed(2)}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#22C55E"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorRev)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </section>
 
@@ -475,6 +668,90 @@ export default function AdminAnalytics() {
                 />
               </div>
             </section>
+            {/* Revenue Channels Comparison */}
+            <section
+              className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
+                POS and Reservations Revenue Comparison
+              </h3>
+
+              {(() => {
+                const totalChannelRev = posRevenue + approvedReservationRevenue;
+                const posPercent =
+                  totalChannelRev > 0
+                    ? Math.round((posRevenue / totalChannelRev) * 100)
+                    : 0;
+                const resPercent =
+                  totalChannelRev > 0
+                    ? Math.round(
+                        (approvedReservationRevenue / totalChannelRev) * 100,
+                      )
+                    : 0;
+
+                return (
+                  <>
+                    {/* Split Progress Bar */}
+                    <div className="h-14 w-full flex rounded-lg overflow-hidden mb-10 border border-white/5 p-1 bg-black/40">
+                      {totalChannelRev === 0 ? (
+                        <PipelineSegment
+                          color="bg-white/10"
+                          percentage="100%"
+                          label="No Revenue"
+                        />
+                      ) : (
+                        <>
+                          {posPercent > 0 && (
+                            <PipelineSegment
+                              color="bg-green-400"
+                              percentage={`${posPercent}%`}
+                              label={`${posPercent}%`}
+                            />
+                          )}
+                          {resPercent > 0 && (
+                            <PipelineSegment
+                              color="bg-slate-500"
+                              percentage={`${resPercent}%`}
+                              label={`${resPercent}%`}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Metric Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-emerald-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
+                        <span className="block text-sm font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
+                          In-Store (POS)
+                        </span>
+                        <span className="text-[40px] sm:text-[50px] font-headline font-black text-green-400 italic truncate block">
+                          ₱
+                          {posRevenue.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-slate-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
+                        <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
+                          Potential Revenue (Approved)
+                        </span>
+                        <span className="text-[40px] sm:text-[50px] font-headline font-black text-white/90 italic truncate block">
+                          ₱
+                          {approvedReservationRevenue.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </section>
           </div>
         </div>
       </main>
@@ -517,7 +794,7 @@ const BrandLegendItem = ({ color, label, percentage }) => (
 
 const PipelineSegment = ({ color, percentage, label }) => (
   <div
-    className={`h-full ${color} flex items-center justify-center text-md font-black text-white/90 uppercase tracking-widest transition-all hover:brightness-110 cursor-pointer border-r border-black/10`}
+    className={`h-full ${color} flex items-center justify-center text-md font-black text-white/90 uppercase tracking-widest transition-all hover:brightness-110 cursor-pointer rounded-md border-r border-black/10`}
     style={{ width: percentage }}
   >
     {label}
@@ -528,14 +805,14 @@ const StatusCard = ({ border, label, count }) => (
   <div
     className={`p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] ${border} group hover:bg-white/[0.03] transition-all cursor-pointer`}
   >
-    <span className="block text-[9px] font-black text-on-surface/20 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
+    <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
       {label}
     </span>
-    <span className="text-3xl font-headline font-black text-white italic tracking-tighter">
+    <span className="text-[50px] font-headline font-black text-primary-container italic ">
       {count}{" "}
-      <span className="text-md  group-hover:opacity-40 tabular-nums ml-1 NOT-ITALIC">
-        ORDERS
-      </span>
+    </span>
+    <span className="text-md font-bold text-white/90 group-hover:opacity-40 tabular-nums ml-1 NOT-ITALIC">
+      ORDERS
     </span>
   </div>
 );
