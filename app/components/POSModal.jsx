@@ -67,6 +67,13 @@ export default function POSModal({
     setQuantity(1);
   };
 
+  useEffect(() => {
+    if (selectedItem?.stock !== undefined && quantity > selectedItem.stock) {
+      setStockCheck(true); // over stock limit
+    } else {
+      setStockCheck(false);
+    }
+  }, [quantity, selectedItem]);
   if (!isOpen) return null;
 
   return (
