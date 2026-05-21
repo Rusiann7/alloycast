@@ -14,6 +14,7 @@ export default function POSModal({
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [stockCheck, setStockCheck] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
