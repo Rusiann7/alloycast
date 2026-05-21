@@ -309,7 +309,7 @@ export default function RegisterAdminPage() {
             </div>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
+          {/* <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
             <p className="text-xs text-white/90 uppercase tracking-widest text-center">
               Already have an admin account?{" "}
               <Link
@@ -319,7 +319,7 @@ export default function RegisterAdminPage() {
                 SIGN IN
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

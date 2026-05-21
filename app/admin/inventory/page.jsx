@@ -179,7 +179,7 @@ export default function AdminInventory() {
   return (
     <div className="bg-background text-white/90 min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen">
+      <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
           <div className="mb-10 sm:mb-14 reveal-up">
@@ -205,7 +205,7 @@ export default function AdminInventory() {
             className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up"
             style={{ animationDelay: "0.1s" }}
           >
-            <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-white/5 sm:bg-transparent">
+            <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
               <span className="material-symbols-outlined text-xl font-light opacity-80">
                 search
               </span>

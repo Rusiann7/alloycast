@@ -338,7 +338,7 @@ export default function AdminAnalytics() {
         visible={toast.visible}
       />
       {/* --- Main Content --- */}
-      <main className="lg:ml-64 pt-28 lg:pt-10 min-h-screen ">
+      <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="space-y-4 px-10 flex flex-col md:flex-row md:justify-between md:items-end">
           <div>
             <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
@@ -362,9 +362,8 @@ export default function AdminAnalytics() {
             </button>
           </div>
         </div>
-
         {/* Sticky Date Range Control */}
-        <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
+        <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up rounded-lg shadow-lg/30">
           <div className="flex items-center  p-1 rounded-lg border border-primary-container">
             {["Last 7 Days", "This Month", "Last Month", "Annual"].map(
               (label) => (
@@ -383,7 +382,6 @@ export default function AdminAnalytics() {
             )}
           </div>
         </div>
-
         <div className="p-10 space-y-8 max-w-[1600px] mx-auto">
           {/* Revenue Analysis */}
           <section className="bg-input-field  rounded-lg shadow-lg/30 p-4 reveal-up">
@@ -393,7 +391,7 @@ export default function AdminAnalytics() {
               </h3>
               <div className="flex gap-10">
                 <LegendItem
-                  dotColor="bg-secondary-container"
+                  dotColor="bg-primary-container"
                   label="TOTAL REVENUE"
                   value={`₱${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   valueColor="text-green-500"
@@ -726,7 +724,7 @@ export default function AdminAnalytics() {
                         <span className="block text-sm font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
                           In-Store (POS)
                         </span>
-                        <span className="text-[40px] sm:text-[50px] font-headline font-black text-green-400 italic truncate block">
+                        <span className="text-[40px]  font-headline font-black text-green-400 italic truncate block">
                           ₱
                           {posRevenue.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
@@ -739,7 +737,7 @@ export default function AdminAnalytics() {
                         <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
                           Potential Revenue (Approved)
                         </span>
-                        <span className="text-[40px] sm:text-[50px] font-headline font-black text-white/90 italic truncate block">
+                        <span className="text-[40px]  font-headline font-black text-white/90 italic truncate block">
                           ₱
                           {approvedReservationRevenue.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
