@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import Link from "next/link";
+import RemoveAccountModal from "../../components/RemoveAccountModal";
 
 export default function AdminCustomers() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -56,6 +57,25 @@ export default function AdminCustomers() {
     setSelectedCustomer(matchedCustomer);
     console.log(matchedCustomer);
     setIsDrawerOpen(true);
+  };
+
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
+
+  const deleteUser = async () => {
+    try {
+      const { error } = await supabase
+        .from("Users")
+        .delete()
+        .eq("id", selectedCustomer?.Users?.id);
+
+      if (error) throw error;
+      setIsDrawerOpen(false);
+      setIsRemoveOpen(false);
+      setSelectedCustomer(null);
+      getCustomer();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -310,6 +330,15 @@ export default function AdminCustomers() {
             <div className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-10 custom-scrollbar">
               {/* Communication Section */}
               <section>
+                {/* Footer Actions */}
+                <div className="space-y-3 pt-4 pb-10">
+                  <button
+                    onClick={() => setIsRemoveOpen(true)}
+                    className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
+                  >
+                    REMOVE CUSTOMER ACCOUNT?
+                  </button>
+                </div>
                 <h3 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary-container mb-6 border-l-2 border-primary-container pl-4">
                   Communication
                 </h3>
@@ -393,17 +422,21 @@ export default function AdminCustomers() {
                   )}
                 </div>
               </section>
-
-              {/* Footer Actions */}
-              {/* <div className="space-y-3 pt-4 pb-10">
-                  <button className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20">
-                    REMOVE ACCOUNT
-                  </button>
-                </div> */}
             </div>
           </aside>
         </>
       )}
+
+      <RemoveAccountModal
+        open={isRemoveOpen && !!selectedCustomer}
+        onClose={() => setIsRemoveOpen(false)}
+        onConfirm={() => deleteUser()}
+        customerName={
+          selectedCustomer
+            ? `${selectedCustomer.firstname} ${selectedCustomer.lastname}`
+            : ""
+        }
+      />
 
       <style jsx global>{`
         .reveal-up {

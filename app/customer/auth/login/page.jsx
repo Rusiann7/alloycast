@@ -1,13 +1,21 @@
 "use client";
 import React, { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
+const DynamicForgotPasswordModal = dynamic(
+  () => import("../../../components/ForgotPasswordModal"),
+  { ssr: false },
+);
+const DynamicNewPasswordModal = dynamic(
+  () => import("../../../components/NewPasswordModal"),
+  { ssr: false },
+);
 
 function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +28,9 @@ function LoginContent() {
     message: "",
     type: "error",
   });
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const timeoutRef = useRef(null);
 
   const router = useRouter();
   const searchParams = useSearchParams(); // for capturing clicked product url and id
@@ -39,6 +50,23 @@ function LoginContent() {
       ...prevLoginForm,
       [name]: value,
     }));
+  };
+
+  const checkEmail = async () => {
+    try {
+      const { count } = await supabase
+        .from("Users")
+        .select("*", { count: "exact" })
+        .eq("email", loginForm.email.trim().toLowerCase());
+
+      if (!count) {
+        showToast("Email Not Found", "error");
+      } else {
+        setIsForgotOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const inputSanitizerFunction = () => {
@@ -89,9 +117,12 @@ function LoginContent() {
       const redirectTo = searchParams.get("redirectTo"); // kinukuha ung specific productDetail url (if meron)
       const destination = redirectTo || "/customer/account"; // kung meron, balik, kung wla, punta sa account
       showToast("Login Successful", "success");
-      setTimeout(() => {
-        router.push(destination); // redirects back to clicked productDetail
+      const id = setTimeout(() => {
+        if (typeof window !== "undefined" && router && router.push) {
+          router.push(destination); // redirects back to clicked productDetail
+        }
       }, 1500);
+      timeoutRef.current = id;
     } else {
       showToast(error.message, "error");
     }
@@ -228,6 +259,15 @@ function LoginContent() {
                 Resend Link
               </button>
             </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => checkEmail()}
+                className=" text-blue-400   hover:underline text-xs drop-shadow-lg/30 italic font-bold uppercase cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+            </div>
             <button
               type="button"
               className="w-full flex items-center justify-center gap-3 shadow-lg/30  bg-white hover:scale-105 transition-all text-black font-bold py-3 px-4 rounded-lg  mb-6 border border-gray-300"
@@ -261,6 +301,20 @@ function LoginContent() {
           </div>
         </div>
       </div>
+      <DynamicForgotPasswordModal
+        isOpen={isForgotOpen}
+        onClose={() => setIsForgotOpen(false)}
+        onSubmit={() => {
+          setIsForgotOpen(false);
+          setIsNewOpen(true);
+        }}
+      />
+
+      <DynamicNewPasswordModal
+        isOpen={isNewOpen}
+        onClose={() => setIsNewOpen(false)}
+        onSubmit={() => setIsNewOpen(false)}
+      />
     </div>
   );
 }
