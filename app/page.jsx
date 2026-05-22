@@ -69,7 +69,6 @@ export default function LandingPage() {
              filter drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)] 
              dark:grayscale-75 dark:brightness-90 dark:contrast-[1.1] dark:drop-shadow-none
              opacity-0 animate-drive-in-stop max-w-none lg:max-w-full 
-             lg:[-webkit-box-reflect:below_-850px_linear-gradient(to_bottom,transparent,rgba(0,0,0,0.4))] 
              -translate-y-[20%] lg:translate-y-0"
               src="/011.png"
               fill

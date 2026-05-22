@@ -355,7 +355,7 @@ export default function AdminReservations() {
   }, [dateRange]);
 
   return (
-    <div className="bg-background text-[#e5e2e1] min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
+    <div className="bg-background text-white/90 min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
         message={toast.message}
         type={toast.type}
@@ -372,22 +372,22 @@ export default function AdminReservations() {
 
       {/* --- Main Content --- */}
 
-      <main className="pl-0 pt-24 lg:pt-5 lg:pl-[var(--sidebar-width)] sm:ml-10 px-6 lg:px-8 pb-12 transition-all duration-500">
+      <main className="pl-0 pt-24 lg:pt-5 lg:pl-[var(--sidebar-width)] ml-10 px-6 lg:px-8 pb-12 transition-all duration-500">
         {/* Page Header */}
-        <div className="bg-background  text-font-color flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
+        <div className="bg-background text-font-color flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
           <div className="mb-14 reveal-up">
             <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
               RESERVATIONS
             </h3>
-            <div className="flex items-center gap-4">
-              <p className="text-sm font-headline font-bold uppercase tracking-[0.25em] text-font-color">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
                 TOTAL RESREVATIONS:{" "}
                 <span className="text-font-color">
                   {reservation.length}
                 </span>{" "}
               </p>
               <div className="w-1 h-1 bg-secondary-container rounded-full" />
-              <p className="text-sm font-headline font-bold uppercase tracking-[0.25em] text-font-color">
+              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
                 PENDING RESERVATIONS:{" "}
                 <span className="text-font-color">
                   {reservation.filter((res) => res.status === "Pending").length}
