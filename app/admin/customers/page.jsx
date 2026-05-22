@@ -61,6 +61,23 @@ export default function AdminCustomers() {
 
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
 
+  const deleteUser = async () => {
+    try {
+      const { error } = await supabase
+        .from("Users")
+        .delete()
+        .eq("id", selectedCustomer?.Users?.id);
+
+      if (error) throw error;
+      setIsDrawerOpen(false);
+      setIsRemoveOpen(false);
+      setSelectedCustomer(null);
+      getCustomer();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="bg-background text-white/90 min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
@@ -413,7 +430,7 @@ export default function AdminCustomers() {
       <RemoveAccountModal
         open={isRemoveOpen && !!selectedCustomer}
         onClose={() => setIsRemoveOpen(false)}
-        onConfirm={() => setIsRemoveOpen(false)}
+        onConfirm={() => deleteUser()}
         customerName={
           selectedCustomer
             ? `${selectedCustomer.firstname} ${selectedCustomer.lastname}`

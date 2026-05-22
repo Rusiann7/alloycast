@@ -52,6 +52,23 @@ function LoginContent() {
     }));
   };
 
+  const checkEmail = async () => {
+    try {
+      const { count } = await supabase
+        .from("Users")
+        .select("*", { count: "exact" })
+        .eq("email", loginForm.email.trim().toLowerCase());
+
+      if (!count) {
+        showToast("Email Not Found", "error");
+      } else {
+        setIsForgotOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const inputSanitizerFunction = () => {
     // panglinis ng email input
     const sanitizedForm = {
@@ -245,7 +262,7 @@ function LoginContent() {
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setIsForgotOpen(true)}
+                onClick={() => checkEmail()}
                 className=" text-blue-400   hover:underline text-xs drop-shadow-lg/30 italic font-bold uppercase cursor-pointer"
               >
                 Forgot Password?

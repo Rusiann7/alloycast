@@ -27,6 +27,16 @@ export default function RegisterAdminPage() {
     type: "error",
   });
 
+  function getRandomString(n) {
+    const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let randomString = "";
+    for (let i = 0; i < n; i++) {
+      const index = Math.floor(Math.random() * characters.length);
+      randomString += characters[index];
+    }
+    return randomString;
+  }
+
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
@@ -110,6 +120,7 @@ export default function RegisterAdminPage() {
           first_name: sanitizedData.firstName,
           last_name: sanitizedData.lastName,
           is_admin: true,
+          reset: getRandomString(5),
         },
       },
     });

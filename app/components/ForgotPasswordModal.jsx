@@ -1,11 +1,15 @@
 "use client";
 import React from "react";
+import { useState } from "react";
 
 const ForgotPasswordModal = ({
   isOpen = false,
   onClose = () => {},
   onSubmit = () => {},
 }) => {
+  const [codeDB, setCodeDB] = useState(null);
+  const [code, setCode] = useState(null);
+
   if (!isOpen) return null;
 
   return (
