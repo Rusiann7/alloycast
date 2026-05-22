@@ -6,6 +6,14 @@ import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
+const DynamicForgotPasswordModal = dynamic(
+  () => import("../../../components/ForgotPasswordModal"),
+  { ssr: false },
+);
+const DynamicNewPasswordModal = dynamic(
+  () => import("../../../components/NewPasswordModal"),
+  { ssr: false },
+);
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -20,6 +28,8 @@ export default function AdminLoginPage() {
     type: "error",
   });
   const [showPassword, setShowPassword] = useState(false); // false muna para d mapakita password unless i-click ung button
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [isNewOpen, setIsNewOpen] = useState(false);
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -236,6 +246,15 @@ export default function AdminLoginPage() {
                   Resend Link
                 </button>
               </p>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotOpen(true)}
+                  className=" text-blue-400   hover:underline text-xs drop-shadow-lg/30 italic font-bold uppercase cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
+              </div>
               <button
                 type="button"
                 className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
@@ -255,19 +274,22 @@ export default function AdminLoginPage() {
               </button>
             </div>
           </form>
-          {/* <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
-              Add Admin User?{" "}
-              <Link
-                href="/admin/auth/register"
-                className="text-primary-container hover:underline italic font-bold"
-              >
-                SIGN UP
-              </Link>
-            </p>
-          </div> */}
         </div>
       </div>
+      <DynamicForgotPasswordModal
+        isOpen={isForgotOpen}
+        onClose={() => setIsForgotOpen(false)}
+        onSubmit={() => {
+          setIsForgotOpen(false);
+          setIsNewOpen(true);
+        }}
+      />
+
+      <DynamicNewPasswordModal
+        isOpen={isNewOpen}
+        onClose={() => setIsNewOpen(false)}
+        onSubmit={() => setIsNewOpen(false)}
+      />
     </div>
   );
 }
