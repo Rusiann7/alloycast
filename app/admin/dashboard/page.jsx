@@ -98,55 +98,82 @@ export default function AdminDashboard() {
         startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
         break;
-      case "All Time":
-        startDate = new Date(0);
+      case "Annual":
+        // Use the calendar year for Annual: Jan 1 -> Dec 31 of current year
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
         break;
       default:
         startDate.setDate(now.getDate() - 30);
     }
 
-    const { data: analyticsData, error } = await supabase
-      .from("Reservation")
+    // Fetch POS data (actual sales) to compute Total Revenue and chart
+    const { data: posData, error: posError } = await supabase
+      .from("POS")
       .select("quantity, created_at, Inventory(price, item_name)")
       .gte("created_at", startDate.toISOString())
-      .lte("created_at", endDate.toISOString())
-      .neq("status", "Pending")
-      .neq("status", "Rejected");
+      .lte("created_at", endDate.toISOString());
 
-    if (error || !analyticsData) {
-      console.error("Error fetching analytics:", error);
+    if (posError || !posData) {
+      console.error("Error fetching POS analytics:", posError);
       return;
     }
 
-    // Process Revenue
-    const dailyRevenue = {};
+    // Process POS revenue
     let sumRev = 0;
-    analyticsData.forEach((res) => {
-      if (res.Inventory?.price) {
-        const rev = res.quantity * res.Inventory.price;
-        sumRev += rev;
-        const dateStr = res.created_at.split("T")[0];
-        dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
+
+    if (dateRange === "Annual") {
+      const monthlyRevenue = {};
+      posData.forEach((res) => {
+        if (res.Inventory?.price) {
+          const rev = res.quantity * res.Inventory.price;
+          sumRev += rev;
+          const d = new Date(res.created_at);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          monthlyRevenue[key] = (monthlyRevenue[key] || 0) + rev;
+        }
+      });
+
+      const chartData = [];
+      for (let m = 0; m < 12; m++) {
+        const key = `${now.getFullYear()}-${String(m + 1).padStart(2, "0")}`;
+        const monthName = new Date(now.getFullYear(), m, 1).toLocaleDateString(
+          "en-US",
+          { month: "short" },
+        );
+        chartData.push({ name: monthName, revenue: monthlyRevenue[key] || 0 });
       }
-    });
+      setTotalRevenue(sumRev);
+      setRevenueData(chartData);
+    } else {
+      const dailyRevenue = {};
+      posData.forEach((res) => {
+        if (res.Inventory?.price) {
+          const rev = res.quantity * res.Inventory.price;
+          sumRev += rev;
+          const dateStr = res.created_at.split("T")[0];
+          dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
+        }
+      });
 
-    setTotalRevenue(sumRev);
-    const chartData = Object.keys(dailyRevenue)
-      .sort((a, b) => new Date(a) - new Date(b))
-      .map((dateStr) => ({
-        name: new Date(dateStr).toLocaleDateString("en-US", {
-          month: "short",
-          day: "2-digit",
-        }),
-        revenue: dailyRevenue[dateStr],
-      }));
-    setRevenueData(chartData);
+      setTotalRevenue(sumRev);
+      const chartData = Object.keys(dailyRevenue)
+        .sort((a, b) => new Date(a) - new Date(b))
+        .map((dateStr) => ({
+          name: new Date(dateStr).toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+          }),
+          revenue: dailyRevenue[dateStr],
+        }));
+      setRevenueData(chartData);
+    }
 
-    // Top Products
+    // Top Products (based on actual POS sales)
     const productCounts = {};
     let totalReserved = 0;
 
-    analyticsData.forEach((res) => {
+    posData.forEach((res) => {
       const name = res.Inventory?.item_name;
       if (name) {
         productCounts[name] = (productCounts[name] || 0) + res.quantity;
@@ -234,54 +261,199 @@ export default function AdminDashboard() {
     }
   };
 
-  const exportToExcel = () => {
-    const workbook = XLSX.utils.book_new();
+  const exportToExcel = async () => {
+    try {
+      const workbook = XLSX.utils.book_new();
 
-    // --- SHEET 1: REVENUE SUMMARY ---
-    const revenueExport = revenueData.map((item) => ({
-      Date: item.name,
-      "Revenue (PHP)": item.revenue,
-    }));
-    revenueExport.push({ Date: "TOTAL", "Revenue (PHP)": totalRevenue });
-    const revSheet = XLSX.utils.json_to_sheet(revenueExport);
-    XLSX.utils.book_append_sheet(workbook, revSheet, "Revenue Report");
+      // determine date bounds based on `dateRange`
+      const now = new Date();
+      let startDate = new Date();
+      let endDate = new Date();
 
-    // --- SHEET 2: TOP SELLING PRODUCTS ---
-    const topProductsExport = topProducts.map((p) => ({
-      "Product Name": p.name,
-      "Units Sold": p.count,
-      "Market Share (%)": p.percentage + "%",
-    }));
-    const topSheet = XLSX.utils.json_to_sheet(topProductsExport);
-    XLSX.utils.book_append_sheet(workbook, topSheet, "Top Products");
+      switch (dateRange) {
+        case "Last 7 Days":
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "This Month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+          );
+          break;
+        case "Last Month":
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+          break;
+        case "Annual":
+          startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
+      }
 
-    // --- SHEET 3: RECENT ACTIVITY LEDGER ---
-    const activityExport = recentActivities.map((act) => ({
-      Date: new Date(act.created_at).toLocaleDateString(),
-      Customer: act.customer_name,
-      Product: act.Inventory?.item_name,
-      Quantity: act.quantity,
-      Status: act.status,
-    }));
-    const actSheet = XLSX.utils.json_to_sheet(activityExport);
-    XLSX.utils.book_append_sheet(workbook, actSheet, "Activity Ledger");
+      // --- SHEET 1: REVENUE SUMMARY (POS) ---
+      const { data: posData, error: posErr } = await supabase
+        .from("POS")
+        .select("quantity, created_at, Inventory(price, item_name)")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
 
-    // --- SHEET 4: LIVE INVENTORY (NEW ARRIVALS) ---
-    const inventoryExport = newArrivals.map((item) => ({
-      "Item Name": item.item_name,
-      Price: item.price,
-      "Date Added": new Date(
-        item.created_at || Date.now(),
-      ).toLocaleDateString(),
-    }));
-    const invSheet = XLSX.utils.json_to_sheet(inventoryExport);
-    XLSX.utils.book_append_sheet(workbook, invSheet, "New Inventory");
+      if (posErr) throw posErr;
 
-    // --- GENERATE DOWNLOAD ---
-    const timestamp = new Date().toISOString().split("T")[0];
-    XLSX.writeFile(workbook, `Alloycast_Dashboard_Report_${timestamp}.xlsx`);
+      let revenueExport = [];
+      let grandTotal = 0;
 
-    showToast("Multi-sheet business report exported!", "success");
+      if (dateRange === "Annual") {
+        // monthly aggregation
+        const monthly = Array(12).fill(0);
+        posData.forEach((p) => {
+          if (p.Inventory?.price) {
+            const rev = p.quantity * p.Inventory.price;
+            const m = new Date(p.created_at).getMonth();
+            monthly[m] += rev;
+            grandTotal += rev;
+          }
+        });
+
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+
+        revenueExport = monthNames.map((mn, i) => ({
+          Month: mn,
+          "Total Revenue (PHP)": Number(monthly[i].toFixed(2)),
+        }));
+      } else {
+        // daily aggregation
+        const daily = {};
+        posData.forEach((p) => {
+          if (p.Inventory?.price) {
+            const rev = p.quantity * p.Inventory.price;
+            const dKey = p.created_at.split("T")[0];
+            daily[dKey] = (daily[dKey] || 0) + rev;
+            grandTotal += rev;
+          }
+        });
+        revenueExport = Object.keys(daily)
+          .sort((a, b) => new Date(a) - new Date(b))
+          .map((dateStr) => ({
+            Date: new Date(dateStr).toLocaleDateString(),
+            "Total Revenue (PHP)": Number(daily[dateStr].toFixed(2)),
+          }));
+      }
+
+      revenueExport.push({
+        Total: "",
+        "Total Revenue (PHP)": Number(grandTotal.toFixed(2)),
+      });
+      const revSheet = XLSX.utils.json_to_sheet(revenueExport);
+      XLSX.utils.book_append_sheet(workbook, revSheet, `${dateRange} Revenue`);
+
+      // --- SHEET 2: TOP PRODUCTS (POS within range) ---
+      const productAgg = {};
+      let totalUnits = 0;
+      posData.forEach((p) => {
+        const name = p.Inventory?.item_name || "Unknown";
+        productAgg[name] = (productAgg[name] || 0) + p.quantity;
+        totalUnits += p.quantity;
+      });
+
+      const topProductsExport = Object.keys(productAgg)
+        .map((name) => ({
+          "Product Name": name,
+          "Units Sold": productAgg[name],
+          "Market Share (%)":
+            totalUnits > 0
+              ? `${Math.round((productAgg[name] / totalUnits) * 100)}%`
+              : "0%",
+        }))
+        .sort((a, b) => b["Units Sold"] - a["Units Sold"]);
+
+      const topSheet = XLSX.utils.json_to_sheet(topProductsExport);
+      XLSX.utils.book_append_sheet(
+        workbook,
+        topSheet,
+        `${dateRange} Top Products`,
+      );
+
+      // --- SHEET 3: ACTIVITY LEDGER (Reservations in range) ---
+      const { data: reservations } = await supabase
+        .from("Reservation")
+        .select(
+          "id, created_at, status, quantity, user_id, Inventory(item_name, item_image), Users(email)",
+        )
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString())
+        .order("created_at", { ascending: false });
+
+      const activityExport = (reservations || []).map((r) => ({
+        Date: new Date(r.created_at).toLocaleDateString(),
+        Time: new Date(r.created_at).toLocaleTimeString(),
+        CustomerEmail: r.Users?.email || "",
+        Product: r.Inventory?.item_name || "",
+        Quantity: r.quantity || "",
+        Status: r.status || "",
+        Reference: `#RES-${String(r.id).slice(0, 4).toUpperCase()}`,
+      }));
+
+      const actSheet = XLSX.utils.json_to_sheet(activityExport);
+      XLSX.utils.book_append_sheet(
+        workbook,
+        actSheet,
+        `${dateRange} Activity Ledger`,
+      );
+
+      // --- SHEET 4: NEW INVENTORY (arrivals in range) ---
+      const { data: arrivals } = await supabase
+        .from("Inventory")
+        .select("id, item_name, price, created_at")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString())
+        .order("created_at", { ascending: false });
+
+      const inventoryExport = (arrivals || []).map((i) => ({
+        "Item Name": i.item_name,
+        Price: Number(i.price).toFixed(2),
+        "Date Added": new Date(i.created_at).toLocaleDateString(),
+      }));
+
+      const invSheet = XLSX.utils.json_to_sheet(inventoryExport);
+      XLSX.utils.book_append_sheet(
+        workbook,
+        invSheet,
+        `${dateRange} New Inventory`,
+      );
+
+      // --- GENERATE DOWNLOAD ---
+      const timestamp = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(
+        workbook,
+        `Alloycast_Dashboard_${dateRange.replace(/\s+/g, "_")}_Report_${timestamp}.xlsx`,
+      );
+
+      showToast("Multi-sheet business report exported!", "success");
+    } catch (err) {
+      console.error("Export failed:", err);
+      showToast("Export failed. Check console for details.", "error");
+    }
   };
 
   const handleActionClick = (res, newStatus) => {
@@ -333,7 +505,7 @@ export default function AdminDashboard() {
           "3ilQZwBk_Cxjfohab", // Your Public Key
         );
         showToast("Order updated and email sent to customer!", "success");
-      } else if (newStatus === "Rejected") {
+      } else if (newStatus === "Declined") {
         const response = await fetch("/api/send-email", {
           method: "POST",
           headers: {
@@ -432,7 +604,7 @@ export default function AdminDashboard() {
           />
           <KPICard
             icon="payments"
-            label="Revenue Estimate"
+            label="POS Revenue"
             value={`₱${totalRevenue.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -479,7 +651,7 @@ export default function AdminDashboard() {
               {/* 2. Filter Buttons - Grid 2x2 on mobile, flex on desktop */}
               <div className="w-full xl:w-auto">
                 <div className="grid grid-cols-2 2xl:flex items-center bg-secondary-container p-1 rounded-lg  gap-1">
-                  {["Last 7 Days", "This Month", "Last Month", "All Time"].map(
+                  {["Last 7 Days", "This Month", "Last Month", "Annual"].map(
                     (label) => (
                       <button
                         key={label}
@@ -517,58 +689,74 @@ export default function AdminDashboard() {
 
             {/* Chart Area - Responsive Height */}
             <div className="h-[250px] sm:h-[300px] lg:h-[400px] w-full relative mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={revenueData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="name"
-                    stroke="#ffffff"
-                    fontSize={12}
-                    tickMargin={10}
-                    axisLine={10}
-                    tickLine={10}
-                    opacity={1}
-                  />
-                  <YAxis
-                    stroke="#ffffff"
-                    fontSize={12}
-                    axisLine={10}
-                    tickLine={10}
-                    opacity={1}
-                    tickFormatter={(value) => `₱${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--secondary-container)",
-                      borderColor: "var(--primary-container)",
-                      fontSize: "12px",
-                      borderRadius: "8px",
-                      color: "white",
-                      border: "none",
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                    }}
-                    itemStyle={{ color: "#22C55E" }}
-                    formatter={(value) => `₱${Number(value).toFixed(2)}`}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#22C55E"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorRev)"
-                    animationDuration={1500}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {!revenueData ||
+              revenueData.length === 0 ||
+              totalRevenue === 0 ? (
+                <div className="h-full w-full flex items-center justify-center text-white/60 uppercase font-black tracking-widest">
+                  No available data on this category
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={revenueData}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop
+                          offset="5%"
+                          stopColor="#22C55E"
+                          stopOpacity={0.4}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#22C55E"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="name"
+                      stroke="#ffffff"
+                      fontSize={12}
+                      tickMargin={10}
+                      axisLine={10}
+                      tickLine={10}
+                      opacity={1}
+                    />
+                    <YAxis
+                      stroke="#ffffff"
+                      fontSize={12}
+                      axisLine={10}
+                      tickLine={10}
+                      opacity={1}
+                      tickFormatter={(value) => `₱${value}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--secondary-container)",
+                        borderColor: "var(--primary-container)",
+                        fontSize: "12px",
+                        borderRadius: "8px",
+                        color: "white",
+                        border: "none",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                      itemStyle={{ color: "#22C55E" }}
+                      formatter={(value) => `₱${Number(value).toFixed(2)}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#22C55E"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorRev)"
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -844,14 +1032,14 @@ export default function AdminDashboard() {
                 <button
                   disabled={activeReservation.status !== "Pending"}
                   onClick={() =>
-                    handleActionClick(activeReservation, "Rejected")
+                    handleActionClick(activeReservation, "Declined")
                   }
                   className="w-full sm:w-auto px-10 py-4 bg-secondary-container text-white/90  rounded-lg font-black uppercase text-xs tracking-[0.2em] hover:scale-105 transition-all disabled:opacity-10 disabled:cursor-not-allowed group flex items-center justify-center space-x-2"
                 >
                   <span className="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">
                     close
                   </span>
-                  <span>Reject Order</span>
+                  <span>Decline Order</span>
                 </button>
                 <button
                   disabled={activeReservation.status !== "Pending"}

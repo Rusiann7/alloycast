@@ -135,7 +135,8 @@ export default function StorePage() {
           category)`,
         )
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .lte("created_at", endDate.toISOString())
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setPos(data || []);

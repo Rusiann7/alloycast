@@ -351,7 +351,7 @@ export default function Account() {
 
               {/* Filter Buttons */}
               <div className="grid grid-cols-2 lg:flex items-center gap-2 p-1 bg-secondary-container rounded-lg border border-white/5">
-                {["All", "Pending", "Approved", "Rejected", "Cancelled"].map(
+                {["All", "Pending", "Approved", "Declined", "Cancelled"].map(
                   (f) => (
                     <button
                       key={f}
@@ -418,10 +418,11 @@ export default function Account() {
                           className={`p-2 rounded-lg text-md ${
                             res.status === "Approved"
                               ? "bg-green-500 text-white/90 border border-green-500/20"
-                              : res.status === "Rejected" ||
-                                  res.status === "Cancelled"
+                              : res.status === "Declined"
                                 ? "bg-on-primary text-white/90  border border-red-500/20"
-                                : "bg-primary-container text-font-color border border-yellow-500/20"
+                                : res.status === "Cancelled"
+                                  ? "bg-on-primary text-white/90 border border-red-500/20"
+                                  : "bg-primary-container text-font-color border border-yellow-500/20"
                           }`}
                         >
                           {res.status || "Pending"}

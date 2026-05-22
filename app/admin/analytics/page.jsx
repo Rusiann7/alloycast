@@ -35,7 +35,7 @@ export default function AdminAnalytics() {
   const [pipelineCounts, setPipelineCounts] = useState({
     Pending: 0,
     Approved: 0,
-    Rejected: 0,
+    Declined: 0,
     Cancelled: 0,
   });
 
@@ -242,7 +242,7 @@ export default function AdminAnalytics() {
       const statusCounts = {
         Pending: 0,
         Approved: 0,
-        Rejected: 0,
+        Declined: 0,
         Cancelled: 0,
       };
       data.forEach((res) => {
@@ -264,13 +264,12 @@ export default function AdminAnalytics() {
       const startDate = new Date(currentYear, 0, 1).toISOString(); // January
       const endDate = new Date(currentYear, 11, 31, 23, 59, 59).toISOString(); // December
 
-      // fetch approved reservations for current year
+      // fetch POS records (actual sales) for current year
       const { data, error } = await supabase
-        .from("Reservation")
-        .select("quantity, created_at, status, Inventory(price)")
+        .from("POS")
+        .select("quantity, created_at, Inventory(price)")
         .gte("created_at", startDate)
-        .lte("created_at", endDate)
-        .eq("status", "Approved");
+        .lte("created_at", endDate);
 
       if (error) throw error;
 
@@ -278,7 +277,7 @@ export default function AdminAnalytics() {
       const monthlyRevenue = Array(12).fill(0);
       let annualTotal = 0;
 
-      // revenue per month calculation
+      // revenue per month calculation (POS)
       data.forEach((res) => {
         if (res.Inventory?.price) {
           const revenue = res.quantity * res.Inventory.price;
@@ -389,13 +388,20 @@ export default function AdminAnalytics() {
               <h3 className="font-headline font-black text-3xl  text-white/90 uppercase tracking-tighter italic">
                 Revenue Analysis Graph
               </h3>
-              <div className="flex gap-10">
+              <div className="flex gap-3 items-center">
                 <LegendItem
                   dotColor="bg-primary-container"
                   label="TOTAL REVENUE"
                   value={`₱${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   valueColor="text-green-500"
                 />
+                <span
+                  title="Actual sales from POS. Potential reservation revenue is shown separately as 'Potential Revenue (Approved)'"
+                  className="material-symbols-outlined ml-2 text-sm"
+                  aria-hidden
+                >
+                  info
+                </span>
               </div>
             </div>
 
@@ -606,7 +612,7 @@ export default function AdminAnalytics() {
                   const total =
                     pipelineCounts.Pending +
                     pipelineCounts.Approved +
-                    pipelineCounts.Rejected +
+                    pipelineCounts.Declined +
                     pipelineCounts.Cancelled;
                   if (total === 0)
                     return (
@@ -630,8 +636,8 @@ export default function AdminAnalytics() {
                       />
                       <PipelineSegment
                         color="bg-rose-500"
-                        percentage={`${Math.round((pipelineCounts.Rejected / total) * 100)}%`}
-                        label={`${Math.round((pipelineCounts.Rejected / total) * 100)}%`}
+                        percentage={`${Math.round((pipelineCounts.Declined / total) * 100)}%`}
+                        label={`${Math.round((pipelineCounts.Declined / total) * 100)}%`}
                       />
                       <PipelineSegment
                         color="bg-slate-500"
@@ -656,8 +662,8 @@ export default function AdminAnalytics() {
                 />
                 <StatusCard
                   border="border-rose-500"
-                  label="Rejected"
-                  count={pipelineCounts.Rejected}
+                  label="Declined"
+                  count={pipelineCounts.Declined}
                 />
                 <StatusCard
                   border="border-slate-500"
@@ -735,7 +741,8 @@ export default function AdminAnalytics() {
 
                       <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-slate-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
                         <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
-                          Potential Revenue (Approved)
+                          Potential Revenue{" "}
+                          <span className="text-green-400">(Approved)</span>
                         </span>
                         <span className="text-[40px]  font-headline font-black text-white/90 italic truncate block">
                           ₱

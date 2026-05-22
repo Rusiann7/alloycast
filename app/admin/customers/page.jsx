@@ -368,9 +368,13 @@ export default function AdminCustomers() {
                           className={`text-sm font-headline font-black uppercase tracking-wider px-3 py-1 rounded ${
                             item.status === "Approved"
                               ? "bg-green-400 text-black/90"
-                              : item.status === "Cancelled"
-                                ? "bg-red-600/20 text-red-400"
-                                : "bg-yellow-600/20 text-yellow-400"
+                              : item.status === "Pending"
+                                ? "bg-yellow-400 text-black/90"
+                                : item.status == "Declined"
+                                  ? "bg-on-primary text-white/90"
+                                  : item.status === "Cancelled"
+                                    ? "bg-red-600/20 text-red-400"
+                                    : "bg-red-600/20 text-red-400"
                           }`}
                         >
                           {item.status}

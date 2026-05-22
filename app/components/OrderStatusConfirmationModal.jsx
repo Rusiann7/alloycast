@@ -41,7 +41,7 @@ export default function OrderStatusConfirmationModal({
             </span>
           </div>
           <h3 className="font-black text-xl sm:text-2xl text-font-color uppercase tracking-tighter leading-tight italic">
-            {isApprove ? "Approve Reservation?" : "Reject Reservation?"}
+            {isApprove ? "Approve Reservation?" : "Decline Reservation?"}
           </h3>
         </div>
 
@@ -102,7 +102,7 @@ export default function OrderStatusConfirmationModal({
             onClick={confirmRejectOrder}
             className="w-full sm:flex-1 px-6 h-14 shadow-lg/30 text-black/90 text-xs font-black uppercase tracking-[0.2em] transition-all rounded-lg bg-primary-container hover:scale-105 active:scale-95 cursor-pointer"
           >
-            {isApprove ? "Approve" : "Reject"}
+            {isApprove ? "Approve" : "Decline"}
           </button>
         </div>
       </div>
