@@ -363,13 +363,13 @@ export default function AdminAnalytics() {
         </div>
         {/* Sticky Date Range Control */}
         <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up rounded-lg shadow-lg/30">
-          <div className="flex items-center  p-1 rounded-lg border border-primary-container">
+          <div className="grid grid-cols-2 gap-1 2xl:flex items-center p-1 rounded-lg border border-primary-container">
             {["Last 7 Days", "This Month", "Last Month", "Annual"].map(
               (label) => (
                 <button
                   key={label}
                   onClick={() => setDateRange(label)}
-                  className={`px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
+                  className={`w-full 2xl:w-auto px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
                     dateRange === label
                       ? "bg-primary-container text-black/90 shadow-lg"
                       : "text-white/90 opacity-80 hover:opacity-100"
@@ -381,7 +381,7 @@ export default function AdminAnalytics() {
             )}
           </div>
         </div>
-        <div className="p-10 space-y-8 max-w-[1600px] mx-auto">
+        <div className="pt-5 space-y-8 max-w-[1600px] mx-auto">
           {/* Revenue Analysis */}
           <section className="bg-input-field  rounded-lg shadow-lg/30 p-4 reveal-up">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-6">
@@ -799,7 +799,7 @@ const BrandLegendItem = ({ color, label, percentage }) => (
 
 const PipelineSegment = ({ color, percentage, label }) => (
   <div
-    className={`h-full ${color} flex items-center justify-center text-md font-black text-white/90 uppercase tracking-widest transition-all hover:brightness-110 cursor-pointer rounded-md border-r border-black/10`}
+    className={`h-full ${color} flex items-center justify-center text-md font-black text-white/90  uppercase tracking-widest transition-all hover:brightness-110 cursor-pointer rounded-md border-r border-black/10`}
     style={{ width: percentage }}
   >
     {label}
@@ -810,7 +810,7 @@ const StatusCard = ({ border, label, count }) => (
   <div
     className={`p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] ${border} group hover:bg-white/[0.03] transition-all cursor-pointer`}
   >
-    <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
+    <span className="block text-[9px] lg:text-sm font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
       {label}
     </span>
     <span className="text-[50px] font-headline font-black text-primary-container italic ">
