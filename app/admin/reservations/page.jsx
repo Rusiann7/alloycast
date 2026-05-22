@@ -79,14 +79,14 @@ export default function AdminReservations() {
             statusColor:
               reservation.status === "Approved"
                 ? "bg-green-700 text-white/90 border-green-500/20"
-                : reservation.status === "Rejected" ||
+                : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
                   ? "bg-red-400/50 text-red-300 border-red-500/20"
                   : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
               reservation.status === "Approved"
                 ? "bg-green-500"
-                : reservation.status === "Rejected" ||
+                : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
                   ? "bg-red-500"
                   : "bg-secondary-container",
@@ -203,7 +203,7 @@ export default function AdminReservations() {
       prevReservations.map((res) => {
         if (res.id === reservationId) {
           const isApproved = newStatus === "Approved";
-          const isRejected = newStatus === "Rejected";
+          const isRejected = newStatus === "Declined";
           let statusColor = "bg-white/5 text-white/60 border-white/10";
           let statusDot = "bg-white/40";
           if (isApproved) {
@@ -242,7 +242,7 @@ export default function AdminReservations() {
           "success",
           "success",
         );
-      } else if (newStatus === "Rejected") {
+      } else if (newStatus === "Declined") {
         const response = await fetch("/api/send-email", {
           method: "POST",
           headers: {
@@ -328,14 +328,14 @@ export default function AdminReservations() {
             statusColor:
               reservation.status === "Approved"
                 ? "bg-green-700 text-white/90 border-green-500/20"
-                : reservation.status === "Rejected" ||
+                : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
                   ? "bg-red-400/50 text-red-300 border-red-500/20"
                   : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
               reservation.status === "Approved"
                 ? "bg-green-500"
-                : reservation.status === "Rejected" ||
+                : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
                   ? "bg-red-500"
                   : "bg-secondary-container",
@@ -417,7 +417,7 @@ export default function AdminReservations() {
             "All Items",
             "Pending",
             "Approved",
-            "Rejected",
+            "Declined",
             "Cancelled",
             "Reports",
           ].map((tab) => (
@@ -561,7 +561,7 @@ export default function AdminReservations() {
                                 className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
                                 disabled={
                                   res.status === "Approved" ||
-                                  res.status === "Rejected"
+                                  res.status === "Declined"
                                 }
                                 onClick={() =>
                                   handleActionClick(
@@ -584,18 +584,18 @@ export default function AdminReservations() {
                                 className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
                                 disabled={
                                   res.status === "Approved" ||
-                                  res.status === "Rejected"
+                                  res.status === "Declined"
                                 }
                                 onClick={() =>
                                   handleActionClick(
                                     res.id,
-                                    "Rejected",
+                                    "Declined",
                                     res.customer_email,
                                     res.customer,
                                     res.item_name,
                                   )
                                 }
-                                title="Reject Reservation"
+                                title="Decline Reservation"
                               >
                                 <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
                                   close
