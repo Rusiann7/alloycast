@@ -1,11 +1,23 @@
 "use client";
 import React from "react";
+import { useState } from "react";
 
 const NewPasswordModal = ({
   isOpen = false,
   onClose = () => {},
   onSubmit = () => {},
 }) => {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const isSame = () => {
+    if (password === confirmPassword) {
+      onSubmit(password);
+    } else {
+      console.log("Password did not match");
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -44,6 +56,8 @@ const NewPasswordModal = ({
             <input
               type="password"
               placeholder="Enter new password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-input-field border border-white/[0.03] rounded-lg h-12 px-4 text-md font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/50"
             />
           </div>
@@ -55,6 +69,8 @@ const NewPasswordModal = ({
             <input
               type="password"
               placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full bg-input-field border border-white/[0.03] rounded-lg h-12 px-4 text-md font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/50"
             />
           </div>
@@ -62,7 +78,7 @@ const NewPasswordModal = ({
           <div className="pt-2">
             <button
               type="button"
-              onClick={onSubmit}
+              onClick={isSame}
               className="w-full h-12 bg-primary-container rounded-lg text-black font-headline font-bold uppercase tracking-[0.2em] hover:scale-[1.01] active:scale-95 transition-all"
             >
               Submit

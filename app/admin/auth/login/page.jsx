@@ -30,6 +30,9 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false); // false muna para d mapakita password unless i-click ung button
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [isNewOpen, setIsNewOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -46,15 +49,59 @@ export default function AdminLoginPage() {
 
   const checkEmail = async () => {
     try {
-      const { count } = await supabase
-        .from("Users")
-        .select("*", { count: "exact" })
-        .eq("email", loginForm.email.trim().toLowerCase());
+      setEmail(loginForm.email.trim().toLowerCase());
+      console.log(email);
 
-      if (!count) {
+      const { count, error } = await supabase
+        .from("Users")
+        .select("*", { count: "exact", head: true })
+        .eq("email", email);
+
+      if (error || !count) {
         showToast("Email Not Found", "error");
       } else {
         setIsForgotOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const checkCode = async () => {
+    try {
+      const { count, error } = await supabase
+        .from("Users")
+        .select("*", { count: "exact", head: true })
+        .eq("reset", code)
+        .eq("email", email);
+
+      if (error || !count) {
+        showToast("Invalid Code", "error");
+      } else {
+        setIsNewOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const resetPassword = async () => {
+    try {
+      const { data: user } = await supabase
+        .from("users")
+        .select("auth_id") // whatever column links to auth.users id
+        .eq("email", email)
+        .single();
+
+      const { error } = await supabase.auth.admin.updateUserById(user.auth_id, {
+        password: password,
+      });
+
+      if (!error) {
+        await supabase
+          .from("users")
+          .update({ reset_code: null })
+          .eq("email", email);
       }
     } catch (error) {
       console.log(error);
@@ -296,16 +343,22 @@ export default function AdminLoginPage() {
       <DynamicForgotPasswordModal
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
-        onSubmit={() => {
+        onSubmit={(code) => {
+          console.log(code);
+          setCode(code);
           setIsForgotOpen(false);
-          setIsNewOpen(true);
+          checkCode();
         }}
       />
 
       <DynamicNewPasswordModal
         isOpen={isNewOpen}
         onClose={() => setIsNewOpen(false)}
-        onSubmit={() => setIsNewOpen(false)}
+        onSubmit={(password) => {
+          setPassword(password);
+          setIsNewOpen(false);
+          resetPassword();
+        }}
       />
     </div>
   );
