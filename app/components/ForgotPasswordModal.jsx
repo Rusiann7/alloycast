@@ -7,8 +7,7 @@ const ForgotPasswordModal = ({
   onClose = () => {},
   onSubmit = () => {},
 }) => {
-  const [codeDB, setCodeDB] = useState(null);
-  const [code, setCode] = useState(null);
+  const [code, setCode] = useState("");
 
   if (!isOpen) return null;
 
@@ -46,23 +45,21 @@ const ForgotPasswordModal = ({
           </label>
 
           <div className="flex gap-3 justify-center">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <input
-                key={i}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={1}
-                className="w-14 h-14 text-center text-xl bg-input-field border border-white/[0.03] rounded-lg font-headline font-bold text-white placeholder:text-white/30 outline-none focus:border-primary-container transition-all"
-                aria-label={`code-${i + 1}`}
-              />
-            ))}
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={5}
+              className="w-full h-14 text-center text-xl bg-input-field border border-white/[0.03] rounded-lg font-headline font-bold text-white placeholder:text-white/30 outline-none focus:border-primary-container transition-all tracking-[0.5em]"
+              placeholder="12345"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+            />
           </div>
 
           <div className="pt-2">
             <button
               type="button"
-              onClick={onSubmit}
+              onClick={() => onSubmit(code)}
               className="w-full h-12 bg-primary-container rounded-lg text-black font-headline font-bold uppercase tracking-[0.2em] hover:scale-[1.01] active:scale-95 transition-all"
             >
               Submit

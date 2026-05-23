@@ -54,6 +54,16 @@ export default function RegisterPage() {
     type: "error",
   });
 
+  function getRandomString(n) {
+    const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let randomString = "";
+    for (let i = 0; i < n; i++) {
+      const index = Math.floor(Math.random() * characters.length);
+      randomString += characters[index];
+    }
+    return randomString;
+  }
+
   // Function to show toast (gawa ni AI)
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -154,6 +164,7 @@ export default function RegisterPage() {
           gender: sanitizedData.gender, // store sa Customers Table
           dob: sanitizedData.dob, // store sa Customers Table
           is_admin: false, // matik false para Customers
+          reset: getRandomString(5),
         },
       },
     });
