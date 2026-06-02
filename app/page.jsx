@@ -31,25 +31,25 @@ export default function LandingPage() {
 
   const router = useRouter();
 
-  const loadInventoryProduct = async () => {
-    try {
-      let { data, error } = await supabase
-        .from("Inventory")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setInventory(data || []); // ilagay sa inventory state ung nafetch na product
-      console.log("Product loaded successfully");
-    } catch (error) {
-      showToast("Error loading products from Inventory");
-      console.error(error.message);
-    }
-  };
-
+  // pinaloob ko lng ung loadInventoryProduct function sa loob ng useEffect
   useEffect(() => {
+    const loadInventoryProduct = async () => {
+      try {
+        let { data, error } = await supabase
+          .from("Inventory")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setInventory(data || []); // ilagay sa inventory state ung nafetch na product
+        console.log("Product loaded successfully");
+      } catch (error) {
+        showToast("Error loading products from Inventory");
+        console.error(error.message);
+      }
+    };
     loadInventoryProduct();
-  }, []);
+  }, [supabase]);
 
   return (
     <div className="bg-background font-body text-on-surface min-h-screen">

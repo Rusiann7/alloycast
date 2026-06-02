@@ -1,11 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import Scanner from "./Scanner";
 import Toast from "./Toast";
 
-const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
+const supabase = createClient();
+
+const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
   const [addFormData, setAddFormData] = useState({
     item_name: "",
     item_brand: "",
@@ -25,8 +26,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
     type: "error",
   });
 
-  const supabase = createClient();
-  const router = useRouter();
   const fileInputRef = React.useRef(null); // pang kuha ng image file
   const videoRef = React.useRef(null); // opens camera to capture image of product
   const canvasRef = React.useRef(null); // converts the video to img file
@@ -43,7 +42,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   // closes the camera when X button is clicked
   React.useEffect(() => {
     if (!isOpen) {
-      stopCamera();
+      setTimeout(() => stopCamera(), 0);
     }
     return () => {
       stopCamera();
@@ -111,7 +110,26 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
   const getInputValue = (e) => {
     const { name, value, type, files } = e.target;
     // For file inputs, we need to take files[0], not value
-    const finalValue = type === "file" ? files[0] : value;
+    let finalValue = type === "file" ? files[0] : value;
+
+    // stock validation prevents decimals & negative inputs
+    if (name === "stock" && value !== "") {
+      const stockValue = parseInt(value, 10);
+      if (stockValue < 0) {
+        finalValue = 1; // returns to 1
+      } else {
+        finalValue = stockValue; // removes any decimals
+      }
+    }
+
+    // price validation allows decimals and prevents negative inputs
+    if (name === "price" && value !== "") {
+      const priceValue = parseFloat(value);
+      if (priceValue < 0) {
+        finalValue = Math.abs(priceValue);
+      }
+    }
+
     setAddFormData((prevAddFormData) => ({
       ...prevAddFormData,
       [name]: finalValue,
@@ -165,7 +183,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
     //upload muna ung image sa Supabase Storage
     if (addFormData.item_image) {
       const file = addFormData.item_image; // mula sa addFormData state
-      const fileExt = file.name.split(".").pop(); // pang extract ng file extension
 
       // image input sanitization
       const sanitizeImage = (file) => {
@@ -192,10 +209,9 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
         try {
           const safeFileName = sanitizeImage(file);
           const filePath = `${Date.now()}_${safeFileName}`;
-          const { data: uploadData, error: uploadError } =
-            await supabase.storage //insert sa Supabase Storage Bucket
-              .from("Inventory") // Inventory Table
-              .upload(filePath, file); // img
+          const { error: uploadError } = await supabase.storage //insert sa Supabase Storage Bucket
+            .from("Inventory") // Inventory Table
+            .upload(filePath, file); // img
 
           if (uploadError) {
             showToast("Error uploading image: " + uploadError.message);
@@ -218,13 +234,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
 
     const sanitizedInput = {
       item_name: sanitizeInput(addFormData.item_name),
-      brand: addFormData.item_brand, // These come from <select>, so they are safer
-      category: addFormData.category,
+      brand: sanitizeInput(addFormData.item_brand), // These come from <select>, so they are safer
+      category: sanitizeInput(addFormData.category),
       price: Math.abs(parseFloat(addFormData.price)) || 0, // Ensure price is positive
       stock: Math.abs(parseInt(addFormData.stock)) || 0, // Ensure stock is positive
     };
 
-    const { data, error } = await supabase.from("Inventory").insert([
+    const { error } = await supabase.from("Inventory").insert([
       //upload ung inventory sa Inventory Table
       {
         item_name: sanitizedInput.item_name,
@@ -238,7 +254,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
     ]);
 
     if (error) {
-      alert("SUPABASE ERROR:", error.message);
       showToast("Error adding product to Inventory");
     } else {
       showToast("Product Added!", "success");
@@ -320,7 +335,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
               value={addFormData.item_name}
               required
               placeholder="e.g. Ferrari F40"
-              className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+              className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/60"
               onChange={getInputValue}
             />
           </div>
@@ -341,7 +356,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 onChange={getInputValue}
               >
                 <option value="" disabled hidden>
-                  Brand
+                  Select a Brand
                 </option>
                 <option value="Hot Wheels">Hot Wheels</option>
                 <option value="Tomica">Tomica</option>
@@ -371,7 +386,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 onChange={getInputValue}
               >
                 <option value="" disabled hidden>
-                  Series
+                  Select a Series
                 </option>
                 <option value="Mainline">Mainline Series</option>
                 <option value="Special">Special Series</option>
@@ -391,8 +406,9 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
               <input
                 name="price"
                 type="number"
-                value={addFormData.price}
+                min="0"
                 step="0.01"
+                value={addFormData.price}
                 required
                 placeholder="0.00"
                 className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/70"
@@ -406,6 +422,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
               <input
                 name="stock"
                 type="number"
+                min="0"
+                step="1"
                 required
                 placeholder="0"
                 className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest outline-none focus:border-primary-container transition-all text-white placeholder:text-white/70"
@@ -444,6 +462,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, inventory }) => {
                 onChange={getInputValue}
               />
               {preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={preview}
                   alt="Preview"

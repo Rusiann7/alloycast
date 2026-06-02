@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
+const supabase = createClient();
 export default function FeedbackPage() {
   const [feedbacks, setFeedback] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [id, setId] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({
     visible: false,
@@ -18,36 +16,33 @@ export default function FeedbackPage() {
     type: "error",
   });
 
-  const supabase = createClient();
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
 
   const itemsPerPage = 5;
   const totalFeedback = feedbacks.length;
 
   useEffect(() => {
+    const getFeedback = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("Feedback")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        setFeedback(data || []);
+
+        console.log("Feedback Reloaded!");
+      } catch (error) {
+        showToast("Error loading feedbacks.", "error");
+      }
+    };
     getFeedback();
   }, []);
-
-  const getFeedback = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("Feedback")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setFeedback(data || []);
-
-      console.log("Gud");
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const showToast = (message, type = "error") => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
-  };
 
   return (
     <div className="bg-background text-font-color min-h-screen font-body relative overflow-hidden select-none">

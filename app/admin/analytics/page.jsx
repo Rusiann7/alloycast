@@ -18,7 +18,6 @@ const DynamicToast = dynamic(() => import("../../components/Toast"));
 
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
-  const [criticalStock, setCriticalStock] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [topProducts, setTopProducts] = useState([]);
