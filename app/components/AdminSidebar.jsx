@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -19,14 +19,45 @@ const DynamicSessionModal = dynamic(() => import("./SessionModal"), {
   ssr: false,
 });
 
-export default function AdminSidebar() {
+const SidebarLink = ({
+  icon,
+  label,
+  href,
+  linkName,
+  isCollapsed,
+  isMobileOpen,
+}) => {
+  const clickedLink = linkName === href;
+  const showLabel = !isCollapsed || isMobileOpen;
+
+  return (
+    <Link
+      title={isCollapsed ? label : undefined}
+      className={`flex items-center rounded-lg px-4 py-3 mx-2 transition-all group 
+      ${!showLabel ? "justify-center" : "space-x-3"} 
+      ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105 hover:opacity-90"}`}
+      href={href || "#"}
+    >
+      <span className="material-symbols-outlined">{icon}</span>
+
+      {showLabel && (
+        <span className="font-headline uppercase text-xs font-black tracking-[0.2em]">
+          {label}
+        </span>
+      )}
+    </Link>
+  );
+};
   const supabase = createClient(); // para sa logout
+export default function AdminSidebar() {
+  const linkName = usePathname(); // pangkuha ng current link path para lagyan ng style
+  // itatago nito ung navbar sa register at login page ng admin
+  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
+  if (hideNavbarOn.includes(linkName)) return null;
+
   const route = useRouter(); // para sa pang redirect sa admin/auth/login
-  const [activeSidebar, setActiveSidebar] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [inventory, setInventory] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -36,106 +67,62 @@ export default function AdminSidebar() {
     type: "error",
   });
 
-  // for mobile sidebar
+  // merged for collpasing sidebar responsive
   useEffect(() => {
-    const isMobile = window.innerWidth < 1024;
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024;
+      if(isMobile){
+        document.documentElement.style.setProperty("--sidebar-width", "0rem");
+      } else {
+        document.documentElement.style.setProperty("--sidebar-width", isCollapsed ? "5rem": "16rem");
+      }
+    };
 
-    if (isMobile) {
-      document.documentElement.style.setProperty("--sidebar-width", "0rem");
-    } else {
-      const width = isCollapsed ? "5rem" : "16rem";
-      document.documentElement.style.setProperty("--sidebar-width", width);
-    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return() => window.removeEventListener("resize", handleResize)
   }, [isCollapsed]);
-
-  // for collpasing sidebar in larger screens
-  useEffect(() => {
-    const width = isCollapsed ? "5rem" : "16rem"; // w‑64
-    document.documentElement.style.setProperty("--sidebar-width", width);
-  }, [isCollapsed]);
+  
 
   // display admin firstname after every reload
   useEffect(() => {
+    let isMounted = true;
+    // get firstname from auth and Admin table
+    const getAdminName = async () => {
+      try {
+        const {
+          data: { user }, error: authError
+        } = await supabase.auth.getUser();
+        
+        if(authError || !user) return;
+
+        const { data, error: dbError} = await supabase
+          .from("Admin")
+          .select("firstname")
+          .eq("user_id", user.id)
+          .single();
+
+          if(dbError) throw Error;
+        // Only update state if the component is still mounted
+        if(isMounted && data){
+          setAdminName(data.firstname || "Shop");
+        }
+      } catch (error) {
+        console.log("Error fetching admin first name:", error.message);
+      }
+    };
     getAdminName();
-  }, []);
-
-  // get firstname from auth and Admin table
-  const getAdminName = async (userId) => {
-    try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      const { data, error } = await supabase
-        .from("Admin")
-        .select("firstname")
-        .eq("user_id", user.id)
-        .single();
-
-      setAdminName(data.firstname || "Admin");
-      console.log("Admin Firstname: ", data.firstname);
-    } catch (error) {
-      console.log(error.message);
+    // cleanup function to prevent memory leaks when unmounting
+    return () => {
+      isMounted = false;
     }
-  };
-
-  useEffect(() => {
-    fetchInventoryProduct();
   }, []);
-
-  // kunin mga product sa loob ng Inventory Table
-  const fetchInventoryProduct = async () => {
-    try {
-      let { data, error } = await supabase
-        .from("Inventory")
-        .select("*")
-        .order("created_at");
-
-      if (error) throw error;
-      setInventory(data || []); // ilagay sa inventory state ung nafetch na product
-      console.log("Product Fetched successfully");
-    } catch (error) {
-      showToast("Error fetching products from Inventory");
-      console.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
-  const linkName = usePathname(); // pangkuha ng current link path para lagyan ng style
-
-  // itatago nito ung navbar sa register at login page ng admin
-  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
-  if (hideNavbarOn.includes(linkName)) return null;
-  console.log("Current Link:", linkName);
-
-  const SidebarLink = ({ icon, label, href }) => {
-    const clickedLink = linkName === href;
-    const showLabel = !isCollapsed || isMobileOpen;
-
-    return (
-      <Link
-        className={`flex items-center rounded-lg px-4 py-3 mx-2 transition-all group 
-      ${!showLabel ? "justify-center" : "space-x-3"} 
-      ${clickedLink ? "text-white bg-secondary-container drop-shadow-lg/30" : "text-input-field opacity-60 hover:scale-105 hover:opacity-90"}`}
-        href={href || "#"}
-      >
-        <span className="material-symbols-outlined">{icon}</span>
-
-        {showLabel && (
-          <span className="font-headline uppercase text-xs font-black tracking-[0.2em]">
-            {label}
-          </span>
-        )}
-      </Link>
-    );
-  };
   const showLogoutModal = async () => {
     setShowSessionModal(true);
   };
@@ -207,41 +194,69 @@ export default function AdminSidebar() {
             icon="grid_view"
             label="DASHBOARD"
             href="/admin/dashboard"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
           <SidebarLink
             icon="analytics"
             label="ANALYTICS"
             href="/admin/analytics"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
           <SidebarLink
             icon="inventory_2"
             label="INVENTORY"
             href="/admin/inventory"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
           <SidebarLink
             icon="calendar_today"
             label="RESERVATIONS"
             href="/admin/reservations"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
 
           <SidebarLink
             icon="point_of_sale"
             label="POINT OF SALES"
             href="/admin/store"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
 
-          <SidebarLink icon="reviews" label="REVIEWS" href="/admin/reviews" />
+          <SidebarLink
+            icon="reviews"
+            label="REVIEWS"
+            href="/admin/reviews"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+          />
 
           <SidebarLink
             icon="feedback"
             label="FEEDBACK"
             href="/admin/feedbacks"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
 
           <SidebarLink
             icon="people"
-            label="Customers"
+            label="CUSTOMER"
             href="/admin/customers"
+            linkName={linkName}
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
           />
         </nav>
 
@@ -272,11 +287,11 @@ export default function AdminSidebar() {
           <div className="pt-4 border-t border-surface-container-highest">
             <button
               onClick={showLogoutModal}
-              className="w-full flex items-center space-x-3 rounded-lg border border-secondary-container text-input-field px-4 py-2 hover:bg-secondary-container hover:text-white/90  hover:scale-105 transition-all"
+              className="w-full flex items-center space-x-3 rounded-lg border border-secondary-container text-black/90 px-4 py-2 hover:bg-secondary-container hover:text-white/90  hover:scale-105 transition-all"
             >
               <span className="material-symbols-outlined">logout</span>
               {!isCollapsed && (
-                <span className="font-headline uppercase text-sm font-bold tracking-widest">
+                <span className="font-headline uppercase text-sm text-black/90 font-bold tracking-widest">
                   Logout
                 </span>
               )}
@@ -298,7 +313,6 @@ export default function AdminSidebar() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         showToast={showToast}
-        onSuccess={fetchInventoryProduct}
       />
     </>
   );

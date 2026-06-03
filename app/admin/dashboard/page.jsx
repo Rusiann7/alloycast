@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
@@ -33,6 +33,36 @@ const DynamicToast = dynamic(() => import("../../components/Toast"), {
   ssr: false,
 });
 
+const supabase = createClient();
+
+  const getDateBounds = (dateRange) => {
+    // 1. Calculate Date Bounds
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
+
+    switch (dateRange) {
+      case "Last 7 Days":
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case "This Month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "Last Month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        break;
+      case "Annual":
+        // Use the calendar year for Annual: Jan 1 -> Dec 31 of current year
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+        break;
+      default:
+        startDate.setDate(now.getDate() - 30);
+    };
+    return {startDate, endDate}
+  }
+
 export default function AdminDashboard() {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -62,51 +92,24 @@ export default function AdminDashboard() {
     type: "success",
   });
 
+  const [isLoading, setIsLoading] = useState(true)
   // Revenue Graph States
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
 
-  const supabase = createClient();
-
   const router = useRouter();
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
+    // Uses structural update callbacks to clear exactly what is in memory
+    setTimeout((currentToastState) => setToast({ ...currentToastState, visible: false }), 4000);
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-    fetchAllAnalytics();
-  }, [dateRange]);
 
-  const fetchAllAnalytics = async () => {
-    // 1. Calculate Date Bounds
-    const now = new Date();
-    let startDate = new Date();
-    let endDate = new Date();
-
-    switch (dateRange) {
-      case "Last 7 Days":
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case "This Month":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case "Last Month":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-        break;
-      case "Annual":
-        // Use the calendar year for Annual: Jan 1 -> Dec 31 of current year
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-        break;
-      default:
-        startDate.setDate(now.getDate() - 30);
-    }
-
+  const fetchAllAnalytics = useCallback(async () => {
+    const {startDate, endDate} = getDateBounds(dateRange);
+  
     // Fetch POS data (actual sales) to compute Total Revenue and chart
     const { data: posData, error: posError } = await supabase
       .from("POS")
@@ -121,6 +124,7 @@ export default function AdminDashboard() {
 
     // Process POS revenue
     let sumRev = 0;
+    const now = new Date();
 
     if (dateRange === "Annual") {
       const monthlyRevenue = {};
@@ -193,74 +197,57 @@ export default function AdminDashboard() {
       .sort((a, b) => b.units - a.units);
 
     setTopProducts(sortedProducts.slice(0, 5));
-  };
+  }, [dateRange, supabase]);
 
-  const fetchDashboardData = async () => {
-    try {
-      // 1. Fetch Reservations
-      const { data: resData } = await supabase
-        .from("Reservation")
-        .select("status");
+  const fetchDashboardData = useCallback(async () => {
+    try{
+      setIsLoading(true);
+      // fetch Reservation, Users, Inventory and joining them
+      const {data: activityData, error: resError} = await supabase.from("Reservation").select("*, Users(email), Inventory(*)").order("created_at", {ascending: false});
 
-      const { data: invData } = await supabase
-        .from("Inventory")
-        .select("item_name, item_image, brand, stock, reorder_point");
-      setData({
-        totalReservations: resData?.length || 0,
-        pendingReservations:
-          resData?.filter((r) => r.status === "Pending").length || 0,
-        criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
-        loading: false,
-      });
+      // fetch inventory
+      const {data: invData} = await supabase.from("Inventory").select("item_name, item_image, brand, stock, reorder_point");
 
-      const criticalItems = invData?.filter((i) => i.stock <= 5) || [];
-      setLowStockProducts(criticalItems);
+      // fetch new added product from Inventory
+      const {data: arrivalsData} = await supabase.from("Inventory").select("id, item_name, price, item_image").order("created_at", {ascending: false}).limit(4)
 
-      // activity ledger recent reservations
-      const { data: ActivityData } = await supabase
-        .from("Reservation")
-        .select("id, created_at, status, Inventory(item_name, item_image)")
-        .order("created_at", { ascending: false })
-        .limit(5);
+      // fetch customer details
+      const {data: customerData} = await supabase.from("Customer").select("user_id, firstname, lastname");
 
-      // new added products from inventory
-      const { data: arrivalsData } = await supabase
-        .from("Inventory")
-        .select("id, item_name, price, item_image")
-        .order("created_at", { ascending: false })
-        .limit(4);
+      if(activityData && customerData){
+        setData({
+          totalReservations: activityData.length,
+          pendingReservations: activityData.filter((r) => r.status === "Pending").length,
+          criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
+        });
 
-      setRecentActivities(ActivityData || []);
-      setNewArrivals(arrivalsData || []);
+        const criticalItems = invData?.filter((i) => i.stock <= 5) || [];
+        setLowStockProducts(criticalItems);
+        setNewArrivals(arrivalsData || [])
 
-      // fetch recent reservations with customer data to display in acitivity ledger modal
-      const { data: activityData } = await supabase
-        .from("Reservation")
-        .select("*, Users(email), Inventory(item_name, item_image, brand)")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      const { data: customerData } = await supabase
-        .from("Customer")
-        .select("user_id, firstname, lastname");
-      if (activityData && customerData) {
-        const merged = activityData.map((res) => {
+        const merged = activityData.slice(0, 5).map((res) => {
           const customer = customerData.find((c) => c.user_id === res.user_id);
           return {
             ...res,
-            customer_name: customer
-              ? `${customer.firstname} ${customer.lastname}`
-              : "Unknown Customer",
+            customer_name: customer ? `${customer.firstname} ${customer.lastname}` : "Details Not Provided",
             customer_email: res.Users?.email,
-          };
-        });
-        setRecentActivities(merged);
+          }
+        })
+        setRecentActivities(merged)
       }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
     }
-  };
+     catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setIsLoading(false)
+    }
+  }, [supabase]);
 
+
+    useEffect(() => {
+    fetchDashboardData();
+    fetchAllAnalytics();
+  }, [fetchAllAnalytics, fetchDashboardData]);
   const exportToExcel = async () => {
     try {
       const workbook = XLSX.utils.book_new();
@@ -911,11 +898,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <DynamicCriticalStockModal
-        isOpen={isStockModalOpen}
-        onClose={() => setIsStockModalOpen(false)}
-        items={lowStockProducts}
-      />
+
 
       {isDetailsModalOpen && activeReservation && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
@@ -1019,7 +1002,7 @@ export default function AdminDashboard() {
                     activeReservation.status === "Approved"
                       ? "text-green-500 border-green-500/20 bg-green-500/5"
                       : activeReservation.status === "Pending"
-                        ? "text-font-color border-primary-container/20 bg-primary-container"
+                        ? "text-black/90 border-primary-container/20 bg-primary-container"
                         : activeReservation.status === "Cancelled"
                           ? "bg-on-primary  border-white/10 "
                           : "text-red-500 border-red-500/20 bg-red-500/5"
@@ -1059,20 +1042,34 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <DynamicToast
-        message={toast.message}
-        type={toast.type}
-        visible={toast.visible}
-      />
+  {/* lazy load components */}
 
-      <DynamicOrderStatusConfirmationModal
-        isOpen={confirmModal.isOpen}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        status={confirmModal.newStatus}
-        customerName={confirmModal.customerName}
-        productName={confirmModal.productName}
+  {isStockModalOpen && (
+      <DynamicCriticalStockModal
+        isOpen={isStockModalOpen}
+        onClose={() => setIsStockModalOpen(false)}
+        items={lowStockProducts}
       />
+  )}
+
+  {toast.visible && (
+   <DynamicToast
+    message={toast.message}
+    type={toast.type}
+    visible={toast.visible}
+    />
+  )}
+
+  {confirmModal.isOpen && (
+    <DynamicOrderStatusConfirmationModal
+    isOpen={confirmModal.isOpen}
+    onConfirm={handleConfirm}
+    onCancel={handleCancel}
+    status={confirmModal.newStatus}
+    customerName={confirmModal.customerName}
+    productName={confirmModal.productName}
+    />
+  )}
     </div>
   );
 }

@@ -37,6 +37,23 @@ export default function StorePage() {
   const transaction = posDB.length;
 
   useEffect(() => {
+    const fetchInventoryProduct = async () => {
+      try {
+        let { data, error } = await supabase
+          .from("Inventory")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setInventory(data || []);
+        console.log("Product Fetched successfully");
+      } catch (error) {
+        showToast("Error fetching products from Inventory");
+        console.error(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchInventoryProduct();
   }, []);
 
@@ -68,58 +85,41 @@ export default function StorePage() {
 
   const totalProducts = searchedInventory.length;
 
-  const fetchInventoryProduct = async () => {
-    try {
-      let { data, error } = await supabase
-        .from("Inventory")
-        .select("*")
-        .order("created_at", { ascending: false });
+  useEffect(() => {
+    const fetchPOSData = async (dateRange) => {
+      try {
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
 
-      if (error) throw error;
-      setInventory(data || []);
-      console.log("Product Fetched successfully");
-    } catch (error) {
-      showToast("Error fetching products from Inventory");
-      console.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPOSData = async (dateRange) => {
-    try {
-      const now = new Date();
-      let startDate = new Date();
-      let endDate = new Date();
-
-      switch (dateRange) {
-        case "Today":
-          startDate.setHours(0, 0, 0, 0);
-          break;
-        case "Yesterday":
-          startDate.setDate(now.getDate() - 1);
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(startDate);
-          endDate.setHours(23, 59, 59, 999);
-          break;
-        case "This Week":
-          startDate.setDate(now.getDate() - 7);
-          break;
-        case "This Month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case "Annual":
-          // Set start to Jan 1 of the current year
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date();
-          break;
-        default:
-          startDate.setDate(now.getDate() - 30);
-      }
-      const { data, error } = await supabase
-        .from("POS")
-        .select(
-          `
+        switch (dateRange) {
+          case "Today":
+            startDate.setHours(0, 0, 0, 0);
+            break;
+          case "Yesterday":
+            startDate.setDate(now.getDate() - 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(startDate);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+          case "This Week":
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case "This Month":
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case "Annual":
+            // Set start to Jan 1 of the current year
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date();
+            break;
+          default:
+            startDate.setDate(now.getDate() - 30);
+        }
+        const { data, error } = await supabase
+          .from("POS")
+          .select(
+            `
           id,
           product_id,
           quantity,
@@ -133,19 +133,17 @@ export default function StorePage() {
           item_image,
           price,
           category)`,
-        )
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
-        .order("created_at", { ascending: false });
+          )
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString())
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setPos(data || []);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
+        if (error) throw error;
+        setPos(data || []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchPOSData("Annual");
   }, []);
 

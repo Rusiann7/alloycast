@@ -13,6 +13,8 @@ const DynamicOrderStatusConfirmationModal = dynamic(
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
+const supabase = createClient();
+
 export default function AdminReservations() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -36,8 +38,6 @@ export default function AdminReservations() {
     customerName: null,
     productName: null,
   });
-
-  const supabase = createClient();
 
   const itemsPerPage = 5;
 
@@ -269,88 +269,89 @@ export default function AdminReservations() {
     }
   };
 
-  const reservationDataDB = async (dateRange) => {
-    try {
-      const now = new Date();
-      let startDate = new Date();
-      let endDate = new Date();
-
-      switch (dateRange) {
-        case "Today":
-          startDate.setHours(0, 0, 0, 0);
-          break;
-        case "Yesterday":
-          startDate.setDate(now.getDate() - 1);
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(startDate);
-          endDate.setHours(23, 59, 59, 999);
-          break;
-        case "This Week":
-          startDate.setDate(now.getDate() - 7);
-          break;
-        case "This Month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case "All Time":
-          startDate = new Date(0); // Year 1970
-          endDate = new Date();
-          break;
-        default:
-          startDate.setDate(now.getDate() - 30);
-      }
-      const { data: reservationData, error: reservationError } = await supabase
-        .from("Reservation")
-        .select("*, Users(id, email), Inventory(item_name, item_image, brand)")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      const { data: customerData, error: customerError } = await supabase
-        .from("Customer")
-        .select("user_id, firstname, lastname");
-
-      if (reservationData && customerData) {
-        const mergedTables = reservationData.map((reservation) => {
-          const matchCustomer = customerData.find(
-            (customer) => customer.user_id === reservation.user_id,
-          );
-
-          return {
-            id: reservation.id,
-            customer: matchCustomer
-              ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
-              : "Unknown Customer",
-            customer_email: reservation.Users?.email,
-            item_name: reservation.Inventory?.item_name,
-            brand: reservation.Inventory?.brand || "Unkownd Brand",
-            qty: (reservation.quantity || 0).toString().padStart(2, "0"),
-            date: new Date(reservation.created_at).toLocaleDateString(),
-            status: reservation.status || "Pending",
-            statusColor:
-              reservation.status === "Approved"
-                ? "bg-green-700 text-white/90 border-green-500/20"
-                : reservation.status === "Declined" ||
-                    reservation.status === "Cancelled"
-                  ? "bg-red-400/50 text-red-300 border-red-500/20"
-                  : "bg-primary-container text-secondary-container border-white/10",
-            statusDot:
-              reservation.status === "Approved"
-                ? "bg-green-500"
-                : reservation.status === "Declined" ||
-                    reservation.status === "Cancelled"
-                  ? "bg-red-500"
-                  : "bg-secondary-container",
-
-            img: reservation.Inventory?.item_image || "/logo.jpg",
-          };
-        });
-        setReservationDB(mergedTables);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
+    const reservationDataDB = async (dateRange) => {
+      try {
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
+
+        switch (dateRange) {
+          case "Today":
+            startDate.setHours(0, 0, 0, 0);
+            break;
+          case "Yesterday":
+            startDate.setDate(now.getDate() - 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(startDate);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+          case "This Week":
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case "This Month":
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case "All Time":
+            startDate = new Date(0); // Year 1970
+            endDate = new Date();
+            break;
+          default:
+            startDate.setDate(now.getDate() - 30);
+        }
+        const { data: reservationData } = await supabase
+          .from("Reservation")
+          .select(
+            "*, Users(id, email), Inventory(item_name, item_image, brand)",
+          )
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+
+        const { data: customerData } = await supabase
+          .from("Customer")
+          .select("user_id, firstname, lastname");
+
+        if (reservationData && customerData) {
+          const mergedTables = reservationData.map((reservation) => {
+            const matchCustomer = customerData.find(
+              (customer) => customer.user_id === reservation.user_id,
+            );
+
+            return {
+              id: reservation.id,
+              customer: matchCustomer
+                ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
+                : "Unknown Customer",
+              customer_email: reservation.Users?.email,
+              item_name: reservation.Inventory?.item_name,
+              brand: reservation.Inventory?.brand || "Unkownd Brand",
+              qty: (reservation.quantity || 0).toString().padStart(2, "0"),
+              date: new Date(reservation.created_at).toLocaleDateString(),
+              status: reservation.status || "Pending",
+              statusColor:
+                reservation.status === "Approved"
+                  ? "bg-green-700 text-white/90 border-green-500/20"
+                  : reservation.status === "Declined" ||
+                      reservation.status === "Cancelled"
+                    ? "bg-red-400/50 text-red-300 border-red-500/20"
+                    : "bg-primary-container text-secondary-container border-white/10",
+              statusDot:
+                reservation.status === "Approved"
+                  ? "bg-green-500"
+                  : reservation.status === "Declined" ||
+                      reservation.status === "Cancelled"
+                    ? "bg-red-500"
+                    : "bg-secondary-container",
+
+              img: reservation.Inventory?.item_image || "/logo.jpg",
+            };
+          });
+          setReservationDB(mergedTables);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
     reservationDataDB(dateRange);
   }, [dateRange]);
 
@@ -658,7 +659,6 @@ export default function AdminReservations() {
                     key={label}
                     onClick={() => {
                       setDateRange(label);
-                      reservationDataDB(label);
                     }}
                     className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
                       dateRange === label
