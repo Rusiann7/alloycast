@@ -255,7 +255,7 @@ export default function AdminAnalytics() {
     };
 
     fetchAllAnalytics();
-  }, [dateRange]);
+  }, [dateRange, BRAND_COLORS, showToast, supabase]);
 
   const ExportTotalAnnualRevenue = async () => {
     try {
