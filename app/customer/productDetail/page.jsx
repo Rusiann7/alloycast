@@ -53,6 +53,9 @@ function ProductDetail() {
 
   const commentCount = commentDB.length;
 
+  const averageRating =
+    commentDB.reduce((sum, item) => sum + item.rating, 0) / commentDB.length;
+
   // for querying selected product from Inventory Table
   useEffect(() => {
     if (productId) {
@@ -143,7 +146,6 @@ function ProductDetail() {
 
       if (error) throw error;
       setCommentDB(data || []);
-      console.log(data);
     } catch (error) {
       console.log(error);
     }
@@ -189,7 +191,6 @@ function ProductDetail() {
       } else {
         setSubmitBtn(false);
         const userComment = commentDB.find((item) => item.user_id === user.id);
-        console.log(userComment?.comment, userComment?.rating);
         setComment(userComment?.comment);
         setRating(userComment?.rating);
       }
@@ -384,10 +385,6 @@ function ProductDetail() {
     );
   }
 
-  if (!submitBtn) {
-    console.log("Fuck you");
-  }
-
   return (
     <div className="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white min-h-screen">
       <DynamicToast
@@ -437,6 +434,7 @@ function ProductDetail() {
                   <p className="text-on-surface-variant font-headline font-black tracking-[0.2em] text-lg uppercase flex items-center gap-4 italic">
                     {product.brand} OFFICIAL SERIES
                   </p>
+                  <span>Star ({averageRating})</span>
                 </div>
               </div>
               {/* Allocation Telemetry */}
@@ -587,7 +585,7 @@ function ProductDetail() {
                     className="w-full h-full bg-input-field border border-white/5 rounded-lg drop-shadow-lg/30 p-4 font-body text-white placeholder:text-white/70 focus:outline-none focus:border-primary-container/50 transition-all min-h-[150px] resize-none carbon-noise shadow-inner"
                   />
                   <div className="flex gap-2 justify-end">
-                    {!submitBtn && (
+                    {!submitBtn ? (
                       <button
                         className="flex items-center gap-2 bg-secondary-container text-white/90 text-sm px-4 py-3 rounded-lg drop-shadow-lg/50 font-bold uppercase hover:scale-105 active:scale-[0.98] transition-all"
                         onClick={() => {
@@ -598,17 +596,18 @@ function ProductDetail() {
                         <span className="material-symbols-outlined">edit</span>
                         Edit Comment
                       </button>
+                    ) : (
+                      <button
+                        className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-[0.98]"
+                        onClick={() =>
+                          !submitBtn
+                            ? updateComment(rating, comment)
+                            : insertComment(rating, comment)
+                        }
+                      >
+                        Submit Review
+                      </button>
                     )}
-                    <button
-                      className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-[0.98]"
-                      onClick={() =>
-                        !submitBtn
-                          ? updateComment(rating, comment)
-                          : insertComment(rating, comment)
-                      }
-                    >
-                      Submit Review
-                    </button>
                   </div>
                 </div>
               ) : (
