@@ -22,7 +22,7 @@ import {
   computeTopProducts,
   mergeCustomerDetails,
 } from "../../../helpers/dashboardHelpers";
-import { exportToExcelFile } from "../../../utils/exportExcel";
+import { exportToExcelFile } from "../../../utils/exportExcelAdminDashboard";
 
 const DynamicCriticalStockModal = dynamic(
   () => import("../../components/CriticalStockModal"),

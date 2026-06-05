@@ -5,20 +5,27 @@ import * as XLSX from "xlsx";
  * Generates and downloads a multi-sheet spreadsheet.
  */
 export const exportToExcelFile = ({
+  // exports the core processor wrapper
   dateRange,
   posData,
   reservations,
   arrivals,
   showToast,
 }) => {
-  const workbook = XLSX.utils.book_new();
+  const workbook = XLSX.utils.book_new(); // instantiates a blank spreadsheet workbook instance structure in internal system memory
 
   // --- SHEET 1: REVENUE SUMMARY ---
-  let revenueExport = [];
-  let grandTotal = 0;
+  let revenueExport = []; // empty tracker array for revenue
+  let grandTotal = 0; // zero-indexed tracking accumulator(iteration)
 
   if (dateRange === "Annual") {
-    const monthly = Array(12).fill(0);
+    const monthly = Array(12).fill(0); // creates a blank array with 12 slots for each month starting 0 = January
+    // Iterates over every POS entry returned from Supabase.
+    // If the nested product card price exists,
+    // it calculates transaction revenue,
+    // reads the numerical month index (0-11),
+    // adds the revenue to that month's slot,
+    //  and updates the grandTotal
     posData.forEach((p) => {
       if (p.Inventory?.price) {
         const rev = p.quantity * p.Inventory.price;
@@ -28,6 +35,7 @@ export const exportToExcelFile = ({
       }
     });
 
+    // Defines an explicit text matrix for calendar months,
     const monthNames = [
       "January",
       "February",
@@ -42,12 +50,17 @@ export const exportToExcelFile = ({
       "November",
       "December",
     ];
-
+    // maps over it to produce clean,
+    // formatted row rows linking the month name to its total revenue.
     revenueExport = monthNames.map((mn, i) => ({
       Month: mn,
       "Total Revenue (PHP)": Number(monthly[i].toFixed(2)),
     }));
   } else {
+    // For shorter ranges, it sets up an object map.
+    // It splits the ISO date text to isolate the calendar date string (YYYY-MM-DD),
+    //  initializes or increments that specific date bucket with the calculated sale item revenue,
+    //  and adds to the total.
     const daily = {};
     posData.forEach((p) => {
       if (p.Inventory?.price) {
@@ -57,6 +70,9 @@ export const exportToExcelFile = ({
         grandTotal += rev;
       }
     });
+
+    // Converts the unique object map keys into a sorted sequential calendar timeline array,
+    // mapping each date into a clean spreadsheet data row.
     revenueExport = Object.keys(daily)
       .sort((a, b) => new Date(a) - new Date(b))
       .map((dateStr) => ({
@@ -65,6 +81,9 @@ export const exportToExcelFile = ({
       }));
   }
 
+  // Injects a final summary footer row onto the bottom of the data table,
+  // converts the raw JSON array into a standard binary spreadsheet grid,
+  // and attaches it as the first worksheet tab.
   revenueExport.push({
     Total: "Grand Total",
     "Total Revenue (PHP)": Number(grandTotal.toFixed(2)),
@@ -73,6 +92,9 @@ export const exportToExcelFile = ({
   XLSX.utils.book_append_sheet(workbook, revSheet, `${dateRange} Revenue`);
 
   // --- SHEET 2: TOP PRODUCTS ---
+  // Starts processing Sheet 2 (Top Products).
+  // It iterates through the dataset to tally total unit counts for each model variant name,
+  // tracking the global aggregate volume.
   const productAgg = {};
   let totalUnits = 0;
   posData.forEach((p) => {
@@ -81,6 +103,9 @@ export const exportToExcelFile = ({
     totalUnits += p.quantity;
   });
 
+  // Maps the volume data into an export layout that calculates relative percentage market share,
+  // sorts from highest units sold to lowest,
+  // and logs it as the second tab in the workbook.
   const topProductsExport = Object.keys(productAgg)
     .map((name) => ({
       "Product Name": name,
@@ -95,7 +120,10 @@ export const exportToExcelFile = ({
   const topSheet = XLSX.utils.json_to_sheet(topProductsExport);
   XLSX.utils.book_append_sheet(workbook, topSheet, `${dateRange} Top Products`);
 
-  // --- SHEET 3: ACTIVITY LEDGER ---
+  // --- SHEET 3: ACTIVITY LEDGER RESERVATIONS---
+  // Starts processing Sheet 3 (Activity Ledger Reservations).
+  // It maps raw historical reservations arrays into structured spreadsheet rows with
+  // separate date, time, and uppercase alphanumeric business lookup reference codes.
   const activityExport = (reservations || []).map((r) => ({
     Date: new Date(r.created_at).toLocaleDateString(),
     Time: new Date(r.created_at).toLocaleTimeString(),
@@ -114,6 +142,9 @@ export const exportToExcelFile = ({
   );
 
   // --- SHEET 4: NEW INVENTORY ---
+  // Starts processing Sheet 4 (New Inventory).
+  // It builds a data sheet showing items introduced to the database during the selected time period,
+  // along with their pricing metrics.
   const inventoryExport = (arrivals || []).map((i) => ({
     "Item Name": i.item_name,
     Price: Number(i.price).toFixed(2),
@@ -128,10 +159,13 @@ export const exportToExcelFile = ({
   );
 
   // --- GENERATE FILE ---
+  // Generates a clean filename using the current date and selected date range,
+  // compiles the binary file download directly inside the browser client context,
+  // and triggers your decoupled success notification.
   const timestamp = new Date().toISOString().split("T")[0];
   XLSX.writeFile(
     workbook,
-    `Alloycast_Dashboard_${dateRange.replace(/\s+/g, "_")}_Report_${timestamp}.xlsx`,
+    `AlloyDash_Dashboard_${dateRange.replace(/\s+/g, "_")}_Report_${timestamp}.xlsx`,
   );
   showToast("Multi-sheet business report exported!", "success");
 };

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import {
   AreaChart,
@@ -13,8 +13,28 @@ import {
   Cell,
 } from "recharts";
 import dynamic from "next/dynamic";
+import { getDateBounds } from "../../../utils/dateBounds";
+import {
+  calculateChannelRevenues,
+  aggregateRevenueChartData,
+  computeProductStats,
+  aggregateBrandMarketShare,
+  aggregatePipelineCounts,
+} from "../../../helpers/analyticsHelpers";
+import { exportAnnualRevenueToCSV } from "../../../helpers/exportCSVAdminAnalytics";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
+
+const supabase = createClient();
+
+// for market share by brands
+const BRAND_COLORS = [
+  "#10B981", // Green/Emerald (Graph Segment)
+  "#3B82F6", // Blue
+  "#A78BFA", // Violet
+  "#F472B6", // Pink
+  "#06B6D4", // Cyan
+];
 
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState("Last 30 Days");
@@ -38,51 +58,19 @@ export default function AdminAnalytics() {
     Cancelled: 0,
   });
 
-  const showToast = (message, type = "error") => {
+  const showToast = useCallback((message, type = "error") => {
     setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ ...toast, visible: false }), 4000);
-  };
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  }, []);
 
-  // for market share by brands
-  const BRAND_COLORS = [
-    "#10B981", // Green/Emerald (Graph Segment)
-    "#3B82F6", // Blue
-    "#A78BFA", // Violet
-    "#F472B6", // Pink
-    "#06B6D4", // Cyan
-  ];
+  // Refactored fetchAllANALytics
+  const fetchAllAnalytics = useCallback(async () => {
+    try {
+      // Reuse utility to get date boundaries
+      const { startDate, endDate } = getDateBounds(dateRange);
 
-  const supabase = createClient();
-
-  // --- Master Analytics Fetcher ---
-  useEffect(() => {
-    const fetchAllAnalytics = async () => {
-      // 1. Calculate Date Bounds based on filter button
-      const now = new Date();
-      let startDate = new Date();
-      let endDate = new Date();
-
-      switch (dateRange) {
-        case "Last 7 Days":
-          startDate.setDate(now.getDate() - 7);
-          break;
-        case "This Month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case "Last Month":
-          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-          break;
-        case "Annual":
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-          break;
-        default:
-          startDate.setDate(now.getDate() - 30);
-      }
-
-      // 2. Fetch Data from Supabase matching the date range
-      const { data, error } = await supabase
+      // Fetch Reservation Data
+      const { data: reservationData, error: reservationError } = await supabase
         .from("Reservation")
         .select(
           "quantity, created_at, status, Inventory(item_name, brand, price)",
@@ -90,180 +78,64 @@ export default function AdminAnalytics() {
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      if (error || !data) {
-        console.error("Error fetching analytics:", error);
-        return;
-      }
+      if (reservationError) throw reservationError;
 
-      // Fetch POS
+      // Fetch POS Data
       const { data: posData, error: posError } = await supabase
         .from("POS")
         .select("quantity, created_at, Inventory(price)")
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      if (posError) {
-        showToast("Error fetching POS data:", posError);
-      }
+      if (posError) throw posError;
 
-      // calculate POS revenue
-      let totalPosRevenue = 0;
-      if (posData) {
-        posData.forEach((item) => {
-          if (item.Inventory?.price) {
-            totalPosRevenue += item.quantity * item.Inventory.price;
-          }
-        });
-      }
-      setPosRevenue(totalPosRevenue);
+      const safeReservations = reservationData || [];
+      const safePOS = posData || [];
 
-      // calculate approved reservation revenue
-      let totalApprovedRvenue = 0;
-      data.forEach((res) => {
-        if (res.Inventory?.price && res.status === "Approved") {
-          totalApprovedRvenue += res.quantity * res.Inventory?.price;
-        }
-      });
-      setApprovedReservationRevenue(totalApprovedRvenue);
+      // Calculate in-store vs booking revenues
+      const {
+        posRevenue: calculatedPOS,
+        approvedReservationRevenue: calculatedApproved,
+      } = calculateChannelRevenues(safePOS, safeReservations);
+      setPosRevenue(calculatedPOS);
+      setApprovedReservationRevenue(calculatedApproved);
 
-      // 3. Process Revenue
-      const aggregatedRevenue = {};
-      let sumRev = 0;
-      if (posData) {
-        posData.forEach((res) => {
-          if (res.Inventory?.price) {
-            const rev = res.quantity * res.Inventory.price;
-            sumRev += rev;
+      // Aggregate revenue and chart points
+      const { totalRevenue: calculatedTotal, chartData } =
+        aggregateRevenueChartData(safePOS, dateRange);
+      setTotalRevenue(calculatedTotal);
+      setRevenueData(chartData);
 
-            let groupKey;
-            if (dateRange === "Annual") {
-              // Group by month (YYYY-MM)
-              const dateObj = new Date(res.created_at);
-              groupKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
-            } else {
-              // Group by day (YYYY-MM-DD)
-              groupKey = res.created_at.split("T")[0];
-            }
-            aggregatedRevenue[groupKey] =
-              (aggregatedRevenue[groupKey] || 0) + rev;
-          }
-        });
-      }
-      setTotalRevenue(sumRev);
+      // Process product statistics (Top 6 / Low 6)
+      const { topProducts: tops, lowProducts: lows } = computeProductStats(
+        safeReservations,
+        6,
+      );
+      setTopProducts(tops);
+      setLowProducts(lows);
 
-      const chartData = Object.keys(aggregatedRevenue)
-        .sort((a, b) => new Date(a) - new Date(b))
-        .map((key) => {
-          if (dateRange === "Annual") {
-            const [year, month] = key.split("-");
-            return {
-              name: new Date(year, month - 1).toLocaleDateString("en-US", {
-                month: "short",
-              }),
-              revenue: aggregatedRevenue[key],
-            };
-          } else {
-            return {
-              name: new Date(key).toLocaleDateString("en-US", {
-                month: "short",
-                day: "2-digit",
-              }),
-              revenue: aggregatedRevenue[key],
-            };
-          }
-        });
+      // Compute market share brand distribution
+      const brandDistribution = aggregateBrandMarketShare(
+        safeReservations,
+        BRAND_COLORS,
+      );
+      setTopBrands(brandDistribution);
 
-      // For Annual, ensure all 12 months exist so the graph spans Jan-Dec
-      if (dateRange === "Annual") {
-        const fullYearData = [];
-        const currentYear = new Date().getFullYear();
-        for (let i = 0; i < 12; i++) {
-          const monthName = new Date(currentYear, i).toLocaleDateString(
-            "en-US",
-            {
-              month: "short",
-            },
-          );
-          const existing = chartData.find((d) => d.name === monthName);
-          fullYearData.push(existing || { name: monthName, revenue: 0 });
-        }
-        setRevenueData(fullYearData);
-      } else {
-        setRevenueData(chartData);
-      }
+      // Compute status pipeline counters
+      const pipelines = aggregatePipelineCounts(safeReservations);
+      setPipelineCounts(pipelines);
+    } catch (err) {
+      console.error("Error fetching analytics: ", err);
+      showToast("Error getting analytics data", "error");
+    }
+  }, [dateRange, showToast]);
 
-      // 4. Process Top and Low Products
-      const productCounts = {};
-      let totalReserved = 0;
-      data.forEach((res) => {
-        const name = res.Inventory?.item_name;
-        if (name) {
-          productCounts[name] = (productCounts[name] || 0) + res.quantity;
-          totalReserved += res.quantity;
-        }
-      });
-      const sortedProducts = Object.keys(productCounts)
-        .map((name) => ({
-          name,
-          units: productCounts[name],
-          percentage:
-            totalReserved > 0
-              ? Math.round((productCounts[name] / totalReserved) * 100)
-              : 0,
-        }))
-        .sort((a, b) => b.units - a.units);
-
-      setTopProducts(sortedProducts.slice(0, 6)); // Highest 6
-      setLowProducts([...sortedProducts].reverse().slice(0, 6)); // Lowest 6
-
-      // 5. Process Market Share by Brand
-      const brandCounts = {};
-      let brandTotal = 0;
-      data.forEach((res) => {
-        const brand = res.Inventory?.brand;
-        if (brand) {
-          brandCounts[brand] = (brandCounts[brand] || 0) + res.quantity;
-          brandTotal += res.quantity;
-        }
-      });
-      const sortedBrands = Object.keys(brandCounts)
-        .map((brand, index) => ({
-          name: brand,
-          units: brandCounts[brand],
-          percentage:
-            brandTotal > 0
-              ? Math.round((brandCounts[brand] / brandTotal) * 100)
-              : 0,
-          color: BRAND_COLORS[index % BRAND_COLORS.length],
-        }))
-        .sort((a, b) => b.units - a.units);
-
-      const statusCounts = {
-        Pending: 0,
-        Approved: 0,
-        Declined: 0,
-        Cancelled: 0,
-      };
-      data.forEach((res) => {
-        const status = res.status || "Pending";
-        if (statusCounts.hasOwnProperty(status)) {
-          statusCounts[status] += 1;
-        }
-      });
-      setPipelineCounts(statusCounts);
-      setTopBrands(sortedBrands);
-    };
-
-    fetchAllAnalytics();
-  }, [dateRange, BRAND_COLORS, showToast, supabase]);
-
-  const ExportTotalAnnualRevenue = async () => {
+  const exportAnnualRevenue = useCallback(async () => {
     try {
-      const currentYear = new Date().getFullYear(); // Current Year
-      const startDate = new Date(currentYear, 0, 1).toISOString(); // January
-      const endDate = new Date(currentYear, 11, 31, 23, 59, 59).toISOString(); // December
+      const currentYear = new Date().getFullYear();
+      const startDate = new Date(currentYear, 0, 1).toISOString();
+      const endDate = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
 
-      // fetch POS records (actual sales) for current year
       const { data, error } = await supabase
         .from("POS")
         .select("quantity, created_at, Inventory(price)")
@@ -271,62 +143,17 @@ export default function AdminAnalytics() {
         .lte("created_at", endDate);
 
       if (error) throw error;
-
-      // creates array for each month, total of 12 months, 0 = January
-      const monthlyRevenue = Array(12).fill(0);
-      let annualTotal = 0;
-
-      // revenue per month calculation (POS)
-      data.forEach((res) => {
-        if (res.Inventory?.price) {
-          const revenue = res.quantity * res.Inventory.price;
-          const monthIndex = new Date(res.created_at).getMonth();
-          monthlyRevenue[monthIndex] += revenue; // adds result to specific MONTH
-          annualTotal += revenue; // adds same revenue grand total for YEAR
-        }
-      });
-
-      // format to data Excel
-      const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-
-      // build tabular data string
-      let csvContent = "Month, Total Revenue (PHP)\n"; // header row for excel file
-      monthNames.forEach((month, index) => {
-        csvContent += `${month},${monthlyRevenue[index]}\n`; // Appends a new row for each month
-      });
-
-      // grand total for year
-      csvContent += `\nTOTAL ANNUAL REVENUE,${annualTotal}\n`;
-
-      // file download trigger
-      // converts to physical excel file
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      // to download file
-      link.setAttribute("download", `Annual_Revenue_Report_${currentYear}.csv`);
-      document.body.appendChild(link);
-      link.click(); // clicks the button
-      document.body.removeChild(link); //cleans up link
+      exportAnnualRevenueToCSV(data || [], currentYear);
     } catch (err) {
-      showToast("Failed to export data. Try again later");
-      console.error("Failed to export data:", err);
+      showToast("Failed to export data. Try again later", "error");
+      console.error("Failed to export data: ", err);
     }
-  };
+  }, [showToast]);
+
+  // 5. Run effects when date filters or callback references change
+  useEffect(() => {
+    fetchAllAnalytics();
+  }, [fetchAllAnalytics]);
 
   return (
     <div className="bg-background text-font-color min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
@@ -350,7 +177,7 @@ export default function AdminAnalytics() {
           </div>
           <div className="relative group">
             <button
-              onClick={ExportTotalAnnualRevenue}
+              onClick={exportAnnualRevenue}
               className="flex items-center gap-3 bg-primary-container shadow-lg/30 px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:scale-105 transition-all rounded-lg group relative overflow-hidden"
             >
               <span className="material-symbols-outlined text-lg">

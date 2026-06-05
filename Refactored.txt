@@ -3,3 +3,8 @@ June 4
 - utils/dateBounds = for filter buttons in Admin Dashboard
 - helpers/dashboardHelpers = functions for database queries
 - utils/exportExcel = export to excel Admin Dashboard
+
+June 5
+- created helpers/analyticsHelpers.js = calculation functions from Admin analytics
+- refactored fetchAllAnalytics function in Admin Analytics
+- refactored exportAnnualRevenue function in Admin ANalytics
