@@ -53,8 +53,9 @@ function ProductDetail() {
 
   const commentCount = commentDB.length;
 
-  const averageRating =
-    commentDB.reduce((sum, item) => sum + item.rating, 0) / commentDB.length;
+  const averageRating = commentDB.length
+    ? commentDB.reduce((sum, item) => sum + item.rating, 0) / commentDB.length
+    : 0;
 
   // for querying selected product from Inventory Table
   useEffect(() => {
