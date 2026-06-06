@@ -4,17 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "../lib/supabase/client";
 import dynamic from "next/dynamic";
-import Image from "next/image";
-
-// for lazy loading components
+import { Phone } from "lucide-react";
 
 const DynamicNavbar = dynamic(() => import("./components/LandingPageNavbar"));
 
+// for lazy loading components
+
 const DynamicHowItWorksModal = dynamic(
   () => import("./components/HowItWorksModal"),
-  {
-    ssr: false,
-  },
+  { ssr: false },
 );
 
 const DynamicProductCards = dynamic(() => import("./components/ProductCard"), {
@@ -52,132 +50,105 @@ export default function LandingPage() {
   }, [supabase]);
 
   return (
-    <div className="bg-background font-body text-on-surface min-h-screen">
+    <div className=" font-body text-on-surface min-h-screen">
+      {/* ── Hero Section ──────────────────────────────────────── */}
       <DynamicNavbar />
+      <section
+        id="hero"
+        className="relative w-full h-screen min-h-[640px] overflow-hidden flex flex-col border-b-4 border-primary-container hero-border-glow"
+        style={{ fontFamily: "var(--font-rubik), sans-serif" }}
+      >
+        {/* Video Background — deepest layer, behind DotGrid */}
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ zIndex: -55, filter: "hue-rotate(55deg) saturate(1.3)" }}
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260227_042027_c4b2f2ea-1c7c-4d6e-9e3d-81a78063703f.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+
+        {/* ── Hero Content — Upper Third ─────────────────────── */}
+        <div className="relative z-20 flex flex-col items-start justify-start px-8 lg:px-16 pt-24 flex-1">
+          {/* Eyebrow */}
+          <span className="text-primary-container text-xs font-bold uppercase tracking-[0.25em] mb-4">
+            Premium Diecast Reservation
+          </span>
+
+          {/* Headline */}
+          <h1
+            className="font-black uppercase text-white leading-[0.9] tracking-[-0.04em] mb-6"
+            style={{ fontSize: "clamp(42px, 6.5vw, 64px)" }}
+          >
+            Hunt. Reserve.
+            <br />
+            <span className="text-primary-container">Collect.</span>
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-white/60 text-sm font-medium max-w-[360px] mb-8 leading-relaxed">
+            Your exclusive source for limited-edition diecast brands. Reserved
+            for elite collectors.
+          </p>
+
+          {/* Browse Products button */}
+          <Link
+            href="/customer/product"
+            className="btn-clipped inline-flex items-center gap-2 bg-primary-container text-black/90 text-xs font-bold uppercase tracking-widest px-7 py-3.5 transition-all hover:opacity-90 active:scale-95"
+          >
+            Browse Products
+            <span className="material-symbols-outlined text-[14px] leading-none">
+              arrow_forward
+            </span>
+          </Link>
+        </div>
+
+        {/* ── Liquid Glass Consultation Card — Bottom Left ──── */}
+        <div className="relative z-20 px-8 lg:px-16 pb-10">
+          <div className="liquid-glass rounded-xl p-5 max-w-[300px] flex items-center gap-4">
+            {/* Icon bubble — primary-container/black */}
+            <div className="btn-clipped flex-shrink-0 w-10 h-10 bg-primary-container flex items-center justify-center">
+              <Phone size={16} className="text-black" strokeWidth={2.5} />
+            </div>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-bold uppercase tracking-widest mb-0.5">
+                How It Works
+              </p>
+              <p className="text-white/50 text-[11px] leading-snug">
+                See how to reserve & collect
+              </p>
+            </div>
+            {/* Pill CTA — secondary-container */}
+            <button
+              onClick={() => setHowItWorksModal(true)}
+              className="btn-clipped flex-shrink-0 bg-primary-container text-black/90 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 transition-opacity hover:opacity-80"
+            >
+              Learn
+            </button>
+          </div>
+        </div>
+      </section>
+      {/* ── End Targo Hero ────────────────────────────────────── */}
+
       <DynamicHowItWorksModal
         isOpen={howItWorksModal}
         onClose={() => setHowItWorksModal(false)}
       />
-      {/* Main Hero Section */}
-      <main className="relative h-screen min-h-[700px] sm:min-h-[800px] w-full mt-10 overflow-hidden radial-brand flex flex-col justify-center custom-cursor-area">
-        {/* Background Asset: Nissan Skyline PNG - Optimized positioning */}
-        <div className="absolute inset-0 z-0 flex items-center justify-start pointer-events-none overflow-hidden">
-          <div className="relative w-full h-full flex items-center justify-center lg:justify-start lg:ml-[45%]">
-            <Image
-              alt="Nissan Skyline GT-R R34"
-              className="w-[100%] sm:w-[110%] lg:w-[85%] h-auto object-contain 
-             filter drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)] 
-             dark:grayscale-75 dark:brightness-90 dark:contrast-[1.1] dark:drop-shadow-none
-             opacity-0 animate-drive-in-stop max-w-none lg:max-w-full 
-             -translate-y-[20%] lg:translate-y-0"
-              src="/011.png"
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw"
-            />
-          </div>
-        </div>
-
-        <div className="relative z-10 container mx-auto px-6 lg:px-12 flex flex-col items-center lg:items-start text-center lg:text-left">
-          {/* Headline Group */}
-          <div
-            className="flex flex-col mb-6 reveal-up"
-            style={{ animationDelay: "0.4s" }}
-          >
-            <h1 className="font-headline font-black uppercase italic leading-[0.92] text-[clamp(44px,12vw,96px)] tracking-tighter">
-              <span className="block text-landing-text drop-shadow-lg/20">
-                Hunt
-              </span>
-              <span className="block text-reserve-text drop-shadow-lg/60">
-                Reserve
-              </span>
-              <span className="block text-collect-text drop-shadow-lg/80">
-                Collect
-              </span>
-            </h1>
-          </div>
-          {/* Subheadline */}
-          <p
-            className="text-lg sm:text-lg font-bold lg:bg-transparent lg:shadow-none shadow-lg/30 bg-secondary-container/80 text-white/90 lg:text-font-color max-w-[440px] mb-10  p-2 leading-relaxed reveal-up rounded-lg"
-            style={{ animationDelay: "0.6s" }}
-          >
-            Your Source of Exclusive Limited Diecast brands. Exclusive for Elite
-            Collectors.
-          </p>
-          {/* CTA Row */}
-          <div
-            className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto reveal-up"
-            style={{ animationDelay: "0.8s" }}
-          >
-            <button className="w-full sm:min-w-[220px] h-[52px] drop-shadow-lg/50 bg-primary-container text-black/60  font-black uppercase tracking-widest text-sm rounded-lg btn-premium">
-              <Link href="/customer/product">Browse Products</Link>
-            </button>
-            <button
-              onClick={() => setHowItWorksModal(true)}
-              className="w-full sm:min-w-[220px] h-[52px]  bg-secondary-container text-white  font-black uppercase tracking-widest text-sm rounded-lg btn-premium drop-shadow-lg/50"
-            >
-              How It Works
-            </button>
-          </div>
-
-          {/* Ticker Section */}
-          <div className="mt-16 w-full lg:max-w-[600px] overflow-hidden">
-            <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
-              <span className="text-sm uppercase tracking-[0.3em] font-black text-font-color">
-                THE PRODUCTS WE SELL
-              </span>
-            </div>
-            <div className="relative overflow-hidden w-full">
-              <div className="marquee flex items-center text-[11px] sm:text-[13px] font-bold  uppercase py-2">
-                {[1].map((i) => (
-                  <span
-                    key={i}
-                    className="flex items-center gap-4 px-4 whitespace-nowrap text-font-color font-black"
-                  >
-                    Hot Wheels{" "}
-                    <span className="material-symbols-outlined text-[14px] ">
-                      flare
-                    </span>
-                    Tomica{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
-                    Majorette{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
-                    Auto World{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
-                    Mini GT{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
-                    Bburago{" "}
-                    <span className="material-symbols-outlined text-[14px]">
-                      flare
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
 
       {/* Top Products */}
-      <section className="bg-background py-10">
+      <section className="py-10">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>
-              <h2 className="font-headline font-black text-4xl uppercase italic tracking-tight mb-2 text-font-color">
+              <h2 className="font-headline font-black text-4xl border-primary-container bg-primary-container p-3 rounded-xl uppercase italic tracking-tight mb-2 text-black/90 text-md drop-shadow-xl/30">
                 Top Selling Products
               </h2>
             </div>
             <button
               onClick={() => router.push("/customer/product")}
-              className="group flex items-center gap-2 text-md font-black uppercase tracking-widest text-font-color"
+              className="group flex items-center gap-2 border border-primary-container bg-primary-container p-3 rounded-xl italic tracking-tight uppercase text-md font-black text-black/90 drop-shadow-xl/30"
             >
               View More
               <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">

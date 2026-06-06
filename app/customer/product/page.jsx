@@ -91,8 +91,8 @@ export default function Product() {
     currentPage * itemsPerPage,
   );
   return (
-    <div className="bg-background text-on-surface font-body min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
-      <header className="relative py-28 px-12 lg:px-20 border-b border-white/5 overflow-hidden reveal-up">
+    <div className="text-on-surface font-body min-h-screen flex flex-col selection:bg-primary-container selection:text-white">
+      <header className="relative py-28 px-12 lg:px-20 border-b-4 border-primary-container hero-border-glow ">
         <div className="absolute inset-0 bg-black/60 to-transparent z-10"></div>
         <div className="absolute right-0 top-0 w-full  h-full pointer-events-none  animate-drive-in drop-shadow-lg/50">
           <Image

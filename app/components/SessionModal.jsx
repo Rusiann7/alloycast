@@ -10,7 +10,7 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
         onClick={onClose}
       />
 
-      <div className="bg-background  w-full max-w-sm rounded-xl overflow-hidden shadow-2xl animate-reveal-up relative z-10">
+      <div className="bg-modal-background  w-full max-w-sm rounded-xl overflow-hidden shadow-2xl animate-reveal-up relative z-10">
         <div className="pt-10 pb-6 flex justify-center"></div>
 
         <div className="px-8 text-center space-y-2">
@@ -25,7 +25,7 @@ export default function SessionModal({ isOpen, onClose, onConfirm }) {
         <div className="p-8 flex gap-3">
           <button
             onClick={onClose}
-            className="w-full py-4 bg-secondary-container text-white/90 rounded-lg font-headline font-black uppercase text-sm tracking-[0.2em] hover:bg-primary-container hover:text-black/90 hover:scale-105 transition-colors"
+            className="w-full py-4 bg-secondary-container text-white/90 rounded-lg font-headline font-black uppercase text-sm tracking-[0.2em]  hover:scale-105 transition-all"
           >
             No
           </button>

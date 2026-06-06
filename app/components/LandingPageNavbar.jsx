@@ -76,21 +76,21 @@ export default function LandingPageNavbar() {
         visible={toast.visible}
       />
       {/* Header Navigation */}
-      <header className="fixed top-0 left-0 w-full z-1 bg-primary-container  text-font-color z-999">
+      <header className="bg-primary-container fixed top-0 left-0 w-full z-[999]  text-white">
         <div className="mx-auto flex items-center justify-between px-3 lg:px-12 py-4">
           <div className="flex items-center gap-10">
-            <div className="flex items-center gap-3 text-font-color">
-              <div className="size-10 text-primary-container">
+            <div className="flex items-center gap-3">
+              <div className="size-10">
                 <Image
                   width={100}
                   height={100}
                   src="/logo.jpg"
                   alt="Ethan Marcus Diecast"
-                  className="border-black/70 border-1 rounded-lg"
+                  className="border-white/20 border-1 rounded-lg"
                   loading="lazy"
                 />
               </div>
-              <h2 className="font-headline text-lg text-black/90  font-bold uppercase tracking-tight hover:cursor-pointer hover:text-secondary-container">
+              <h2 className="font-headline text-lg text-black/90 font-bold uppercase tracking-tight hover:cursor-pointer  transition-colors">
                 <Link href="/">Ethan Marcus Diecast</Link>
               </h2>
             </div>
@@ -99,7 +99,7 @@ export default function LandingPageNavbar() {
               {navLinks.map((navLink) => (
                 <Link
                   key={navLink.id}
-                  className="font-headline text-md text-black/90 hover:text-secondary-container  font-bold uppercase tracking-tight hover:cursor-pointer"
+                  className="font-headline text-md text-input-field r font-bold uppercase tracking-tight hover:cursor-pointer transition-colors"
                   href={navLink.href}
                 >
                   {navLink.label}
@@ -109,16 +109,16 @@ export default function LandingPageNavbar() {
           </div>
           <div className="flex items-center gap-4">
             <button
-              className="flex lg:hidden items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors"
+              className="flex lg:hidden items-center justify-center p-2 rounded-full hover:bg-white/10 transition-colors"
               onClick={() => setNavbarOpen(!navbarOpen)}
             >
-              <span className="material-symbols-outlined text-black/90 transition-all duration-300">
+              <span className="material-symbols-outlined text-white transition-all duration-300">
                 {navbarOpen ? "close" : "menu"}
               </span>
             </button>
 
             {!user ? (
-              <button className="hidden lg:block bg-secondary-container hover:scale-105 text-white/90 drop-shadow-lg/30 transition-all  text-xs font-black uppercase tracking-widest px-6 h-10 rounded-lg ">
+              <button className="hidden lg:block btn-clipped bg-secondary-container  text-white/90 hover:scale-105 drop-shadow-lg/30 transition-all text-xs font-black uppercase tracking-widest px-6 h-10">
                 <Link href="/customer/auth/login">Log In</Link>
               </button>
             ) : (
@@ -126,7 +126,7 @@ export default function LandingPageNavbar() {
                 {/* Link to the user's profile/dashboard */}
                 <Link
                   href="/customer/account"
-                  className="hidden lg:flex items-center gap-2 text-sm font-black uppercase tracking-widest text-black/90 hover:text-secondary-container "
+                  className="hidden lg:flex items-center gap-2 text-sm font-black uppercase tracking-widest text-input-field hover:cursor-pointer transition-colors"
                 >
                   <span className="material-symbols-outlined text-sm">
                     person
@@ -137,7 +137,7 @@ export default function LandingPageNavbar() {
                 {/* Trigger the logout function */}
                 <button
                   onClick={showLogoutModal}
-                  className="hidden lg:block text-sm font-black uppercase tracking-widest text-on-primary hover:text-secondary-container  transition-colors"
+                  className="hidden lg:block text-sm font-black uppercase tracking-widest text-on-primary hover:cursor-pointer transition-colors"
                 >
                   Log Out
                 </button>

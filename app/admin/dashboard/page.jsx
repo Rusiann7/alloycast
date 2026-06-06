@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
@@ -14,6 +14,15 @@ import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+
+// Import  new helper & utility functions
+import { getDateBounds } from "../../../utils/dateBounds";
+import {
+  aggregateRevenue,
+  computeTopProducts,
+  mergeCustomerDetails,
+} from "../../../helpers/dashboardHelpers";
+import { exportToExcelFile } from "../../../utils/exportExcelAdminDashboard";
 
 const DynamicCriticalStockModal = dynamic(
   () => import("../../components/CriticalStockModal"),
@@ -33,35 +42,8 @@ const DynamicToast = dynamic(() => import("../../components/Toast"), {
   ssr: false,
 });
 
+// 2. Instantiate Supabase singleton at the module level (avoids recreation on render)
 const supabase = createClient();
-
-  const getDateBounds = (dateRange) => {
-    // 1. Calculate Date Bounds
-    const now = new Date();
-    let startDate = new Date();
-    let endDate = new Date();
-
-    switch (dateRange) {
-      case "Last 7 Days":
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case "This Month":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case "Last Month":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-        break;
-      case "Annual":
-        // Use the calendar year for Annual: Jan 1 -> Dec 31 of current year
-        startDate = new Date(now.getFullYear(), 0, 1);
-        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-        break;
-      default:
-        startDate.setDate(now.getDate() - 30);
-    };
-    return {startDate, endDate}
-  }
 
 export default function AdminDashboard() {
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
@@ -92,7 +74,6 @@ export default function AdminDashboard() {
     type: "success",
   });
 
-  const [isLoading, setIsLoading] = useState(true)
   // Revenue Graph States
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [revenueData, setRevenueData] = useState([]);
@@ -100,192 +81,90 @@ export default function AdminDashboard() {
 
   const router = useRouter();
 
-  const showToast = (message, type = "success") => {
+  // 3. Functional toast setter prevents stale state closures
+  const showToast = useCallback((message, type = "success") => {
     setToast({ visible: true, message, type });
-    // Uses structural update callbacks to clear exactly what is in memory
-    setTimeout((currentToastState) => setToast({ ...currentToastState, visible: false }), 4000);
-  };
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  }, []);
 
-
+  // 4. Stable useCallback for fetching Analytics
   const fetchAllAnalytics = useCallback(async () => {
-    const {startDate, endDate} = getDateBounds(dateRange);
-  
-    // Fetch POS data (actual sales) to compute Total Revenue and chart
+    const { startDate, endDate } = getDateBounds(dateRange);
     const { data: posData, error: posError } = await supabase
       .from("POS")
       .select("quantity, created_at, Inventory(price, item_name)")
       .gte("created_at", startDate.toISOString())
       .lte("created_at", endDate.toISOString());
-
     if (posError || !posData) {
       console.error("Error fetching POS analytics:", posError);
+      showToast("Failed to fetch POS analytics data", "error");
       return;
     }
+    const currentYear = new Date().getFullYear();
+    const { totalRevenue: sumRev, chartData } = aggregateRevenue(
+      posData,
+      dateRange,
+      currentYear,
+    );
+    setTotalRevenue(sumRev);
+    setRevenueData(chartData);
+    const products = computeTopProducts(posData, 5);
+    setTopProducts(products);
+  }, [dateRange, showToast]);
 
-    // Process POS revenue
-    let sumRev = 0;
-    const now = new Date();
-
-    if (dateRange === "Annual") {
-      const monthlyRevenue = {};
-      posData.forEach((res) => {
-        if (res.Inventory?.price) {
-          const rev = res.quantity * res.Inventory.price;
-          sumRev += rev;
-          const d = new Date(res.created_at);
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-          monthlyRevenue[key] = (monthlyRevenue[key] || 0) + rev;
-        }
-      });
-
-      const chartData = [];
-      for (let m = 0; m < 12; m++) {
-        const key = `${now.getFullYear()}-${String(m + 1).padStart(2, "0")}`;
-        const monthName = new Date(now.getFullYear(), m, 1).toLocaleDateString(
-          "en-US",
-          { month: "short" },
-        );
-        chartData.push({ name: monthName, revenue: monthlyRevenue[key] || 0 });
-      }
-      setTotalRevenue(sumRev);
-      setRevenueData(chartData);
-    } else {
-      const dailyRevenue = {};
-      posData.forEach((res) => {
-        if (res.Inventory?.price) {
-          const rev = res.quantity * res.Inventory.price;
-          sumRev += rev;
-          const dateStr = res.created_at.split("T")[0];
-          dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
-        }
-      });
-
-      setTotalRevenue(sumRev);
-      const chartData = Object.keys(dailyRevenue)
-        .sort((a, b) => new Date(a) - new Date(b))
-        .map((dateStr) => ({
-          name: new Date(dateStr).toLocaleDateString("en-US", {
-            month: "short",
-            day: "2-digit",
-          }),
-          revenue: dailyRevenue[dateStr],
-        }));
-      setRevenueData(chartData);
-    }
-
-    // Top Products (based on actual POS sales)
-    const productCounts = {};
-    let totalReserved = 0;
-
-    posData.forEach((res) => {
-      const name = res.Inventory?.item_name;
-      if (name) {
-        productCounts[name] = (productCounts[name] || 0) + res.quantity;
-        totalReserved += res.quantity;
-      }
-    });
-
-    const sortedProducts = Object.keys(productCounts)
-      .map((name) => ({
-        name,
-        units: productCounts[name],
-        percentage:
-          totalReserved > 0
-            ? Math.round((productCounts[name] / totalReserved) * 100)
-            : 0,
-      }))
-      .sort((a, b) => b.units - a.units);
-
-    setTopProducts(sortedProducts.slice(0, 5));
-  }, [dateRange, supabase]);
-
+  // 5. Stable useCallback for fetching general Dashboard Data
   const fetchDashboardData = useCallback(async () => {
-    try{
-      setIsLoading(true);
-      // fetch Reservation, Users, Inventory and joining them
-      const {data: activityData, error: resError} = await supabase.from("Reservation").select("*, Users(email), Inventory(*)").order("created_at", {ascending: false});
-
-      // fetch inventory
-      const {data: invData} = await supabase.from("Inventory").select("item_name, item_image, brand, stock, reorder_point");
-
-      // fetch new added product from Inventory
-      const {data: arrivalsData} = await supabase.from("Inventory").select("id, item_name, price, item_image").order("created_at", {ascending: false}).limit(4)
-
-      // fetch customer details
-      const {data: customerData} = await supabase.from("Customer").select("user_id, firstname, lastname");
-
-      if(activityData && customerData){
-        setData({
-          totalReservations: activityData.length,
-          pendingReservations: activityData.filter((r) => r.status === "Pending").length,
-          criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
-        });
-
-        const criticalItems = invData?.filter((i) => i.stock <= 5) || [];
-        setLowStockProducts(criticalItems);
-        setNewArrivals(arrivalsData || [])
-
-        const merged = activityData.slice(0, 5).map((res) => {
-          const customer = customerData.find((c) => c.user_id === res.user_id);
-          return {
-            ...res,
-            customer_name: customer ? `${customer.firstname} ${customer.lastname}` : "Details Not Provided",
-            customer_email: res.Users?.email,
-          }
-        })
-        setRecentActivities(merged)
+    try {
+      const { data: resData } = await supabase
+        .from("Reservation")
+        .select("status");
+      const { data: invData } = await supabase
+        .from("Inventory")
+        .select("item_name, item_image, brand, stock, reorder_point");
+      setData({
+        totalReservations: resData?.length || 0,
+        pendingReservations:
+          resData?.filter((r) => r.status === "Pending").length || 0,
+        criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
+        loading: false,
+      });
+      const criticalItems = invData?.filter((i) => i.stock <= 5) || [];
+      setLowStockProducts(criticalItems);
+      const { data: arrivalsData } = await supabase
+        .from("Inventory")
+        .select("id, item_name, price, item_image")
+        .order("created_at", { ascending: false })
+        .limit(4);
+      setNewArrivals(arrivalsData || []);
+      const { data: activityData } = await supabase
+        .from("Reservation")
+        .select("*, Users(email), Inventory(item_name, item_image, brand)")
+        .order("created_at", { ascending: false })
+        .limit(9);
+      const { data: customerData } = await supabase
+        .from("Customer")
+        .select("user_id, firstname, lastname");
+      if (activityData && customerData) {
+        const merged = mergeCustomerDetails(activityData, customerData);
+        setRecentActivities(merged);
       }
-    }
-     catch (error) {
+    } catch (error) {
       console.error("Error fetching dashboard data:", error);
-    } finally {
-      setIsLoading(false)
+      showToast("Error updating dashboard statistics", "error");
     }
-  }, [supabase]);
+  }, [showToast]);
 
-
-    useEffect(() => {
+  // 6. Hook trigger relies on stable reference functions
+  useEffect(() => {
     fetchDashboardData();
     fetchAllAnalytics();
-  }, [fetchAllAnalytics, fetchDashboardData]);
+  }, [fetchDashboardData, fetchAllAnalytics]);
+
+  // 7. Decoupled Excel export handler
   const exportToExcel = async () => {
     try {
-      const workbook = XLSX.utils.book_new();
+      const { startDate, endDate } = getDateBounds(dateRange);
 
-      // determine date bounds based on `dateRange`
-      const now = new Date();
-      let startDate = new Date();
-      let endDate = new Date();
-
-      switch (dateRange) {
-        case "Last 7 Days":
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - 7);
-          break;
-        case "This Month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          endDate = new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            0,
-            23,
-            59,
-            59,
-          );
-          break;
-        case "Last Month":
-          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-          break;
-        case "Annual":
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-          break;
-        default:
-          startDate.setDate(now.getDate() - 30);
-      }
-
-      // --- SHEET 1: REVENUE SUMMARY (POS) ---
       const { data: posData, error: posErr } = await supabase
         .from("POS")
         .select("quantity, created_at, Inventory(price, item_name)")
@@ -294,94 +173,6 @@ export default function AdminDashboard() {
 
       if (posErr) throw posErr;
 
-      let revenueExport = [];
-      let grandTotal = 0;
-
-      if (dateRange === "Annual") {
-        // monthly aggregation
-        const monthly = Array(12).fill(0);
-        posData.forEach((p) => {
-          if (p.Inventory?.price) {
-            const rev = p.quantity * p.Inventory.price;
-            const m = new Date(p.created_at).getMonth();
-            monthly[m] += rev;
-            grandTotal += rev;
-          }
-        });
-
-        const monthNames = [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December",
-        ];
-
-        revenueExport = monthNames.map((mn, i) => ({
-          Month: mn,
-          "Total Revenue (PHP)": Number(monthly[i].toFixed(2)),
-        }));
-      } else {
-        // daily aggregation
-        const daily = {};
-        posData.forEach((p) => {
-          if (p.Inventory?.price) {
-            const rev = p.quantity * p.Inventory.price;
-            const dKey = p.created_at.split("T")[0];
-            daily[dKey] = (daily[dKey] || 0) + rev;
-            grandTotal += rev;
-          }
-        });
-        revenueExport = Object.keys(daily)
-          .sort((a, b) => new Date(a) - new Date(b))
-          .map((dateStr) => ({
-            Date: new Date(dateStr).toLocaleDateString(),
-            "Total Revenue (PHP)": Number(daily[dateStr].toFixed(2)),
-          }));
-      }
-
-      revenueExport.push({
-        Total: "",
-        "Total Revenue (PHP)": Number(grandTotal.toFixed(2)),
-      });
-      const revSheet = XLSX.utils.json_to_sheet(revenueExport);
-      XLSX.utils.book_append_sheet(workbook, revSheet, `${dateRange} Revenue`);
-
-      // --- SHEET 2: TOP PRODUCTS (POS within range) ---
-      const productAgg = {};
-      let totalUnits = 0;
-      posData.forEach((p) => {
-        const name = p.Inventory?.item_name || "Unknown";
-        productAgg[name] = (productAgg[name] || 0) + p.quantity;
-        totalUnits += p.quantity;
-      });
-
-      const topProductsExport = Object.keys(productAgg)
-        .map((name) => ({
-          "Product Name": name,
-          "Units Sold": productAgg[name],
-          "Market Share (%)":
-            totalUnits > 0
-              ? `${Math.round((productAgg[name] / totalUnits) * 100)}%`
-              : "0%",
-        }))
-        .sort((a, b) => b["Units Sold"] - a["Units Sold"]);
-
-      const topSheet = XLSX.utils.json_to_sheet(topProductsExport);
-      XLSX.utils.book_append_sheet(
-        workbook,
-        topSheet,
-        `${dateRange} Top Products`,
-      );
-
-      // --- SHEET 3: ACTIVITY LEDGER (Reservations in range) ---
       const { data: reservations } = await supabase
         .from("Reservation")
         .select(
@@ -391,24 +182,6 @@ export default function AdminDashboard() {
         .lte("created_at", endDate.toISOString())
         .order("created_at", { ascending: false });
 
-      const activityExport = (reservations || []).map((r) => ({
-        Date: new Date(r.created_at).toLocaleDateString(),
-        Time: new Date(r.created_at).toLocaleTimeString(),
-        CustomerEmail: r.Users?.email || "",
-        Product: r.Inventory?.item_name || "",
-        Quantity: r.quantity || "",
-        Status: r.status || "",
-        Reference: `#RES-${String(r.id).slice(0, 4).toUpperCase()}`,
-      }));
-
-      const actSheet = XLSX.utils.json_to_sheet(activityExport);
-      XLSX.utils.book_append_sheet(
-        workbook,
-        actSheet,
-        `${dateRange} Activity Ledger`,
-      );
-
-      // --- SHEET 4: NEW INVENTORY (arrivals in range) ---
       const { data: arrivals } = await supabase
         .from("Inventory")
         .select("id, item_name, price, created_at")
@@ -416,30 +189,16 @@ export default function AdminDashboard() {
         .lte("created_at", endDate.toISOString())
         .order("created_at", { ascending: false });
 
-      const inventoryExport = (arrivals || []).map((i) => ({
-        "Item Name": i.item_name,
-        Price: Number(i.price).toFixed(2),
-        "Date Added": new Date(i.created_at).toLocaleDateString(),
-      }));
-
-      const invSheet = XLSX.utils.json_to_sheet(inventoryExport);
-      XLSX.utils.book_append_sheet(
-        workbook,
-        invSheet,
-        `${dateRange} New Inventory`,
-      );
-
-      // --- GENERATE DOWNLOAD ---
-      const timestamp = new Date().toISOString().split("T")[0];
-      XLSX.writeFile(
-        workbook,
-        `Alloycast_Dashboard_${dateRange.replace(/\s+/g, "_")}_Report_${timestamp}.xlsx`,
-      );
-
-      showToast("Multi-sheet business report exported!", "success");
+      exportToExcelFile({
+        dateRange,
+        posData: posData || [],
+        reservations: reservations || [],
+        arrivals: arrivals || [],
+        showToast,
+      });
     } catch (err) {
-      console.error("Export failed:", err);
-      showToast("Export failed. Check console for details.", "error");
+      console.error("Export failed: ", err);
+      showToast("Failed to export dashboard data", "error");
     }
   };
 
@@ -551,7 +310,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="bg-background  font-body min-h-screen overflow-x-hidden select-none">
+    <div className="font-body min-h-screen overflow-x-hidden select-none">
       {/* --- Main Content Canvas --- */}
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5  pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         {" "}
@@ -780,7 +539,7 @@ export default function AdminDashboard() {
           >
             <div className="p-6 border-b-2 border-primary-container bg-primary-container flex justify-between items-center">
               <h4 className="text-xl text-black/90 font-black font-headline uppercase tracking-tighter">
-                Activity Ledger
+                Reservations
               </h4>
               <button
                 onClick={() => router.push("/admin/reservations")}
@@ -867,7 +626,7 @@ export default function AdminDashboard() {
             style={{ animationDelay: "0.8s" }}
           >
             <h4 className="text-md text-white/90 font-black font-headline uppercase tracking-widest mb-6">
-              Live Inventory{" "}
+              Inventory{" "}
               <span className="text-primary-container ml-2 text-sm">
                 +{newArrivals.length} ADDED ITEMS
               </span>
@@ -898,7 +657,11 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-
+      <DynamicCriticalStockModal
+        isOpen={isStockModalOpen}
+        onClose={() => setIsStockModalOpen(false)}
+        items={lowStockProducts}
+      />
 
       {isDetailsModalOpen && activeReservation && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
@@ -906,7 +669,7 @@ export default function AdminDashboard() {
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setIsDetailsModalOpen(false)}
           ></div>
-          <div className="relative w-full max-w-4xl bg-background border border-white/5 p-6 sm:p-10 rounded-lg animate-scale-in max-h-[95vh] overflow-y-auto scrollbar-hide">
+          <div className="relative w-full max-w-4xl bg-modal-background border border-white/5 p-6 sm:p-10 rounded-lg animate-scale-in max-h-[95vh] overflow-y-auto scrollbar-hide">
             <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
               <div className="flex items-center space-x-3">
                 <span className="material-symbols-outlined text-secondary-container">
@@ -1002,7 +765,7 @@ export default function AdminDashboard() {
                     activeReservation.status === "Approved"
                       ? "text-green-500 border-green-500/20 bg-green-500/5"
                       : activeReservation.status === "Pending"
-                        ? "text-black/90 border-primary-container/20 bg-primary-container"
+                        ? "text-font-color border-primary-container/20 bg-primary-container"
                         : activeReservation.status === "Cancelled"
                           ? "bg-on-primary  border-white/10 "
                           : "text-red-500 border-red-500/20 bg-red-500/5"
@@ -1042,34 +805,20 @@ export default function AdminDashboard() {
         </div>
       )}
 
-  {/* lazy load components */}
-
-  {isStockModalOpen && (
-      <DynamicCriticalStockModal
-        isOpen={isStockModalOpen}
-        onClose={() => setIsStockModalOpen(false)}
-        items={lowStockProducts}
+      <DynamicToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
       />
-  )}
 
-  {toast.visible && (
-   <DynamicToast
-    message={toast.message}
-    type={toast.type}
-    visible={toast.visible}
-    />
-  )}
-
-  {confirmModal.isOpen && (
-    <DynamicOrderStatusConfirmationModal
-    isOpen={confirmModal.isOpen}
-    onConfirm={handleConfirm}
-    onCancel={handleCancel}
-    status={confirmModal.newStatus}
-    customerName={confirmModal.customerName}
-    productName={confirmModal.productName}
-    />
-  )}
+      <DynamicOrderStatusConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        status={confirmModal.newStatus}
+        customerName={confirmModal.customerName}
+        productName={confirmModal.productName}
+      />
     </div>
   );
 }

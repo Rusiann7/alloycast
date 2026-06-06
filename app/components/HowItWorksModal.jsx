@@ -36,9 +36,9 @@ export default function HowItWorksModal({ isOpen, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-background/90 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center mt-16 p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in">
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden reveal-up">
+      <div className="relative w-full max-w-2xl bg-modal-background border border-white/10 rounded-2xl shadow-2xl overflow-hidden reveal-up">
         {/* Checkered Racing Header */}
         <div className="h-4 checkered-pattern w-full"></div>
 
