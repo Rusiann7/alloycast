@@ -282,7 +282,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       />
       <form
         onSubmit={addProduct}
-        className="relative w-full max-w-3xl bg-background rounded-lg shadow-[0_0_100px_rgba(0,0,0,1)]  animate-slide-in-up flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-3xl bg-modal-background rounded-lg shadow-[0_0_100px_rgba(0,0,0,1)]  animate-slide-in-up flex flex-col max-h-[90vh]"
       >
         <header className="p-6 sm:p-8 lg:p-10 border-b border-white/[0.03] flex flex-col sm:flex-row items-start sm:items-center justify-between shrink-0 gap-6">
           <div className="flex items-center gap-4">
@@ -490,7 +490,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
         </div>
 
-        <footer className="p-6 sm:p-8 border-t border-secondary-container flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-background rounded-lg  shrink-0">
+        <footer className="p-6 sm:p-8 border-t border-secondary-container flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-modal-background rounded-lg  shrink-0">
           <button
             type="button"
             onClick={onClose}

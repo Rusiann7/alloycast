@@ -12,7 +12,7 @@ const DeleteConfirmationModal = ({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-background rounded-lg p-2  shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-md bg-modal-background rounded-lg p-2  shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-white/5 flex items-start gap-4">
           <div className="w-12 h-12 rounded-full bg-error-container/10 border border-error-container/20 flex items-center justify-center flex-shrink-0">

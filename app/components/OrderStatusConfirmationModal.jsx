@@ -28,7 +28,7 @@ export default function OrderStatusConfirmationModal({
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-background  rounded-lg p-6 sm:p-10 max-w-md w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-scale-in">
+      <div className="bg-modal-background  rounded-lg p-6 sm:p-10 max-w-md w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-scale-in">
         {/* Icon & Title */}
         <div className="flex items-center gap-4 mb-6">
           <div

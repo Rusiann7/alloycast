@@ -3,7 +3,9 @@
 
 :root {
   /* light theme */
-  --background: #f2f1cd;
+  /* --background: #f2f1cd;  */
+  --background: #fcfcfc;
+  --modal-background: #f2f1cd;
   --secondary-background: #f8f9fa;
   --foreground: #1a1a1a;
   --primary-container: #f8e408;
@@ -22,6 +24,7 @@
 
 @theme {
   --color-background: var(--background);
+  --color-modal-background: var(--modal-background);
   --color-secondary-background: var(--secondary-background);
   --color-foreground: var(--foreground);
   --color-primary-container: var(--primary-container);
@@ -109,8 +112,9 @@
 
 .dark {
   /* Core Foundation */
-  --background: #303604;
-  /* --primary: #f07a0c; */
+  /* --background: #303604; */
+  --background: #000000;
+  --modal-background: #303604;
   --primary-container: #d0bf02;
   --secondary-container: #645a2f;
   --shit-container: #8f851f;
@@ -271,17 +275,9 @@ input[type="number"] {
 }
 
 /* Custom Cursor Experience */
-body {
-  cursor: url("red-cursor.png"), auto;
-}
-
 a,
 button {
   cursor: pointer;
-}
-
-.custom-cursor-area {
-  cursor: url("red-cursor.png"), auto;
 }
 
 @keyframes scan {
@@ -301,4 +297,59 @@ button {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* ─── Hero Border Glow Animation ───────────────────────────────── */
+@keyframes border-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 18px -2px rgba(208, 191, 2, 0.5),
+      0 2px 40px rgba(208, 191, 2, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 6px 30px 0px rgba(255, 253, 0, 0.95),
+      0 2px 60px rgba(255, 253, 0, 0.6),
+      0 0px 100px rgba(255, 253, 0, 0.3);
+  }
+}
+
+.hero-border-glow {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+/* Rubik font variable & brand color */
+@theme {
+  --font-rubik: var(--font-rubik);
+  --color-targo-red: #ee3f2c;
+}
+
+/* Clip-path: diagonal cut top-right + bottom-left */
+.btn-clipped {
+  clip-path: polygon(
+    0% 0%,
+    calc(100% - 12px) 0%,
+    100% 12px,
+    100% 100%,
+    12px 100%,
+    0% calc(100% - 12px)
+  );
+}
+
+/* Liquid glass card */
+.liquid-glass {
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.4);
 }

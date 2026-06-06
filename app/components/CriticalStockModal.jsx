@@ -2,7 +2,7 @@ export default function CriticalStockModal({ isOpen, onClose, items }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-background w-full max-w-6xl rounded-lg p-8 flex flex-col max-h-[90vh]">
+      <div className="bg-modal-background w-full max-w-6xl rounded-lg p-8 flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center mb-6 shrink-0">
           <h4 className="text-xl font-black font-headline uppercase italic text-font-color">
             Critical Stock Alert

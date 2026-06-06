@@ -163,8 +163,8 @@ export default function RegisterAdminPage() {
         visible={toast.visible}
       />
 
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container rounded-xl overflow-hidden border border-white/5 shadow-2xl animate-fade-in">
-        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 border-b-4 border-primary-container hero-border-glow rounded-xl overflow-hidden border  shadow-2xl animate-fade-in">
+        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black text-white overflow-hidden">
           <div className="relative z-10">
             <h1 className="font-headline font-black text-4xl text-primary-container uppercase italic leading-none mb-4">
               Manage the Hunt

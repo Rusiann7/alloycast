@@ -647,7 +647,7 @@ function ProductDetail() {
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-md bg-background  border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-font-color my-auto shadow-2xl">
+          <div className="relative w-full max-w-md bg-modal-background  border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-font-color my-auto shadow-2xl">
             {/* Header */}
             <div className="flex justify-between items-start mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">

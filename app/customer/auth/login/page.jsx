@@ -173,9 +173,9 @@ function LoginContent() {
         type={toast.type}
         visible={toast.visible}
       />
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-surface-container-high rounded-lg  overflow-hidden  shadow-lg/30 animate-fade-in">
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 border border-primary-container hero-border-glow bg-surface-container-high rounded-lg  overflow-hidden  shadow-lg/30 animate-fade-in">
         {/* Left Side: Branding/Visual */}
-        <div className="relative hidden md:flex flex-col justify-between p-12 bg-black/80 text-white overflow-hidden">
+        <div className="relative hidden md:flex flex-col justify-between  p-12 bg-black text-white overflow-hidden">
           <div className="relative z-10">
             <h1 className="font-headline font-black text-4xl uppercase text-primary-container italic leading-none mb-4">
               Join the Hunt

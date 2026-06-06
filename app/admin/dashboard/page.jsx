@@ -310,7 +310,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="bg-background  font-body min-h-screen overflow-x-hidden select-none">
+    <div className="font-body min-h-screen overflow-x-hidden select-none">
       {/* --- Main Content Canvas --- */}
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5  pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         {" "}
@@ -669,7 +669,7 @@ export default function AdminDashboard() {
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setIsDetailsModalOpen(false)}
           ></div>
-          <div className="relative w-full max-w-4xl bg-background border border-white/5 p-6 sm:p-10 rounded-lg animate-scale-in max-h-[95vh] overflow-y-auto scrollbar-hide">
+          <div className="relative w-full max-w-4xl bg-modal-background border border-white/5 p-6 sm:p-10 rounded-lg animate-scale-in max-h-[95vh] overflow-y-auto scrollbar-hide">
             <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
               <div className="flex items-center space-x-3">
                 <span className="material-symbols-outlined text-secondary-container">

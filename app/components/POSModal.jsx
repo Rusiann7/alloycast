@@ -83,7 +83,7 @@ export default function POSModal({
       onClick={isClose}
     >
       <div
-        className="bg-background shadow-lg/30  rounded-lg p-6 max-w-md w-full mx-4"
+        className="bg-modal-background shadow-lg/30  rounded-lg p-6 max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-4">
