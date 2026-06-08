@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import {
   AreaChart,
@@ -22,8 +23,28 @@ import {
   aggregatePipelineCounts,
 } from "../../../helpers/analyticsHelpers";
 import { exportAnnualRevenueToCSV } from "../../../helpers/exportCSVAdminAnalytics";
+import { getDateBounds } from "../../../utils/dateBounds";
+import {
+  calculateChannelRevenues,
+  aggregateRevenueChartData,
+  computeProductStats,
+  aggregateBrandMarketShare,
+  aggregatePipelineCounts,
+} from "../../../helpers/analyticsHelpers";
+import { exportAnnualRevenueToCSV } from "../../../helpers/exportCSVAdminAnalytics";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
+
+const supabase = createClient();
+
+// for market share by brands
+const BRAND_COLORS = [
+  "#10B981", // Green/Emerald (Graph Segment)
+  "#3B82F6", // Blue
+  "#A78BFA", // Violet
+  "#F472B6", // Pink
+  "#06B6D4", // Cyan
+];
 
 const supabase = createClient();
 
@@ -59,10 +80,21 @@ export default function AdminAnalytics() {
   });
 
   const showToast = useCallback((message, type = "error") => {
+  const showToast = useCallback((message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   }, []);
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  }, []);
 
+  // Refactored fetchAllANALytics
+  const fetchAllAnalytics = useCallback(async () => {
+    try {
+      // Reuse utility to get date boundaries
+      const { startDate, endDate } = getDateBounds(dateRange);
+
+      // Fetch Reservation Data
+      const { data: reservationData, error: reservationError } = await supabase
   // Refactored fetchAllANALytics
   const fetchAllAnalytics = useCallback(async () => {
     try {
@@ -79,7 +111,9 @@ export default function AdminAnalytics() {
         .lte("created_at", endDate.toISOString());
 
       if (reservationError) throw reservationError;
+      if (reservationError) throw reservationError;
 
+      // Fetch POS Data
       // Fetch POS Data
       const { data: posData, error: posError } = await supabase
         .from("POS")
@@ -87,6 +121,10 @@ export default function AdminAnalytics() {
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
+      if (posError) throw posError;
+
+      const safeReservations = reservationData || [];
+      const safePOS = posData || [];
       if (posError) throw posError;
 
       const safeReservations = reservationData || [];
@@ -129,9 +167,51 @@ export default function AdminAnalytics() {
       showToast("Error getting analytics data", "error");
     }
   }, [dateRange, showToast]);
+      // Calculate in-store vs booking revenues
+      const {
+        posRevenue: calculatedPOS,
+        approvedReservationRevenue: calculatedApproved,
+      } = calculateChannelRevenues(safePOS, safeReservations);
+      setPosRevenue(calculatedPOS);
+      setApprovedReservationRevenue(calculatedApproved);
+
+      // Aggregate revenue and chart points
+      const { totalRevenue: calculatedTotal, chartData } =
+        aggregateRevenueChartData(safePOS, dateRange);
+      setTotalRevenue(calculatedTotal);
+      setRevenueData(chartData);
+
+      // Process product statistics (Top 6 / Low 6)
+      const { topProducts: tops, lowProducts: lows } = computeProductStats(
+        safeReservations,
+        6,
+      );
+      setTopProducts(tops);
+      setLowProducts(lows);
+
+      // Compute market share brand distribution
+      const brandDistribution = aggregateBrandMarketShare(
+        safeReservations,
+        BRAND_COLORS,
+      );
+      setTopBrands(brandDistribution);
+
+      // Compute status pipeline counters
+      const pipelines = aggregatePipelineCounts(safeReservations);
+      setPipelineCounts(pipelines);
+    } catch (err) {
+      console.error("Error fetching analytics: ", err);
+      showToast("Error getting analytics data", "error");
+    }
+  }, [dateRange, showToast]);
 
   const exportAnnualRevenue = useCallback(async () => {
+  const exportAnnualRevenue = useCallback(async () => {
     try {
+      const currentYear = new Date().getFullYear();
+      const startDate = new Date(currentYear, 0, 1).toISOString();
+      const endDate = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
+
       const currentYear = new Date().getFullYear();
       const startDate = new Date(currentYear, 0, 1).toISOString();
       const endDate = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
@@ -144,7 +224,10 @@ export default function AdminAnalytics() {
 
       if (error) throw error;
       exportAnnualRevenueToCSV(data || [], currentYear);
+      exportAnnualRevenueToCSV(data || [], currentYear);
     } catch (err) {
+      showToast("Failed to export data. Try again later", "error");
+      console.error("Failed to export data: ", err);
       showToast("Failed to export data. Try again later", "error");
       console.error("Failed to export data: ", err);
     }
@@ -178,6 +261,7 @@ export default function AdminAnalytics() {
           </div>
           <div className="relative group">
             <button
+              onClick={exportAnnualRevenue}
               onClick={exportAnnualRevenue}
               className="flex items-center gap-3 bg-primary-container shadow-lg/30 px-6 py-3 border border-white/5 text-black/90  font-bold text-md uppercase tracking-widest hover:scale-105 transition-all rounded-lg group relative overflow-hidden"
             >
