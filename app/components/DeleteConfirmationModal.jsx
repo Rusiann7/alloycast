@@ -34,15 +34,13 @@ const DeleteConfirmationModal = ({
         <div className="p-6 bg-secondary-container drop-shadow-lg/30 rounded-lg">
           <p className="text-white/90 text-md leading-relaxed">
             Are you sure you want to permanently delete{" "}
-            <span className="font-bold text-primary-container">
-              "{itemName}"
-            </span>
+            <span className="font-bold text-primary-container">{itemName}</span>
             ?
           </p>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/5 flex gap-3 justify-end bg-background">
+        <div className="p-6 border-t border-white/5 flex gap-3 justify-end">
           <button
             type="button"
             onClick={onClose}

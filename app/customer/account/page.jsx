@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -45,9 +45,7 @@ const OrderCancellationModal = ({
         <div className="p-6 bg-secondary-container drop-shadow-lg/30 rounded-lg">
           <p className="text-white/90 text-md leading-relaxed">
             Are you sure you want to cancel your reservation for{" "}
-            <span className="font-bold text-primary-container">
-              "{itemName}"
-            </span>
+            <span className="font-bold text-primary-container">{itemName}</span>
             ?
           </p>
         </div>
@@ -164,7 +162,7 @@ export default function Account() {
     };
 
     fetchAccountData();
-  }, []);
+  }, [router, supabase]);
 
   const showLogoutModal = async () => {
     setShowSessionModal(true);
@@ -271,15 +269,18 @@ export default function Account() {
   });
 
   return (
-    <div className="bg-background font-body text-on-surface min-h-screen pt-24 pb-20">
+    <div className="font-body text-on-surface min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-6 lg:px-12 flex flex-col gap-12 lg:gap-20">
         {/* Profile Header */}
         <section className="flex flex-col md:flex-row items-center gap-8 md:gap-12 animate-fade-in pb-12 border-b border-white/5">
           <div className="relative size-32 lg:size-40 rounded-full bg-surface-container-high overflow-hidden border-2 border-primary-container shadow-[0_0_30px_rgba(200,16,46,0.1)] group">
-            <img
+            <Image
               src={`https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=E31837&color=fff`}
               alt="User"
+              width={100}
+              height={10}
               className="w-full h-full object-cover grayscale"
+              loading="lazy"
             />
           </div>
           <div className="text-center md:text-left flex-1">

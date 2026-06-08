@@ -187,39 +187,3 @@ export default function Feedback() {
     </div>
   );
 }
-
-const FilterSection = ({ title, children }) => (
-  <div className="space-y-6">
-    <h3 className="font-headline text-sm font-black uppercase tracking-[0.4em] text-primary-container ">
-      {title}
-    </h3>
-    <div className="flex flex-col gap-4">{children}</div>
-  </div>
-);
-
-const FilterCheckbox = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-4 cursor-pointer group">
-    <div className="relative">
-      <input
-        type="checkbox"
-        checked={checked} // Changed from defaultChecked
-        onChange={onChange} // Added the onChange handler
-        className="appearance-none size-5 border-2 border-primary-container rounded-md checked:bg-primary-container checked:border-primary-container transition-all"
-      />
-      {/* 
-         IMPORTANT: Use 'checked' (not peer-checked) 
-         to show the checkmark icon manually based on state 
-      */}
-      {checked && (
-        <span className="material-symbols-outlined absolute inset-0 text-[14px]  text-black flex items-center justify-center pointer-events-none">
-          check
-        </span>
-      )}
-    </div>
-    <span
-      className={`font-headline text-sm font-black uppercase tracking-widest transition-colors ${checked ? "text-white" : "text-font-color"} group-hover:text-white`}
-    >
-      {label}
-    </span>
-  </label>
-);

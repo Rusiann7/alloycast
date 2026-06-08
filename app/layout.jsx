@@ -33,6 +33,7 @@ export default function RootLayout({ children }) {
           <div className="fixed inset-0 -z-50 w-full min-h-screen pointer-events-auto overflow-hidden">
             <DotGrid
               dotSize={4}
+              className="opacity-25 dark:opacity-40"
               gap={15}
               baseColor="#232116"
               activeColor="#fffd00"
