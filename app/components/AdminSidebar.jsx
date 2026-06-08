@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -48,14 +48,11 @@ const SidebarLink = ({
     </Link>
   );
 };
-  const supabase = createClient(); // para sa logout
+const supabase = createClient(); // para sa logout
 export default function AdminSidebar() {
-  const linkName = usePathname(); // pangkuha ng current link path para lagyan ng style
-  // itatago nito ung navbar sa register at login page ng admin
-  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
-  if (hideNavbarOn.includes(linkName)) return null;
-
   const route = useRouter(); // para sa pang redirect sa admin/auth/login
+  const linkName = usePathname(); // pangkuha ng current link path para lagyan ng style
+
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [adminName, setAdminName] = useState("");
@@ -67,22 +64,28 @@ export default function AdminSidebar() {
     type: "error",
   });
 
+  // itatago nito ung navbar sa register at login page ng admin
+  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
+  if (hideNavbarOn.includes(linkName)) return null;
+
   // merged for collpasing sidebar responsive
   useEffect(() => {
     const handleResize = () => {
       const isMobile = window.innerWidth < 1024;
-      if(isMobile){
+      if (isMobile) {
         document.documentElement.style.setProperty("--sidebar-width", "0rem");
       } else {
-        document.documentElement.style.setProperty("--sidebar-width", isCollapsed ? "5rem": "16rem");
+        document.documentElement.style.setProperty(
+          "--sidebar-width",
+          isCollapsed ? "5rem" : "16rem",
+        );
       }
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
-    return() => window.removeEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize);
   }, [isCollapsed]);
-  
 
   // display admin firstname after every reload
   useEffect(() => {
@@ -91,20 +94,21 @@ export default function AdminSidebar() {
     const getAdminName = async () => {
       try {
         const {
-          data: { user }, error: authError
+          data: { user },
+          error: authError,
         } = await supabase.auth.getUser();
-        
-        if(authError || !user) return;
 
-        const { data, error: dbError} = await supabase
+        if (authError || !user) return;
+
+        const { data, error: dbError } = await supabase
           .from("Admin")
           .select("firstname")
           .eq("user_id", user.id)
           .single();
 
-          if(dbError) throw Error;
+        if (dbError) throw Error;
         // Only update state if the component is still mounted
-        if(isMounted && data){
+        if (isMounted && data) {
           setAdminName(data.firstname || "Shop");
         }
       } catch (error) {
@@ -115,7 +119,7 @@ export default function AdminSidebar() {
     // cleanup function to prevent memory leaks when unmounting
     return () => {
       isMounted = false;
-    }
+    };
   }, []);
 
   const showToast = (message, type = "error") => {
@@ -291,7 +295,7 @@ export default function AdminSidebar() {
             >
               <span className="material-symbols-outlined">logout</span>
               {!isCollapsed && (
-                <span className="font-headline uppercase text-sm text-black/90 font-bold tracking-widest">
+                <span className="font-headline uppercase text-sm font-bold tracking-widest">
                   Logout
                 </span>
               )}

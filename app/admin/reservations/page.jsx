@@ -356,7 +356,7 @@ export default function AdminReservations() {
   }, [dateRange]);
 
   return (
-    <div className="bg-background text-white/90 min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
+    <div className="text-white/90 min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
         message={toast.message}
         type={toast.type}
@@ -375,7 +375,7 @@ export default function AdminReservations() {
 
       <main className="pl-0 pt-24 lg:pt-5 lg:pl-[var(--sidebar-width)] ml-10 px-6 lg:px-8 pb-12 transition-all duration-500">
         {/* Page Header */}
-        <div className="bg-background text-font-color flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
+        <div className="text-font-color flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
           <div className="mb-14 reveal-up">
             <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
               RESERVATIONS
@@ -431,7 +431,7 @@ export default function AdminReservations() {
               className={`pb-5  text-md  font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
                 activeTab === tab
                   ? "text-secondary-container"
-                  : "text-font-color opacity-40 hover:opacity-80"
+                  : "text-font-color opacity-100 hover:opacity-60"
               }`}
             >
               {tab}

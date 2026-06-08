@@ -58,7 +58,7 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
             4. Code of Conduct
           </p>
           <p>
-            No spamming, no sniping (unless it's an auction!), and no toxic
+            No spamming, no sniping unless It&apos;s an auction!, and no toxic
             behavior. Keep it professional, collector.
           </p>
         </div>

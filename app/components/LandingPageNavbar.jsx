@@ -112,7 +112,7 @@ export default function LandingPageNavbar() {
               className="flex lg:hidden items-center justify-center p-2 rounded-full hover:bg-white/10 transition-colors"
               onClick={() => setNavbarOpen(!navbarOpen)}
             >
-              <span className="material-symbols-outlined text-white transition-all duration-300">
+              <span className="material-symbols-outlined text-secondary-container transition-all duration-300">
                 {navbarOpen ? "close" : "menu"}
               </span>
             </button>

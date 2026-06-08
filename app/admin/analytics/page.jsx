@@ -153,10 +153,11 @@ export default function AdminAnalytics() {
   // 5. Run effects when date filters or callback references change
   useEffect(() => {
     fetchAllAnalytics();
-  }, [fetchAllAnalytics]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange]);
 
   return (
-    <div className="bg-background text-font-color min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
+    <div className="text-font-color min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
         message={toast.message}
         type={toast.type}
@@ -164,7 +165,7 @@ export default function AdminAnalytics() {
       />
       {/* --- Main Content --- */}
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
-        <div className="space-y-4 px-10 flex flex-col md:flex-row md:justify-between md:items-end">
+        <div className="space-y-4 flex flex-col md:flex-row md:justify-between md:items-end">
           <div>
             <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
               ANALYTICS
@@ -646,11 +647,4 @@ const StatusCard = ({ border, label, count }) => (
       ORDERS
     </span>
   </div>
-);
-
-const HeatBox = ({ opacity }) => (
-  <div
-    className="w-2.5 h-2.5 bg-primary-container rounded-sm shadow-sm"
-    style={{ opacity }}
-  ></div>
 );

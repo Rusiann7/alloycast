@@ -1,7 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
-import AddProductModal from "../../components/AddProductModal";
-import Toast from "../../components/Toast";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -43,13 +41,8 @@ export default function AdminInventory() {
 
   const supabase = createClient();
 
-  // load products mula sa inventory kada refresh ng page ONCE
-  useEffect(() => {
-    fetchInventoryProduct();
-  }, []);
-
   // kunin mga product sa loob ng Inventory Table
-  const fetchInventoryProduct = async () => {
+  const fetchInventoryProduct = useCallback(async () => {
     try {
       let { data, error } = await supabase
         .from("Inventory")
@@ -65,12 +58,17 @@ export default function AdminInventory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
+
+  // load products mula sa inventory kada refresh ng page ONCE
+  useEffect(() => {
+    fetchInventoryProduct();
+  }, [fetchInventoryProduct]);
 
   // // calculate total stock and inventory count and show in Header
   const totalProductStock = inventory.reduce(
@@ -177,7 +175,7 @@ export default function AdminInventory() {
     }
   };
   return (
-    <div className="bg-background text-white/90 min-h-screen font-body relative overflow-hidden select-none">
+    <div className="text-white/90 min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">

@@ -142,7 +142,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>
-              <h2 className="font-headline font-black text-4xl border-primary-container bg-primary-container p-3 rounded-xl uppercase italic tracking-tight mb-2 text-black/90 text-md drop-shadow-xl/30">
+              <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md drop-shadow-xl/30">
                 Top Selling Products
               </h2>
             </div>
@@ -152,7 +152,7 @@ export default function LandingPage() {
             >
               View More
               <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
-                arrow_forward
+                arrow_right
               </span>
             </button>
           </div>
@@ -170,7 +170,7 @@ export default function LandingPage() {
       </section>
 
       {/* Brands Grid */}
-      <section className="bg-surface-container-low py-12">
+      <section className="py-12">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[

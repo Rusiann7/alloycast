@@ -77,9 +77,9 @@ export default function DataPrivacyModal({ isOpen, onClose, onAgree }) {
             5. Consent
           </p>
           <p>
-            By clicking "I Agree" and checking the Data Privacy box, you
-            explicitly consent to the collection and processing of your personal
-            data for the stated purposes.
+            By clicking &quot;I Agree&quot; and checking the Data Privacy box,
+            you explicitly consent to the collection and processing of your
+            personal data for the stated purposes.
           </p>
         </div>
 
