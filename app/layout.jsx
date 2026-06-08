@@ -1,10 +1,8 @@
 import "./globals.css";
 import { Space_Grotesk, Inter, Rubik } from "next/font/google";
-import { Space_Grotesk, Inter, Rubik } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { ThemeProvider } from "next-themes";
 import ThemeToggle from "./components/ThemeToggle";
-import DotGrid from "./components/DotGrid";
 import DotGrid from "./components/DotGrid";
 
 export const metadata = {
@@ -14,7 +12,6 @@ export const metadata = {
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 const inter = Inter({ subsets: ["latin"] });
-const rubik = Rubik({ subsets: ["latin"], variable: "--font-rubik" });
 const rubik = Rubik({ subsets: ["latin"], variable: "--font-rubik" });
 
 export default function RootLayout({ children }) {
@@ -27,7 +24,6 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body
-        className={`min-h-full flex flex-col ${spaceGrotesk.className} ${inter.className} ${rubik.variable}`}
         className={`min-h-full flex flex-col ${spaceGrotesk.className} ${inter.className} ${rubik.variable}`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark">
