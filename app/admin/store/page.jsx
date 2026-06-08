@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useActionState } from "react";
-import Toast from "../../components/Toast";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -19,7 +18,6 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
   const [scannedBarCode, setScannedBarCode] = useState(null);
-  const [todayCount, setTodayCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState("Annual");
@@ -31,7 +29,6 @@ export default function StorePage() {
   const [activeTab, setActiveTab] = useState("Point of Sales");
 
   const supabase = createClient();
-
   const itemsPerPage = 5;
 
   const transaction = posDB.length;
@@ -41,62 +38,37 @@ export default function StorePage() {
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
-  useEffect(() => {
-    const fetchInventoryProduct = async () => {
-      try {
-        let { data, error } = await supabase
-          .from("Inventory")
-          .select("*")
-          .order("created_at", { ascending: false });
+  // Fetch Inventory Products
+  const fetchInventoryProduct = async () => {
+    try {
+      let { data, error } = await supabase
+        .from("Inventory")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        setInventory(data || []);
-        console.log("Product Fetched successfully");
-      } catch (error) {
-        showToast("Error fetching products from Inventory");
-        console.error(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (error) throw error;
+      setInventory(data || []);
+      console.log("Product Fetched successfully");
+    } catch (error) {
+      showToast("Error fetching products from Inventory");
+      console.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInventoryProduct();
-  }, [fetchInventoryProduct]);
-
-  useEffect(() => {
-    let startDate = new Date();
-
-    startDate.setHours(0, 0, 0, 0);
-
-    const todayCountGetter = async () => {
-      const { count } = await supabase
-        .from("POS")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startDate.toISOString());
-
-      setTodayCount(count || 0);
-    };
-
-    todayCountGetter();
   }, []);
 
-  const totalProductStock = inventory.reduce(
-    (sum, item) => sum + (Number(item.stock) || 0),
-    0,
-  );
-
-  const searchedInventory = inventory.filter((item) =>
-    item.item_name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const totalProducts = searchedInventory.length;
-
-  const fetchPOSData = async (dateRange) => {
+  // Fetch Filtered POS Data
+  const fetchPOSData = useCallback(async (selectedRange) => {
     try {
       const now = new Date();
       let startDate = new Date();
       let endDate = new Date();
 
-      switch (dateRange) {
+      switch (selectedRange) {
         case "Today":
           startDate.setHours(0, 0, 0, 0);
           break;
@@ -113,30 +85,31 @@ export default function StorePage() {
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
         case "Annual":
-          // Set start to Jan 1 of the current year
           startDate = new Date(now.getFullYear(), 0, 1);
           endDate = new Date();
           break;
         default:
           startDate.setDate(now.getDate() - 30);
       }
+
       const { data, error } = await supabase
         .from("POS")
         .select(
           `
-        id,
-        product_id,
-        quantity,
-        created_at, 
-        name,
-        email,
-        Inventory!product_id (
-        id,
-        item_name,
-        brand,
-        item_image,
-        price,
-        category)`,
+          id,
+          product_id,
+          quantity,
+          created_at, 
+          name,
+          email,
+          Inventory!product_id (
+            id,
+            item_name,
+            brand,
+            item_image,
+            price,
+            category
+          )`,
         )
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString())
@@ -145,14 +118,51 @@ export default function StorePage() {
       if (error) throw error;
       setPos(data || []);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching POS records:", error);
     }
-  };
-  fetchPOSData("Annual");
+  }, []);
 
+  // Triggers whenever dateRange state changes, plus on initial component mount
   useEffect(() => {
     fetchPOSData(dateRange);
-  }, [dateRange]);
+  }, [dateRange, fetchPOSData]);
+
+  // Derived Values calculated instantly on every render update
+  const totalProductStock = inventory.reduce(
+    (sum, item) => sum + (Number(item.stock) || 0),
+    0,
+  );
+
+  const searchedInventory = inventory.filter((item) =>
+    item.item_name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const totalProducts = searchedInventory.length;
+
+  // Dynamically computes total earnings for the specific fetched date block
+  const dynamicSalesTotal = posDB.reduce((sum, currentItem) => {
+    const itemPrice = currentItem.Inventory?.price || 0;
+    const quantityCount = currentItem.quantity || 0;
+    return sum + itemPrice * quantityCount;
+  }, 0);
+
+  // Maps state strings to explicit KPI section headings
+  const getDynamicSalesLabel = () => {
+    switch (dateRange) {
+      case "Today":
+        return "Today's Sales";
+      case "Yesterday":
+        return "Yesterday Sales";
+      case "This Week":
+        return "Weekly Sales";
+      case "This Month":
+        return "Monthly Sales";
+      case "Annual":
+        return "Annual Sales";
+      default:
+        return "Total Sales";
+    }
+  };
 
   const exportSalesData = () => {
     try {
@@ -161,13 +171,11 @@ export default function StorePage() {
         return;
       }
 
-      // Build CSV Header
       let csvContent =
         "Transaction ID,Date Purchased,Product Name,Brand,Category,Price (PHP),Quantity,Total Revenue (PHP),Customer Name,Customer Email\n";
 
       let grandTotal = 0;
 
-      // Add Data Rows
       posDB.forEach((pos) => {
         const date = new Date(pos.created_at).toLocaleDateString();
         const productName = `"${pos.Inventory?.item_name || "N/A"}"`;
@@ -184,7 +192,6 @@ export default function StorePage() {
         csvContent += `${pos.id},${date},${productName},${brand},${category},${price},${quantity},${revenue},${custName},${custEmail}\n`;
       });
 
-      // Add Grand Total row
       csvContent += `\n,,,,,,,GRAND TOTAL,${grandTotal}\n`;
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -206,45 +213,37 @@ export default function StorePage() {
     }
   };
 
-  const scannerModal = () => {
-    setScannerOpen(true);
-  };
+  const scannerModal = () => setScannerOpen(true);
 
   const confirmItems = (item) => {
     if (item.stock <= 0) {
       showToast("No Stock In The Inventory", "error");
       return;
     }
-
     setSelectedItem(item);
-
     setIsOpen(true);
   };
 
   const handelScannedBarCode = (decodedText) => {
     setScannedBarCode(decodedText);
     setScannerOpen(false);
-    console.log("Scanned Items: ", decodedText);
     purchaseBarCode(decodedText);
   };
 
-  //sa barcode ito
-  const purchaseBarCode = async (scannedBarCode) => {
+  const purchaseBarCode = async (barcodeData) => {
     try {
       const matchedItem = inventory.find(
-        (item) => item.barcode === parseInt(scannedBarCode),
+        (item) => item.barcode === parseInt(barcodeData),
       );
 
-      console.log(matchedItem?.stock);
-
-      if (!matchedItem) {
-        showToast("Item Not Found In The Inventory", "error");
-        throw new Error();
-      }
-
-      if (matchedItem?.stock === 0) {
-        showToast("No Stock In The Inventory", "error");
-        throw new Error();
+      if (!matchedItem || matchedItem.stock === 0) {
+        showToast(
+          !matchedItem
+            ? "Item Not Found In The Inventory"
+            : "No Stock In The Inventory",
+          "error",
+        );
+        return;
       }
       setSelectedItem(matchedItem);
       setIsOpen(true);
@@ -253,11 +252,10 @@ export default function StorePage() {
     }
   };
 
-  //para ma punta sa reservation
-  const addSales = async (id, formData) => {
+  const addSales = async (productId, formData) => {
     try {
       const { error } = await supabase.from("POS").insert({
-        product_id: id,
+        product_id: productId,
         quantity: formData.quantity,
         name: formData.userName || null,
         email: formData.emailAddr || null,
@@ -267,38 +265,33 @@ export default function StorePage() {
 
       showToast("Successfully Reserved", "success");
       fetchInventoryProduct();
+      fetchPOSData(dateRange); // Refresh POS data view after adding items
     } catch (error) {
       console.log(error);
     }
   };
 
-  //sa button ito
-  const purchaseItems = async (id, formData) => {
+  const purchaseItems = async (productId, formData) => {
     try {
-      const matchedID = inventory.find(
+      const matchedItem = inventory.find(
         (item) => item.id === parseInt(selectedItem.id),
       );
 
-      console.log(matchedID?.stock);
-
-      if (matchedID?.stock === 0) {
+      if (!matchedItem || matchedItem.stock === 0) {
         showToast("No Stock In The Inventory", "error");
-        throw new Error();
+        return;
       }
 
       const { error } = await supabase
         .from("Inventory")
-        .update({ stock: selectedItem.stock - formData.quantity }) // minus 1
+        .update({ stock: selectedItem.stock - formData.quantity })
         .eq("id", selectedItem.id);
 
       if (error) throw error;
 
       setId(selectedItem.id);
-
       addSales(selectedItem.id, formData);
       setIsOpen(false);
-
-      console.log("It works");
     } catch (error) {
       console.log(error);
     }
@@ -344,10 +337,8 @@ export default function StorePage() {
             )}
           </div>
 
-          <div
-            className="flex items-center gap-10 mb-10 overflow-x-auto scrollbar-hide reveal-up border-b border-white/5"
-            style={{ animationDelay: "0.1s" }}
-          >
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-10 mb-10 overflow-x-auto scrollbar-hide reveal-up border-b border-white/5">
             {["Point of Sales", "Reports"].map((tab) => (
               <button
                 key={tab}
@@ -372,10 +363,7 @@ export default function StorePage() {
           {activeTab === "Point of Sales" ? (
             <>
               {/* Search/Filter Bar */}
-              <div
-                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up"
-                style={{ animationDelay: "0.1s" }}
-              >
+              <div className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up">
                 <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
                   <span className="material-symbols-outlined text-xl font-light opacity-80 text-white/90">
                     search
@@ -383,9 +371,7 @@ export default function StorePage() {
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                    }}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="FILTER BY BRAND, SCALE, OR SKU..."
                     className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
                   />
@@ -401,11 +387,8 @@ export default function StorePage() {
                 </button>
               </div>
 
-              {/* Product Table */}
-              <div
-                className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
-                style={{ animationDelay: "0.2s" }}
-              >
+              {/* Product Inventory Table */}
+              <div className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide">
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
                     <tr className=" bg-input-field">
@@ -444,7 +427,6 @@ export default function StorePage() {
                             key={item.id}
                             className="group hover:bg-white/[0.01] transition-all duration-300"
                           >
-                            {/* IMAGE */}
                             <td className="px-8 py-5">
                               <div className="w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative">
                                 <Image
@@ -459,43 +441,31 @@ export default function StorePage() {
                                 />
                               </div>
                             </td>
-
-                            {/* Product Name */}
                             <td className="px-8 py-5 text-center">
                               <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
                                 {item.item_name}
                               </p>
                             </td>
-
-                            {/* Brand */}
                             <td className="px-8 py-5 text-center">
-                              <span className="bg-white/5 border border-white/10 rounded-lg text-white/90 px-2.5 py-1 rounded-lg text-sm font-black tracking-[0.1em]">
+                              <span className="bg-white/5 border border-white/10 rounded-lg text-white/90 px-2.5 py-1 text-sm font-black tracking-[0.1em]">
                                 {item.brand}
                               </span>
                             </td>
-
-                            {/* Category */}
                             <td className="px-8 py-5 text-center">
                               <p className="text-md text-white font-headline uppercase tracking-[0.2em]">
                                 {item.category}
                               </p>
                             </td>
-
-                            {/* Price */}
                             <td className="px-8 py-5 text-center">
                               <p className="text-md font-headline font-bold text-primary-container">
                                 ₱{item.price}
                               </p>
                             </td>
-
-                            {/* Stock */}
                             <td className="px-8 py-5 text-center">
                               <p className="text-md text-white font-headline font-bold">
                                 {item.stock}
                               </p>
                             </td>
-
-                            {/* Actions */}
                             <td className="px-8 py-5">
                               <div className="flex items-center justify-center gap-3">
                                 <button
@@ -527,10 +497,10 @@ export default function StorePage() {
                     )}
                   </tbody>
                 </table>
-                {/* Pagination */}
+
+                {/* Pagination Controls */}
                 <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
                   <div className="flex items-center gap-3">
-                    {/* Previous */}
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                       disabled={currentPage === 1}
@@ -540,13 +510,9 @@ export default function StorePage() {
                         chevron_left
                       </span>
                     </button>
-
-                    {/* Current Page Indicator */}
-                    <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md rounded-lg">
+                    <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black font-black text-md rounded-lg">
                       {currentPage}
                     </button>
-
-                    {/* Next */}
                     <button
                       onClick={() =>
                         setCurrentPage((p) =>
@@ -572,8 +538,8 @@ export default function StorePage() {
             </>
           ) : (
             <div className="space-y-10 reveal-up">
-              {/* Sticky Date Range Control */}
-              <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
+              {/* Dynamic Filter Row Controls */}
+              <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 shadow-lg/30">
                 <div className="grid grid-cols-2 md:flex items-center p-1 rounded-lg border border-primary-container bg-input-field gap-1 md:gap-0 w-full md:w-auto">
                   {[
                     "Today",
@@ -584,10 +550,7 @@ export default function StorePage() {
                   ].map((label, index) => (
                     <button
                       key={label}
-                      onClick={() => {
-                        setDateRange(label);
-                        fetchPOSData(label);
-                      }}
+                      onClick={() => setDateRange(label)} // Modifying state cleanly kicks off fetch useEffect
                       className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
                         index === 4 ? "col-span-2 md:col-span-1" : ""
                       } ${
@@ -601,44 +564,39 @@ export default function StorePage() {
                   ))}
                 </div>
               </div>
-              {/* KPI Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2  gap-6">
-                {[
-                  {
-                    label: "Today's Sales",
-                    value: todayCount,
-                    icon: "payments",
-                    color: "text-green-400",
-                  },
-                  {
-                    label: "Transactions",
-                    value: transaction,
-                    icon: "receipt_long",
-                    color: "text-blue-400",
-                  },
-                ].map((kpi, i) => (
-                  <div
-                    key={i}
-                    className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:scale-105 transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <span
-                        className={`material-symbols-outlined ${kpi.color} text-4xl`}
-                      >
-                        {kpi.icon}
-                      </span>
-                    </div>
-                    <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">
-                      {kpi.label}
-                    </p>
-                    <p className="text-4xl font-headline font-black text-primary-container italic tracking-tighter">
-                      {kpi.value}
-                    </p>
+
+              {/* Dynamic KPI Dashboard View metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:scale-105 transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="material-symbols-outlined text-green-400 text-4xl">
+                      payments
+                    </span>
                   </div>
-                ))}
+                  <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">
+                    {getDynamicSalesLabel()}
+                  </p>
+                  <p className="text-4xl font-headline font-black text-primary-container italic tracking-tighter">
+                    ₱{dynamicSalesTotal.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:scale-105 transition-all">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="material-symbols-outlined text-blue-400 text-4xl">
+                      receipt_long
+                    </span>
+                  </div>
+                  <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">
+                    Transactions
+                  </p>
+                  <p className="text-4xl font-headline font-black text-primary-container italic tracking-tighter">
+                    {transaction}
+                  </p>
+                </div>
               </div>
 
-              {/* Reports Table */}
+              {/* Filtered POS Reports View Logs Table */}
               <div className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide border border-white/5">
                 <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
@@ -670,67 +628,80 @@ export default function StorePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.02]">
-                    {posDB.map((pos) => (
-                      <tr
-                        key={pos.id}
-                        className="group hover:bg-white/[0.01] transition-all duration-300"
-                      >
-                        <td className="px-8 py-5">
-                          <div className="flex items-center justify-center">
-                            <div className="w-32 h-20 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
-                              <Image
-                                src={
-                                  pos.Inventory?.item_image ||
-                                  "/placeholder-car.png"
-                                }
-                                alt={pos.Inventory?.item_name || "Image"}
-                                width={100}
-                                height={100}
-                                className="w-full h-full object-cover filter group-hover:scale-110 transition-all duration-700"
-                                loading="lazy"
-                              />
+                    {posDB.length > 0 ? (
+                      posDB.map((pos) => (
+                        <tr
+                          key={pos.id}
+                          className="group hover:bg-white/[0.01] transition-all duration-300"
+                        >
+                          <td className="px-8 py-5">
+                            <div className="flex items-center justify-center">
+                              <div className="w-32 h-20 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
+                                <Image
+                                  src={
+                                    pos.Inventory?.item_image ||
+                                    "/placeholder-car.png"
+                                  }
+                                  alt={pos.Inventory?.item_name || "Image"}
+                                  width={100}
+                                  height={100}
+                                  className="w-full h-full object-cover filter group-hover:scale-110 transition-all duration-700"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <p className="font-bold text-md tracking-tight uppercase text-primary-container transition-colors">
-                            {pos.Inventory?.item_name}
-                          </p>
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <span className="inline-block px-2.5 py-1 bg-white/5 border border-white/10 text-sm font-black tracking-[0.1em] text-white/90 rounded-lg uppercase">
-                            {pos.Inventory?.brand}
-                          </span>
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
-                            {pos.Inventory?.category}
-                          </p>
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <p className="text-2xl  text-primary-container">
-                            ₱{pos.Inventory?.price * pos.quantity}{" "}
-                            <span className="text-sm text-white/80 italic block">
-                              (₱{pos.Inventory?.price} each)
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <p className="font-bold text-md tracking-tight uppercase text-primary-container">
+                              {pos.Inventory?.item_name}
+                            </p>
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <span className="inline-block px-2.5 py-1 bg-white/5 border border-white/10 text-sm font-black tracking-[0.1em] text-white/90 rounded-lg uppercase">
+                              {pos.Inventory?.brand}
                             </span>
-                          </p>
-                        </td>
-                        <td className="px-8 py-5 text-center font-black text-md tabular-nums text-white">
-                          {pos.quantity}
-                        </td>
-                        <td className="px-8 py-5 text-center">
-                          <p className="font-black text-md text-primary-container tracking-tight uppercase transition-colors">
-                            {pos.name || "Name not provided"}
-                          </p>
-                          <p className="font-body text-sm text-white/80 mt-1 tabular-nums italic">
-                            {pos.email || "Email not provided"}
-                          </p>
-                        </td>
-                        <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest transition-colors">
-                          {new Date(pos.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
+                              {pos.Inventory?.category}
+                            </p>
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <p className="text-2xl text-primary-container">
+                              ₱
+                              {(
+                                pos.Inventory?.price * pos.quantity
+                              ).toLocaleString()}{" "}
+                              <span className="text-sm text-white/80 italic block">
+                                (₱{pos.Inventory?.price} each)
+                              </span>
+                            </p>
+                          </td>
+                          <td className="px-8 py-5 text-center font-black text-md tabular-nums text-white">
+                            {pos.quantity}
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <p className="font-black text-md text-primary-container tracking-tight uppercase">
+                              {pos.name || "Name not provided"}
+                            </p>
+                            <p className="font-body text-sm text-white/80 mt-1 tabular-nums italic">
+                              {pos.email || "Email not provided"}
+                            </p>
+                          </td>
+                          <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest">
+                            {new Date(pos.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="8"
+                          className="px-8 py-12 text-center text-white/60 uppercase text-sm tracking-widest font-bold"
+                        >
+                          No transaction records found for this period.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -745,18 +716,22 @@ export default function StorePage() {
         visible={toast.visible}
       />
 
-      <DynamicPOSModal
-        isOpen={isOpen}
-        isClose={() => setIsOpen(false)}
-        selectedItem={selectedItem}
-        onPurchase={(formData) => purchaseItems(selectedItem?.id, formData)}
-      />
+      {isOpen && selectedItem && (
+        <DynamicPOSModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          item={selectedItem}
+          onConfirm={purchaseItems}
+        />
+      )}
 
-      <DynamicScanner
-        scannerOpen={scannerOpen}
-        scannerClose={() => setScannerOpen(false)}
-        onScan={handelScannedBarCode}
-      />
+      {scannerOpen && (
+        <DynamicScanner
+          isOpen={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onScan={handelScannedBarCode}
+        />
+      )}
     </div>
   );
 }

@@ -91,7 +91,7 @@ function ProductDetail() {
       };
       fetchProduct();
     }
-  }, [productId]);
+  }, [productId, supabase]);
 
   // for redirecting back to landpage if no product exists
   useEffect(() => {
@@ -428,24 +428,28 @@ function ProductDetail() {
                 <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-sm tracking-[0.4em] px-4 py-2  drop-shadow-lg/30 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
                 </span>
-                <h1 className="text-[60px] lg:text-[80px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
+                <h1 className="text-[40px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
                   {product.item_name}
                 </h1>
                 <div className="flex items-center gap-6">
-                  <p className="text-on-surface-variant font-headline font-black tracking-[0.2em] text-lg uppercase flex items-center gap-4 italic">
+                  <p className="text-font-color font-headline font-black tracking-[0.2em] text-lg uppercase flex items-center gap-4 italic">
                     {product.brand} OFFICIAL SERIES
                   </p>
-                  <span>Star ({averageRating})</span>
+                  {averageRating < 1 ? (
+                    <span>(No Rating)</span>
+                  ) : (
+                    <span>Star ({averageRating})</span>
+                  )}
                 </div>
               </div>
               {/* Allocation Telemetry */}
-              <div className=" p-6 rounded-lg carbon-noise relative group">
+              <div className="rounded-lg carbon-noise relative group">
                 <div className="flex justify-between items-end mb-10">
                   <div>
                     <p className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
                       ITEM PRICE:
                     </p>
-                    <p className="text-6xl lg:text-6xl font-headline font-black ext-font-color  tracking-tighter italic tabular-nums">
+                    <p className="text-6xl lg:text-6xl font-headline font-black text-font-color  tracking-tighter italic tabular-nums">
                       ₱{Number(product.price).toLocaleString()}
                     </p>
                   </div>
@@ -646,100 +650,95 @@ function ProductDetail() {
       </main>
       {/* Reservation Confirmation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-md bg-modal-background  border border-white/10 rounded-lg p-6 sm:p-8 md:p-12 text-font-color my-auto shadow-2xl">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
+          {/* Removed mt-10 and adjusted padding to max out at p-6 instead of p-12 */}
+          <div className="relative w-full max-w-md bg-modal-background border border-white/10 rounded-lg p-5 sm:p-6 text-font-color shadow-2xl">
+            {/* Header - Reduced mb */}
+            <div className="flex justify-between items-start mb-4 sm:mb-5">
+              {/* Scaled down the massive heading sizes slightly */}
+              <h2 className="text-xl sm:text-2xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">
                 Confirm Reservation?
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="material-symbols-outlined flex-shrink-0 bg-on-primary text-white/90  rounded-full p-2 transition-colors"
+                className="material-symbols-outlined flex-shrink-0 bg-on-primary text-white/90 rounded-full p-1.5 transition-colors"
                 aria-label="Close reservation modal"
               >
                 close
               </button>
             </div>
 
-            {/* Quantity Section */}
-            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex flex-col items-end">
-              <p className="font-light text-lg sm:text-sm text-font-color leading-relaxed">
-                How many &nbsp;
-                <span className="text-font-color font-bold">
-                  {product.item_name}
-                </span>
-                &nbsp; you want to reserve?
-              </p>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "") {
-                    setQuantity("");
-                    return;
-                  }
-                  const parsed = parseInt(val, 10);
-                  if (isNaN(parsed)) {
-                    setQuantity("");
-                  } else if (parsed > product.stock) {
-                    setQuantity(product.stock);
-                    showToast(
-                      `Quantity capped at maximum available stock (${product.stock})`,
-                      "error",
-                    );
-                  } else if (parsed < 1) {
-                    setQuantity(1);
-                  } else {
-                    setQuantity(parsed);
-                  }
-                }}
-                max={product.stock}
-                min="1"
-                className="w-auto bg-input-field px-4 py-3 sm:py-4 border border-white/10 rounded-lg text-white font-headline text-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
-                placeholder="Enter quantity"
-              />
-              <p className="text-lg sm:text-md text-on-surface-variant/70 font-light">
-                Available stock: {product.stock} units
-              </p>
+            {/* Quantity Section - Tighter spacing */}
+            <div className="space-y-2 mb-4 sm:mb-5 flex flex-col ">
+              <label htmlFor="quantity-input" className="text-sm sm:text-base">
+                Enter amount of items you want to reserve
+              </label>
+              <div className="flex flex-col gap-1.5 items-end w-full sm:w-auto">
+                <input
+                  id="quantity-input"
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setQuantity("");
+                      return;
+                    }
+                    const parsed = parseInt(val, 10);
+                    if (isNaN(parsed)) {
+                      setQuantity("");
+                    } else if (parsed > product.stock) {
+                      setQuantity(product.stock);
+                      showToast(
+                        `Quantity capped at maximum available stock (${product.stock})`,
+                        "error",
+                      );
+                    } else if (parsed < 1) {
+                      setQuantity(1);
+                    } else {
+                      setQuantity(parsed);
+                    }
+                  }}
+                  max={product.stock}
+                  min="1"
+                  className="w-16 bg-input-field border border-white/10 rounded-lg p-3 text-center text-white font-headline text-base focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
+                  placeholder="1"
+                />
+              </div>
+              <p className="text-md ">Available stock: {product.stock} units</p>
             </div>
 
-            {/* Summary Section */}
-            <div className="bg-surface-container-low border border-white/5 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
-              <p className="text-lg sm:text-md uppercase tracking-wider text-on-surface/40 font-headline mb-2">
+            {/* Summary Section - Compact padding and margins */}
+            <div className="border border-primary-container bg-input-field rounded-lg p-3 sm:p-4 mb-4 sm:mb-5">
+              <p className="text-center text-xs uppercase tracking-wider text-primary-container font-headline mb-1.5">
                 Order Summary
               </p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg sm:text-md text-font-color">
-                    Product:
-                  </span>
-                  <span className="text-lg sm:text-md font-bold text-font-color">
+              <div className="space-y-1.5 text-sm sm:text-base">
+                <div className="flex flex-col ">
+                  <span className="text-primary-container">Product:</span>
+                  <p className="text-white/90 truncate max-w-full">
                     {product.item_name}
-                  </span>
+                  </p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-lg sm:text-md text-on-surface-variant">
-                    Quantity:
-                  </span>
-                  <span className="text-lg sm:text-md font-bold text-font-color">
+                  <span className="text-primary-container">Quantity:</span>
+                  <span className="font-bold text-white/90">
                     {quantity || 0} {quantity > 1 ? "units" : "unit"}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-3 sm:space-y-4">
+            {/* Action Buttons - Shaved off large button heights */}
+            <div className="space-y-2">
               <button
-                className="w-full py-4 sm:py-5 md:py-6 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-sm sm:text-base hover:scale-105  transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
+                className="w-full py-2.5 sm:py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
                 onClick={insertReservationToTable}
               >
                 Confirm My Reservation
               </button>
               <button
-                className="w-full py-3 sm:py-4 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-sm sm:text-base text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
+                className="w-full py-2 sm:py-2.5 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-xs sm:text-sm text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancel
