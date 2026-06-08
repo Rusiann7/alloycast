@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../lib/supabase/client";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { AuthFormSkeleton } from "../../../components/Skeleton";
