@@ -1,8 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/client";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
@@ -199,7 +199,7 @@ export default function AdminLoginPage() {
   };
 
   const googleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/admin/auth/callback`,
@@ -236,9 +236,12 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="absolute -bottom-10 -right-20 w-[150%] opacity-20 pointer-events-none transform rotate-[-15deg]">
-            <img
+            <Image
               alt="Car Silhouette"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL-AWm0406EG-1UZke8iuF1oZxcY65Vq6dc_9-A1GnFbAoiFAWnkMBVZgKMgaVRrrRUJYiw4nqzaDQd1xGgpwmcWvsEgj79XUUyMY5S2nZYlyPKfUOAWjiQ526D-dlyERFA5g4vM428anIhTgnebUse3SrzDJ-KFXe1uL4dTXtd2m6zn7W9gdZTxRKoEkXLyJSbUtC_04soQqG8Y9gtrtxozmtOzC2Dn_cxQRGR3D-A3F6oSplCvPXJHKZHEGE26GEuAPJ9owfaUc"
+              src="/auth-image.png"
+              width={500}
+              height={500}
+              loading="lazy"
             />
           </div>
 
@@ -301,7 +304,7 @@ export default function AdminLoginPage() {
             </div>
             <div className="flex flex-col gap-4">
               <p className="text-xs text-white/90 uppercase tracking-widest text-center">
-                Didn't receive the email?{" "}
+                Didn't receive the email?
                 <button
                   type="button"
                   onClick={resendVerification}
@@ -324,10 +327,11 @@ export default function AdminLoginPage() {
                 className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"
                 onClick={googleLogin}
               >
-                <img
-                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                <Image
+                  src="/google-icon.png"
                   alt="Google Logo"
-                  className="w-5 h-5"
+                  width={24}
+                  height={24}
                 />
                 <span className="uppercase text-xs tracking-widest font-black">
                   Sign in with Google

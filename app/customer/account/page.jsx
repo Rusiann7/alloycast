@@ -45,9 +45,7 @@ const OrderCancellationModal = ({
         <div className="p-6 bg-secondary-container drop-shadow-lg/30 rounded-lg">
           <p className="text-white/90 text-md leading-relaxed">
             Are you sure you want to cancel your reservation for{" "}
-            <span className="font-bold text-primary-container">
-              "{itemName}"
-            </span>
+            <span className="font-bold text-primary-container">{itemName}</span>
             ?
           </p>
         </div>

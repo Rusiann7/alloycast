@@ -27,7 +27,7 @@ export async function GET(request) {
     );
 
     const {
-      data: { user },
+      // data: { user },
       error: exchangeError,
     } = await supabase.auth.exchangeCodeForSession(code);
 

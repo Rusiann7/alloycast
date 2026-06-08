@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 
 export async function POST(request) {
   try {
-    const { to_email, customerName, productName, status, reasonCancellation } =
+    const { to_email, customerName, productName, reasonCancellation } =
       await request.json();
 
     // middleman

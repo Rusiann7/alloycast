@@ -24,7 +24,7 @@ const CustomerFooter = () => {
   const closeModal = () => setModalContent(null);
 
   return (
-    <footer className="bg-background py-16 border-t border-secondary-container relative">
+    <footer className="bg-background py-16 border-t border-primary-container hero-border-glow relative">
       <div className="container mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-start gap-12">
         <div className="max-w-[300px]">
           <div className="flex items-center gap-3 text-font-color mb-6">

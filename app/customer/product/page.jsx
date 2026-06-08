@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -15,6 +15,11 @@ const DynamicProductCards = dynamic(
 const DynamicFooter = dynamic(() => import("../../components/CustomerFooter"), {
   ssr: false,
 });
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false,
+});
+
 export default function Product() {
   const [inventory, setInventory] = useState([]);
   const [searchQuery, setSearchQuery] = useState(""); // for searching products
@@ -27,7 +32,19 @@ export default function Product() {
   const itemsPerPage = 20; // product displayed limit per page
   const supabase = createClient();
 
-  const loadInventoryProduct = async () => {
+  //toast
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = useCallback((message, type = "success") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  }, []);
+
+  const loadInventoryProduct = useCallback(async () => {
     setLoading(true); // start loading products
     try {
       let { data, error } = await supabase
@@ -44,11 +61,11 @@ export default function Product() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadInventoryProduct();
-  }, []);
+  }, [loadInventoryProduct]);
 
   const filterBrand = (brandCode) => {
     setSelectedBrands((prev) =>
@@ -247,7 +264,7 @@ export default function Product() {
             {/* Only show pagination if there are products to navigate through */}
             {filteredProducts.length > itemsPerPage && (
               <div className="mt-16 flex items-center justify-center gap-4 reveal-up">
-                <div className="mt-16 flex items-center justify-center gap-4 reveal-up">
+                <div className=" mt-16 flex items-center justify-center bg-primary-container rounded-lg drop-shadow-lg/30 gap-4 reveal-up text-black/90">
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(1, prev - 1))
@@ -260,9 +277,9 @@ export default function Product() {
                     </span>
                   </button>
 
-                  <span className="font-headline font-black text-xs uppercase tracking-widest text-white/40">
+                  <span className="font-headline font-black text-xs uppercase tracking-widest text-black/90">
                     Page {currentPage}{" "}
-                    <span className="text-white/10 mx-2">/</span> {totalPages}
+                    <span className="text-black/90 mx-2">/</span> {totalPages}
                   </span>
 
                   <button
@@ -285,6 +302,14 @@ export default function Product() {
 
       {/* Footer */}
       <DynamicFooter />
+
+      {/* toast */}
+      <DynamicToast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, visible: false }))}
+      />
 
       <style jsx global>{`
         .reveal-up {

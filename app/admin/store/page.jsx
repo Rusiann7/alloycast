@@ -36,6 +36,11 @@ export default function StorePage() {
 
   const transaction = posDB.length;
 
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
   useEffect(() => {
     const fetchInventoryProduct = async () => {
       try {
@@ -55,7 +60,7 @@ export default function StorePage() {
       }
     };
     fetchInventoryProduct();
-  }, []);
+  }, [fetchInventoryProduct]);
 
   useEffect(() => {
     let startDate = new Date();
@@ -85,72 +90,69 @@ export default function StorePage() {
 
   const totalProducts = searchedInventory.length;
 
-  useEffect(() => {
-    const fetchPOSData = async (dateRange) => {
-      try {
-        const now = new Date();
-        let startDate = new Date();
-        let endDate = new Date();
+  const fetchPOSData = async (dateRange) => {
+    try {
+      const now = new Date();
+      let startDate = new Date();
+      let endDate = new Date();
 
-        switch (dateRange) {
-          case "Today":
-            startDate.setHours(0, 0, 0, 0);
-            break;
-          case "Yesterday":
-            startDate.setDate(now.getDate() - 1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(startDate);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-          case "This Week":
-            startDate.setDate(now.getDate() - 7);
-            break;
-          case "This Month":
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          case "Annual":
-            // Set start to Jan 1 of the current year
-            startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = new Date();
-            break;
-          default:
-            startDate.setDate(now.getDate() - 30);
-        }
-        const { data, error } = await supabase
-          .from("POS")
-          .select(
-            `
-          id,
-          product_id,
-          quantity,
-          created_at, 
-          name,
-          email,
-          Inventory!product_id (
-          id,
-          item_name,
-          brand,
-          item_image,
-          price,
-          category)`,
-          )
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString())
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setPos(data || []);
-      } catch (error) {
-        console.log(error);
+      switch (dateRange) {
+        case "Today":
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case "Yesterday":
+          startDate.setDate(now.getDate() - 1);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(startDate);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case "This Week":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "This Month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case "Annual":
+          // Set start to Jan 1 of the current year
+          startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date();
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
       }
-    };
-    fetchPOSData("Annual");
-  }, []);
+      const { data, error } = await supabase
+        .from("POS")
+        .select(
+          `
+        id,
+        product_id,
+        quantity,
+        created_at, 
+        name,
+        email,
+        Inventory!product_id (
+        id,
+        item_name,
+        brand,
+        item_image,
+        price,
+        category)`,
+        )
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString())
+        .order("created_at", { ascending: false });
 
-  const showToast = (message, type = "error") => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+      if (error) throw error;
+      setPos(data || []);
+    } catch (error) {
+      console.log(error);
+    }
   };
+  fetchPOSData("Annual");
+
+  useEffect(() => {
+    fetchPOSData(dateRange);
+  }, [dateRange]);
 
   const exportSalesData = () => {
     try {
@@ -303,7 +305,7 @@ export default function StorePage() {
   };
 
   return (
-    <div className="bg-background text-font-color min-h-screen font-body relative overflow-hidden select-none">
+    <div className="text-font-color min-h-screen font-body relative overflow-hidden select-none">
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
@@ -356,7 +358,7 @@ export default function StorePage() {
                 className={`pb-5 text-md font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
                   activeTab === tab
                     ? "text-secondary-container opacity-100"
-                    : "text-font-color opacity-40 hover:opacity-80"
+                    : "text-font-color opacity-100 hover:opacity-60"
                 }`}
               >
                 {tab}

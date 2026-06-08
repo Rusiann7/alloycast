@@ -79,7 +79,7 @@ export default function AdminCustomers() {
   };
 
   return (
-    <div className="bg-background text-white/90 min-h-screen font-body relative overflow-hidden select-none">
+    <div className=" text-font-color min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">
@@ -106,7 +106,7 @@ export default function AdminCustomers() {
                 <span className="material-symbols-outlined text-lg">
                   person_add
                 </span>
-                <span>Register New Admin</span>
+                <span>Register New Admin?</span>
               </Link>
             </div>
           </div>

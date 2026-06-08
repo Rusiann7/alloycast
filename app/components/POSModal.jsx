@@ -91,47 +91,52 @@ export default function POSModal({
             {selectedItem?.item_name}
           </h1>
           <div className="flex flex-col gap-1">
-            <p className="text-lg font-bold text-font-color">
-              Price:{" "}
-              <span className="text-font-color">₱{selectedItem?.price}</span>
-            </p>
-            <p className="text-lg font-bold text-font-color">
+            <div>
+              <p className="text-lg font-bold text-font-color">
+                Price:{" "}
+                <span className="text-font-color">₱{selectedItem?.price}</span>
+              </p>
+            </div>
+            <div className="flex justify-between">
               <label htmlFor="">Quantity: </label>
               <input
                 type="number"
-                placeholder="Enter Quantity"
-                className="bg-input-field text-white/90 p-2 rounded-lg"
+                placeholder="1"
+                className="w-15 bg-input-field text-white/90 p-2 rounded-lg text-center"
                 value={quantity}
                 onChange={handleQuantityChange}
               />
-
-              <label htmlFor="" className="ml-2">
-                Available Stocks:{" "}
-              </label>
+            </div>
+            <div>
+              <label htmlFor="">Available Stocks: </label>
               <span className="text-font-color">{selectedItem?.stock}</span>
-            </p>
+            </div>
 
-            <label className="text-font-color text-lg mt-2">
-              Customer Name (Optional):
-            </label>
-            <input
-              type="text"
-              placeholder="John Doe..."
-              className="bg-input-field text-white/90 p-2 rounded-lg"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
+            <div>
+              <label className="text-font-color text-lg mt-2">
+                Customer Name (Optional):
+              </label>
+              <input
+                type="text"
+                placeholder="John Doe..."
+                className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+              />
+            </div>
 
-            <label className="text-font-color text-lg mt-2">
-              Customer Email (Optional):
-            </label>
-            <input
-              type="email"
-              placeholder="johndoe@gmail.com"
-              className="bg-input-field text-white/90 p-2 rounded-lg"
-              value={emailAddr}
-              onChange={(e) => setEmailAddr(e.target.value)}
-            />
+            <div>
+              <label className="text-font-color text-lg mt-2">
+                Customer Email (Optional):
+              </label>
+              <input
+                type="email"
+                placeholder="johndoe@gmail.com"
+                className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                value={emailAddr}
+                onChange={(e) => setEmailAddr(e.target.value)}
+              />
+            </div>
           </div>
           <div className="flex gap-3 mt-4">
             <button
