@@ -14,7 +14,6 @@ export default function POSModal({
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [stockCheck, setStockCheck] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -68,13 +67,6 @@ export default function POSModal({
     setQuantity(1);
   };
 
-  useEffect(() => {
-    if (selectedItem?.stock !== undefined && quantity > selectedItem.stock) {
-      setStockCheck(true); // over stock limit
-    } else {
-      setStockCheck(false);
-    }
-  }, [quantity, selectedItem]);
   if (!isOpen) return null;
 
   return (

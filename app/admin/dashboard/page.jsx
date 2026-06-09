@@ -13,6 +13,7 @@ import {
 import emailjs from "@emailjs/browser";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { KPICardSkeleton, TableSkeleton } from "../../components/Skeleton";
 
 // Import  new helper & utility functions
 import { getDateBounds } from "../../../utils/dateBounds";
@@ -337,46 +338,55 @@ export default function AdminDashboard() {
           </div>
         </div>
         {/* KPI Bento Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KPICard
-            icon="bookmark_manager"
-            label="Total Reservations"
-            value={data.totalReservations.toLocaleString()}
-            delay="0.1s"
-            onClick={() => router.push("/admin/reservations")}
-          />
-          <KPICard
-            icon="pending_actions"
-            label="Pending Review"
-            value={data.pendingReservations.toLocaleString()}
-            onClick={() => router.push("/admin/reservations")}
-          />
-          <KPICard
-            icon="payments"
-            label="POS Revenue"
-            value={`₱${totalRevenue.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`}
-            onClick={() => router.push("/admin/analytics")}
-          />
-          <KPICard
-            icon="warning"
-            label="Critical Stock"
-            value={data.criticalStockCount.toString().padStart(2, "0")}
-            trend={
-              data.criticalStockCount > 0 ? "Urgent Restock" : "Enough Stock"
-            }
-            trendColor={
-              data.criticalStockCount > 0
-                ? "text-primary-container"
-                : "text-green-500"
-            }
-            delay="0.4s"
-            badge={data.criticalStockCount > 0 ? "Urgent" : null}
-            onClick={() => setIsStockModalOpen(true)}
-          />
-        </div>
+        {data.loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <KPICard
+              icon="bookmark_manager"
+              label="Total Reservations"
+              value={data.totalReservations.toLocaleString()}
+              delay="0.1s"
+              onClick={() => router.push("/admin/reservations")}
+            />
+            <KPICard
+              icon="pending_actions"
+              label="Pending Review"
+              value={data.pendingReservations.toLocaleString()}
+              onClick={() => router.push("/admin/reservations")}
+            />
+            <KPICard
+              icon="payments"
+              label="POS Revenue"
+              value={`₱${totalRevenue.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`}
+              onClick={() => router.push("/admin/analytics")}
+            />
+            <KPICard
+              icon="warning"
+              label="Critical Stock"
+              value={data.criticalStockCount.toString().padStart(2, "0")}
+              trend={
+                data.criticalStockCount > 0 ? "Urgent Restock" : "Enough Stock"
+              }
+              trendColor={
+                data.criticalStockCount > 0
+                  ? "text-primary-container"
+                  : "text-green-500"
+              }
+              delay="0.4s"
+              badge={data.criticalStockCount > 0 ? "Urgent" : null}
+              onClick={() => setIsStockModalOpen(true)}
+            />
+          </div>
+        )}
         {/* Primary Data Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div
@@ -438,9 +448,13 @@ export default function AdminDashboard() {
 
             {/* Chart Area - Responsive Height */}
             <div className="h-[250px] sm:h-[300px] lg:h-[400px] w-full relative mt-4">
-              {!revenueData ||
-              revenueData.length === 0 ||
-              totalRevenue === 0 ? (
+              {data.loading ? (
+                <div className="h-full w-full bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-container/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                </div>
+              ) : !revenueData ||
+                revenueData.length === 0 ||
+                totalRevenue === 0 ? (
                 <div className="h-full w-full flex items-center justify-center text-white/60 uppercase font-black tracking-widest">
                   No available data on this category
                 </div>
@@ -551,77 +565,82 @@ export default function AdminDashboard() {
                 View All Reservations
               </button>
             </div>
-            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
-              <table className="w-full text-left min-w-[700px] text-white/90">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
-                      Timestamp
-                    </th>
-                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
-                      Item
-                    </th>
-                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
-                      Action
-                    </th>
-                    <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
-                      Status
-                    </th>
-                    <th className="px-6 py-5 border-primary-container border-b-2  text-sm text-center font-headline font-bold uppercase tracking-widest">
-                      Reference
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/5">
-                  {recentActivities.length > 0 ? (
-                    recentActivities.map((activity) => (
-                      <TableRow
-                        key={activity.id}
-                        onClick={() => {
-                          setActiveReservation(activity);
-                          setIsDetailsModalOpen(true);
-                        }}
-                        date={new Date(activity.created_at)
-                          .toLocaleDateString("en-CA")
-                          .replace(/-/g, ".")}
-                        time={new Date(activity.created_at).toLocaleTimeString(
-                          [],
-                          {
+            {data.loading ? (
+              <div className="p-6">
+                <TableSkeleton rows={5} columns={5} />
+              </div>
+            ) : (
+              <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/10">
+                <table className="w-full text-left min-w-[700px] text-white/90">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
+                        Timestamp
+                      </th>
+                      <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
+                        Item
+                      </th>
+                      <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
+                        Action
+                      </th>
+                      <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
+                        Status
+                      </th>
+                      <th className="px-6 py-5 border-primary-container border-b-2  text-sm text-center font-headline font-bold uppercase tracking-widest">
+                        Reference
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/5">
+                    {recentActivities.length > 0 ? (
+                      recentActivities.map((activity) => (
+                        <TableRow
+                          key={activity.id}
+                          onClick={() => {
+                            setActiveReservation(activity);
+                            setIsDetailsModalOpen(true);
+                          }}
+                          date={new Date(activity.created_at)
+                            .toLocaleDateString("en-CA")
+                            .replace(/-/g, ".")}
+                          time={new Date(
+                            activity.created_at,
+                          ).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                             second: "2-digit",
                             hour12: false,
-                          },
-                        )}
-                        item={activity.Inventory?.item_name || "Unknown Item"}
-                        action="Reservation Order"
-                        status={activity.status}
-                        statusColor={
-                          activity.status === "Approved"
-                            ? "bg-green-400 text-black/90"
-                            : activity.status === "Pending"
-                              ? "bg-primary-container/10 text-primary-container"
-                              : activity.status === "Cancelled"
-                                ? "bg-on-primary text-white/90 "
-                                : "bg-on-primary text-white/90 "
-                        }
-                        refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
-                        img={activity.Inventory?.item_image}
-                      />
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="5"
-                        className="p-10 text-center opacity-20 uppercase text-sm font-black tracking-widest"
-                      >
-                        No Recent Activity
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          })}
+                          item={activity.Inventory?.item_name || "Unknown Item"}
+                          action="Reservation Order"
+                          status={activity.status}
+                          statusColor={
+                            activity.status === "Approved"
+                              ? "bg-green-400 text-black/90"
+                              : activity.status === "Pending"
+                                ? "bg-primary-container/10 text-primary-container"
+                                : activity.status === "Cancelled"
+                                  ? "bg-on-primary text-white/90 "
+                                  : "bg-on-primary text-white/90 "
+                          }
+                          refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
+                          img={activity.Inventory?.item_image}
+                        />
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="p-10 text-center opacity-20 uppercase text-sm font-black tracking-widest"
+                        >
+                          No Recent Activity
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div

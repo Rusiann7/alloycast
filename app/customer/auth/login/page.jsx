@@ -6,6 +6,7 @@ import Link from "next/link";
 import Toast from "../../../components/Toast";
 import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
+import { AuthFormSkeleton } from "../../../components/Skeleton";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
 const DynamicForgotPasswordModal = dynamic(
@@ -30,11 +31,20 @@ function LoginContent() {
   });
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [isNewOpen, setIsNewOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const timeoutRef = useRef(null);
 
   const router = useRouter();
   const searchParams = useSearchParams(); // for capturing clicked product url and id
   const supabase = createClient();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      await supabase.auth.getSession();
+      setLoading(false);
+    };
+    checkSession();
+  }, [supabase.auth]);
 
   // const redirectTo = searchParams.get("redirectTo") || "/customer/dashboard"; // gets the redirect path from capturedCurrentPath in productDetail
 
@@ -173,6 +183,11 @@ function LoginContent() {
         type={toast.type}
         visible={toast.visible}
       />
+      {loading ? (
+        <div className="w-full max-w-4xl">
+          <AuthFormSkeleton />
+        </div>
+      ) : (
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 border border-primary-container hero-border-glow bg-surface-container-high rounded-lg  overflow-hidden  shadow-lg/30 animate-fade-in">
         {/* Left Side: Branding/Visual */}
         <div className="relative hidden md:flex flex-col justify-between  p-12 bg-black text-white overflow-hidden">
@@ -301,6 +316,7 @@ function LoginContent() {
           </div>
         </div>
       </div>
+      )}
       <DynamicForgotPasswordModal
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}

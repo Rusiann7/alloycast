@@ -6,6 +6,7 @@ import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { TableSkeleton } from "../../components/Skeleton";
 
 const DynamicOrderStatusConfirmationModal = dynamic(
   () => import("../../components/OrderStatusConfirmationModal"),
@@ -22,6 +23,7 @@ export default function AdminReservations() {
   const [reservationDB, setReservationDB] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [toast, setToast] = useState({
     visible: false,
@@ -67,7 +69,7 @@ export default function AdminReservations() {
             id: reservation.id,
             customer: matchCustomer
               ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
-              : "Unknown Customer",
+              : "Details Not Provided",
             customer_email: reservation.Users?.email,
             item_name: reservation.Inventory?.item_name,
             brand: reservation.Inventory?.brand || "Unkownd Brand",
@@ -94,6 +96,7 @@ export default function AdminReservations() {
         });
         setReservation(mergedTables);
       }
+      setLoading(false);
     };
     fetchTableData();
   }, []);
@@ -449,166 +452,172 @@ export default function AdminReservations() {
             className="bg-secondary-container rounded-lg shadow-lg/30 overflow-hidden reveal-up"
             style={{ animationDelay: "0.3s" }}
           >
-            <div className="overflow-x-auto ">
-              <table className="w-full text-left border-collapse">
-                <thead className="text-center">
-                  <tr className="bg-input-field">
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Customer Details
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Product Image
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Product Name
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Product Brand
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Quantity
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Date Reserved
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Status
-                    </th>
-                    <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.02]">
-                  {reservation
-                    .filter((res) =>
-                      activeTab === "All Items"
-                        ? true
-                        : res.status === activeTab,
-                    )
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )
-                    .map((res) => (
-                      <tr
-                        key={res.id}
-                        className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer ${activeReservation?.id === res.id ? "bg-primary-container/[0.03] border-l-4 border-l-primary-container" : "border-l-4 border-l-transparent"}`}
-                      >
-                        <td className="p-6">
-                          <p className="font-black text-md tracking-tight uppercase group-hover:text-primary-container transition-colors">
-                            {res.customer}
-                          </p>
-                          <p className="font-body text-md text-white mt-1 tabular-nums italic">
-                            {res.email}
-                          </p>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex items-center  gap-4">
-                            <div className="w-auto h-30 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
-                              <Image
-                                src={res.img}
-                                alt={res.model || "Product Model Image"}
-                                width={100}
-                                height={100}
-                                className="w-xs h-full object-cover filter group-hover:scale-110 transition-all duration-700"
-                                loading="lazy"
-                              />
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex items-center  gap-4">
-                            <p className=" font-bold text-md tracking-tight uppercase">
-                              {res.item_name}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <div>
-                            <span className="inline-block px-2 py-0.5 bg-white/[0.03] text-md font-black border border-white/[0.05] text-white mt-1.5 uppercase tracking-widest">
-                              {res.brand}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="p-6 text-center font-black text-md tabular-nums  ">
-                          {res.qty}
-                        </td>
-                        <td className="p-6 text-md font-black text-white uppercase tracking-widest  transition-colors ">
-                          {res.date}
-                        </td>
-                        <td className="p-6">
-                          <span
-                            className={`inline-flex items-center gap-3 px-4 py-2 ${res.statusColor} text-md font-black uppercase tracking-widest rounded-lg border`}
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full ${res.statusDot} animate-pulse`}
-                            ></span>
-                            {res.status}
-                          </span>
-                        </td>
-                        {/* --- ACTION COLUMN --- */}
-                        <td
-                          className="p-6 text-right"
-                          onClick={(e) => e.stopPropagation()}
+            {loading ? (
+              <div className="p-6">
+                <TableSkeleton columns={8} rows={5} />
+              </div>
+            ) : (
+              <div className="overflow-x-auto ">
+                <table className="w-full text-left border-collapse">
+                  <thead className="text-center">
+                    <tr className="bg-input-field border-b border-primary-container">
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Customer Details
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Product Image
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Product Name
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Product Brand
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Quantity
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Date Reserved
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Status
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.02]">
+                    {reservation
+                      .filter((res) =>
+                        activeTab === "All Items"
+                          ? true
+                          : res.status === activeTab,
+                      )
+                      .slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )
+                      .map((res) => (
+                        <tr
+                          key={res.id}
+                          className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer border-b border-primary-container`}
                         >
-                          <div className="flex items-center justify-center gap-2">
-                            {/* Status Update Action Dropdown */}
-                            <div className="flex text-center gap-2">
-                              {/* --- Approve Button --- */}
-                              <button
-                                className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
-                                disabled={
-                                  res.status === "Approved" ||
-                                  res.status === "Declined"
-                                }
-                                onClick={() =>
-                                  handleActionClick(
-                                    res.id,
-                                    "Approved",
-                                    res.customer_email,
-                                    res.customer,
-                                    res.item_name,
-                                  )
-                                }
-                                title="Approve Reservation"
-                              >
-                                <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
-                                  check
-                                </span>
-                              </button>
-
-                              {/* --- Reject Button --- */}
-                              <button
-                                className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
-                                disabled={
-                                  res.status === "Approved" ||
-                                  res.status === "Declined"
-                                }
-                                onClick={() =>
-                                  handleActionClick(
-                                    res.id,
-                                    "Declined",
-                                    res.customer_email,
-                                    res.customer,
-                                    res.item_name,
-                                  )
-                                }
-                                title="Decline Reservation"
-                              >
-                                <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
-                                  close
-                                </span>
-                              </button>
+                          <td className="p-6">
+                            <p className="font-black text-md tracking-tight uppercase group-hover:text-primary-container transition-colors">
+                              {res.customer || "Details Not Provided"}
+                            </p>
+                            <p className="font-body text-md text-white mt-1 tabular-nums italic">
+                              {res.email}
+                            </p>
+                          </td>
+                          <td className="p-6">
+                            <div className="flex items-center  gap-4">
+                              <div className="w-auto h-30 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
+                                <Image
+                                  src={res.img}
+                                  alt={res.model || "Product Model Image"}
+                                  width={100}
+                                  height={100}
+                                  className="w-xs h-full object-cover filter group-hover:scale-110 transition-all duration-700"
+                                  loading="lazy"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
+                          </td>
+                          <td className="p-6">
+                            <div className="flex items-center  gap-4">
+                              <p className=" font-bold text-md tracking-tight uppercase">
+                                {res.item_name}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-6">
+                            <div>
+                              <span className="inline-block px-2 py-0.5 bg-white/[0.03] text-md font-black border border-white/[0.05] text-white mt-1.5 uppercase tracking-widest">
+                                {res.brand}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-6 text-center font-black text-md tabular-nums  ">
+                            {res.qty}
+                          </td>
+                          <td className="p-6 text-md font-black text-white uppercase tracking-widest  transition-colors ">
+                            {res.date}
+                          </td>
+                          <td className="p-6">
+                            <span
+                              className={`inline-flex items-center gap-3 px-4 py-2 ${res.statusColor} text-md font-black uppercase tracking-widest rounded-lg border`}
+                            >
+                              <span
+                                className={`w-2 h-2 rounded-full ${res.statusDot} animate-pulse`}
+                              ></span>
+                              {res.status}
+                            </span>
+                          </td>
+                          {/* --- ACTION COLUMN --- */}
+                          <td
+                            className="p-6 text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              {/* Status Update Action Dropdown */}
+                              <div className="flex text-center gap-2">
+                                {/* --- Approve Button --- */}
+                                <button
+                                  className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
+                                  disabled={
+                                    res.status === "Approved" ||
+                                    res.status === "Declined"
+                                  }
+                                  onClick={() =>
+                                    handleActionClick(
+                                      res.id,
+                                      "Approved",
+                                      res.customer_email,
+                                      res.customer,
+                                      res.item_name,
+                                    )
+                                  }
+                                  title="Approve Reservation"
+                                >
+                                  <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
+                                    check
+                                  </span>
+                                </button>
+
+                                {/* --- Reject Button --- */}
+                                <button
+                                  className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                                  disabled={
+                                    res.status === "Approved" ||
+                                    res.status === "Declined"
+                                  }
+                                  onClick={() =>
+                                    handleActionClick(
+                                      res.id,
+                                      "Declined",
+                                      res.customer_email,
+                                      res.customer,
+                                      res.item_name,
+                                    )
+                                  }
+                                  title="Decline Reservation"
+                                >
+                                  <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
+                                    close
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="flex items-center justify-center p-8 bg-[#131313]/50 ">
               <div className="flex items-center gap-3">
                 {/* Pagination Controls */}
                 <div className="flex gap-2">

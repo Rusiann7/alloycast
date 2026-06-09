@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Toast from "../../../components/Toast";
@@ -8,6 +8,7 @@ import TermsModal from "../../../components/TermsModal";
 import DataPrivacyModal from "../../../components/DataPrivacyModal";
 import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
+import { AuthFormSkeleton } from "../../../components/Skeleton";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"), {
   ssr: false,
@@ -53,6 +54,15 @@ export default function RegisterPage() {
     message: "",
     type: "error",
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      await supabase.auth.getSession();
+      setLoading(false);
+    };
+    checkSession();
+  }, [supabase.auth]);
 
   function getRandomString(n) {
     const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -227,6 +237,11 @@ export default function RegisterPage() {
         }}
       />
 
+      {loading ? (
+        <div className="w-full max-w-4xl">
+          <AuthFormSkeleton />
+        </div>
+      ) : (
       <div className="max-w-4xl min-h-screen w-full grid grid-cols-1 md:grid-cols-2 border border-primary-container hero-border-glow bg-background rounded-xl overflow-hidden  shadow-2xl animate-fade-in">
         {/* Left Side: Branding/Visual */}
         <div className="relative hidden md:flex flex-col justify-between p-12 bg-black text-white overflow-hidden">
@@ -485,6 +500,7 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
