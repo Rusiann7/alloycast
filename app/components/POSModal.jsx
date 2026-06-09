@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("./Toast"));
 
 export default function POSModal({
   isOpen,
-  isClose,
+  onClose,
   selectedItem,
   onPurchase,
 }) {
@@ -67,20 +67,10 @@ export default function POSModal({
     setEmailAddr("");
     setQuantity(1);
   };
-
-  useEffect(() => {
-    if (selectedItem?.stock !== undefined && quantity > selectedItem.stock) {
-      setStockCheck(true); // over stock limit
-    } else {
-      setStockCheck(false);
-    }
-  }, [quantity, selectedItem]);
-  if (!isOpen) return null;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
-      onClick={isClose}
+      onClick={onClose}
     >
       <div
         className="bg-modal-background shadow-lg/30  rounded-lg p-6 max-w-md w-full mx-4"
@@ -140,7 +130,7 @@ export default function POSModal({
           </div>
           <div className="flex gap-3 mt-4">
             <button
-              onClick={isClose}
+              onClick={onClose}
               className="flex-1 py-2 shadow-lg/30 bg-secondary-container rounded-lg text-white text-md font-bold hover:scale-105 transition-all"
             >
               Cancel

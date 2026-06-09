@@ -720,7 +720,7 @@ export default function StorePage() {
         <DynamicPOSModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
-          item={selectedItem}
+          selectedItem={selectedItem}
           onConfirm={purchaseItems}
         />
       )}
