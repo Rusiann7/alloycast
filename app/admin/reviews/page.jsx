@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 
@@ -15,8 +14,6 @@ const DynamicDeleteConfirmationModal = dynamic(
 );
 
 export default function FeedbackPage() {
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [commentDB, setCommentDB] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -65,7 +62,7 @@ export default function FeedbackPage() {
       await getCommentsAuto();
     };
     fetchComments();
-  }, []);
+  }, [getCommentsAuto]);
 
   const confirmDeleteReview = async () => {
     if (!itemToDelete) return;

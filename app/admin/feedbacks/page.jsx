@@ -39,6 +39,7 @@ export default function FeedbackPage() {
         console.log("Feedback Reloaded!");
       } catch (error) {
         showToast("Error loading feedbacks.", "error");
+        console.log(error);
       }
     };
     getFeedback();

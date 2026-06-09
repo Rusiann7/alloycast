@@ -154,10 +154,13 @@ function ProductDetail() {
 
   //fella this shyte works the clear functons
   useEffect(() => {
-    getComments(productId);
-    setComment("");
-    setRating(0);
-  }, [productId]);
+    const initializeFunction = async () => {
+      getComments(productId);
+      setComment("");
+      setRating(0);
+    };
+    initializeFunction();
+  }, [getComments, productId]);
 
   useEffect(() => {
     if (!user || !productId) return;
@@ -179,7 +182,7 @@ function ProductDetail() {
     };
 
     checkReservationStatus();
-  }, [user, productId]);
+  }, [user, productId, supabase]);
 
   useEffect(() => {
     if (!user) return;
@@ -387,7 +390,7 @@ function ProductDetail() {
   }
 
   return (
-    <div className="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white min-h-screen">
+    <div className="font-body selection:bg-primary-container selection:text-white min-h-screen">
       <DynamicToast
         message={toast.message}
         type={toast.type}
@@ -396,24 +399,28 @@ function ProductDetail() {
       <main className="pt-24 lg:pt-32 min-h-screen">
         <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 px-6 lg:px-12 pb-24">
           {/* Left Column: Image Display */}
-          <div className="md:sticky md:top-32 h-fit space-y-8 reveal-up ">
-            <div className="relative aspect-square bg-white rounded-lg overflow-hidden display-case-lighting group shadow-lg/50">
-              <div className="absolute inset-0 carbon-noise opacity-30 pointer-events-none"></div>
+          <div className=" h-fit space-y-4 reveal-up">
+            <div className="relative w-full h-auto max-h-[450px] border-2 border-primary-container hero-border-glow  rounded-lg overflow-hidden display-case-lighting group shadow-lg/50 flex items-center justify-center">
+              <div className="absolute inset-0 carbon-noise opacity-30 pointer-events-none z-10"></div>
               <Image
                 alt={product.item_name}
-                className="w-full h-full object-contain  p-12 transition-transform duration-1000 group-hover:scale-110"
+                className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-110"
                 src={product.item_image}
-                fill
+                width={800}
+                height={450}
                 priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw" // 4. Add sizes for better optimization
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 85vw"
               />
+
               {/* Dynamic Tag based on category */}
-              <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
-                <span className="bg-primary-container text-black font-headline font-black text-lg px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
+              <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+                {" "}
+                {/* Tightened positions from 8 to 4 */}
+                <span className="bg-primary-container text-black font-headline font-black text-sm px-3 py-1.5 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
                   {product.category || "PREMIUM SELECTION"}
                 </span>
                 {product.stock < 5 && (
-                  <span className="bg-on-primary text-white font-headline font-black text-[10px] px-4 py-2 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
+                  <span className="bg-on-primary text-white font-headline font-black text-[10px] px-3 py-1.5 uppercase tracking-tighter shadow-2xl skew-x-[-12deg]">
                     LOW STOCK ALERT
                   </span>
                 )}

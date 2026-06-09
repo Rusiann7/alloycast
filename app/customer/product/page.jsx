@@ -61,10 +61,13 @@ export default function Product() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast, supabase]);
 
   useEffect(() => {
-    loadInventoryProduct();
+    const initializeFunction = async () => {
+      loadInventoryProduct();
+    };
+    initializeFunction();
   }, [loadInventoryProduct]);
 
   const filterBrand = (brandCode) => {
