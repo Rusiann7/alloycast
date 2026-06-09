@@ -74,6 +74,11 @@ export default function AdminInventory() {
     intializeFunction();
   }, [fetchInventoryProduct]);
 
+  // load products mula sa inventory kada refresh ng page ONCE
+  useEffect(() => {
+    fetchInventoryProduct();
+  }, [fetchInventoryProduct]);
+
   // // calculate total stock and inventory count and show in Header
   const totalProductStock = inventory.reduce(
     (sum, item) => sum + (Number(item.stock) || 0),
