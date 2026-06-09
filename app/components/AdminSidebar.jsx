@@ -64,10 +64,6 @@ export default function AdminSidebar() {
     type: "error",
   });
 
-  // itatago nito ung navbar sa register at login page ng admin
-  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
-  if (hideNavbarOn.includes(linkName)) return null;
-
   // merged for collpasing sidebar responsive
   useEffect(() => {
     const handleResize = () => {
@@ -142,16 +138,20 @@ export default function AdminSidebar() {
     }
   };
 
+  // itatago nito ung navbar sa register at login page ng admin
+  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
+  if (hideNavbarOn.includes(linkName)) return null;
+
   return (
     <>
       {/* Mobile header (hamburger)  */}
-      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-secondary-container backdrop-blur-md px-6 py-4 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 w-full z-[60] bg-primary-container backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <h1 className="text-lg text-black/90 font-black font-headline uppercase leading-none italic">
           {adminName ? adminName : "AlloyDash"} Admin
         </h1>
         <button
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="material-symbols-outlined text-white"
+          className="material-symbols-outlined text-black/90"
         >
           {isMobileOpen ? "close" : "menu"}{" "}
         </button>

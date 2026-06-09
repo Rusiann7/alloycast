@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import emailjs from "@emailjs/browser";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { Skeleton } from "../../components/Skeleton";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"), {
   ssr: false,
@@ -367,10 +368,21 @@ function ProductDetail() {
   // for loading product
   if (loading) {
     return (
-      <div className="bg-background min-h-screen flex items-center justify-center">
-        <h1 className="text-font-color text-lg font-headline animate-pulse uppercase tracking-widest">
-          Loading Product Data...
-        </h1>
+      <div className="font-body selection:bg-primary-container selection:text-white min-h-screen pt-24 lg:pt-32">
+        <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 px-6 lg:px-12 pb-24">
+          <div className="h-[450px] w-full rounded-lg relative overflow-hidden flex items-center justify-center">
+             <Skeleton className="w-full h-full" />
+          </div>
+          <div className="py-0 space-y-8">
+             <Skeleton className="h-8 w-1/3 rounded-lg" />
+             <Skeleton className="h-16 w-3/4 rounded-lg" />
+             <div className="flex gap-4">
+                <Skeleton className="h-8 w-1/2 rounded-lg" />
+             </div>
+             <Skeleton className="h-24 w-full rounded-lg mt-10" />
+             <Skeleton className="h-16 w-full rounded-lg mt-6" />
+          </div>
+        </div>
       </div>
     );
   }

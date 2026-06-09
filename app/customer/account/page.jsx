@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { ProfileSkeleton } from "../../components/Skeleton";
 
 const DynamicSessionModal = dynamic(
   () => import("../../components/SessionModal"),
@@ -225,8 +226,8 @@ export default function Account() {
 
   if (loading) {
     return (
-      <div className="bg-background min-h-screen flex items-center justify-center">
-        <div className="size-12 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
+      <div className="font-body min-h-screen pt-32 pb-24 px-6 max-w-[1200px] mx-auto">
+        <ProfileSkeleton />
       </div>
     );
   }
@@ -428,7 +429,9 @@ export default function Account() {
                         >
                           {res.status || "Pending"}
                         </span>
-                        {(res.status === "Pending" || !res.status) && (
+                        {(res.status === "Pending" ||
+                          res.status === "Approved" ||
+                          !res.status) && (
                           <button
                             onClick={() => {
                               setReservationToCancel({

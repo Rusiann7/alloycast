@@ -37,6 +37,7 @@ const BRAND_COLORS = [
 ];
 
 export default function AdminAnalytics() {
+  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -127,6 +128,8 @@ export default function AdminAnalytics() {
     } catch (err) {
       console.error("Error fetching analytics: ", err);
       showToast("Error getting analytics data", "error");
+    } finally {
+      setLoading(false);
     }
   }, [dateRange, showToast]);
 
@@ -211,6 +214,18 @@ export default function AdminAnalytics() {
           </div>
         </div>
         <div className="pt-5 space-y-8 max-w-[1600px] mx-auto">
+          {loading ? (
+             <div className="space-y-8">
+               <div className="h-[450px] w-full bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden">
+                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-container/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+               </div>
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="h-[400px] bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden"></div>
+                  <div className="h-[400px] bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden"></div>
+               </div>
+             </div>
+          ) : (
+          <>
           {/* Revenue Analysis */}
           <section className="bg-input-field  rounded-lg shadow-lg/30 p-4 reveal-up">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-6">
@@ -587,6 +602,8 @@ export default function AdminAnalytics() {
               })()}
             </section>
           </div>
+          </>
+          )}
         </div>
       </main>
     </div>
