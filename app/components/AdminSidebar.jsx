@@ -64,10 +64,6 @@ export default function AdminSidebar() {
     type: "error",
   });
 
-  // itatago nito ung navbar sa register at login page ng admin
-  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
-  if (hideNavbarOn.includes(linkName)) return null;
-
   // merged for collpasing sidebar responsive
   useEffect(() => {
     const handleResize = () => {
