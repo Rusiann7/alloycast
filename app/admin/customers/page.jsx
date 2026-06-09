@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import Link from "next/link";
 import RemoveAccountModal from "../../components/RemoveAccountModal";
+
+const supabase = createClient();
 
 export default function AdminCustomers() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -14,29 +16,26 @@ export default function AdminCustomers() {
 
   const itemsPerPage = 10;
 
-  const supabase = createClient();
-
-  const getCustomer = async () => {
-    try {
-      const { data, error } = await supabase.from("Customer").select(
-        `id, firstname, lastname, user_id, gender, dob,
-        Users!user_id( id, email, created_at,
-          Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
-            Inventory!inventory_id( id, item_name, item_image, price, brand, category )
-          )
-        )`,
-      );
-
-      if (error) throw error;
-
-      setCustomer(data || []);
-      console.log(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
+    const getCustomer = async () => {
+      try {
+        const { data, error } = await supabase.from("Customer").select(
+          `id, firstname, lastname, user_id, gender, dob,
+          Users!user_id( id, email, created_at,
+            Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
+              Inventory!inventory_id( id, item_name, item_image, price, brand, category )
+            )
+          )`,
+        );
+
+        if (error) throw error;
+
+        setCustomer(data || []);
+        console.log(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     getCustomer();
   }, []);
 
@@ -480,7 +479,7 @@ export default function AdminCustomers() {
   );
 }
 
-const DrawerContactCard = ({ label, value, icon }) => (
+const DrawerContactCard = ({ label, value }) => (
   <div className="flex items-center justify-between p-4 sm:p-5 bg-input-field border-b-4 border-primary-container rounded-lg group hover:scale-105 cursor-pointer transition-all">
     <div className="flex flex-col">
       <span className="text-xs font-headline font-bold text-white/80 uppercase tracking-widest mb-1.5">

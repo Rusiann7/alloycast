@@ -20,6 +20,8 @@ const DynamicDeleteConfirmationModal = dynamic(
   { ssr: false },
 );
 
+const supabase = createClient();
+
 export default function AdminInventory() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
@@ -39,10 +41,14 @@ export default function AdminInventory() {
 
   const itemsPerPage = 5;
 
-  const supabase = createClient();
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
 
   // kunin mga product sa loob ng Inventory Table
   const fetchInventoryProduct = useCallback(async () => {
+    setLoading(true);
     try {
       let { data, error } = await supabase
         .from("Inventory")
@@ -60,14 +66,12 @@ export default function AdminInventory() {
     }
   }, []);
 
-  const showToast = (message, type = "error") => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
-  };
-
   // load products mula sa inventory kada refresh ng page ONCE
   useEffect(() => {
-    fetchInventoryProduct();
+    const intializeFunction = async () => {
+      fetchInventoryProduct();
+    };
+    intializeFunction();
   }, [fetchInventoryProduct]);
 
   // // calculate total stock and inventory count and show in Header

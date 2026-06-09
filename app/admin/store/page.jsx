@@ -15,7 +15,6 @@ export default function StorePage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [posDB, setPos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
   const [scannedBarCode, setScannedBarCode] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,7 +38,7 @@ export default function StorePage() {
   };
 
   // Fetch Inventory Products
-  const fetchInventoryProduct = async () => {
+  const fetchInventoryProduct = useCallback(async () => {
     try {
       let { data, error } = await supabase
         .from("Inventory")
@@ -52,14 +51,15 @@ export default function StorePage() {
     } catch (error) {
       showToast("Error fetching products from Inventory");
       console.error(error.message);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchInventoryProduct();
-  }, []);
+    const initializeFunction = async () => {
+      fetchInventoryProduct();
+    };
+    initializeFunction();
+  }, [fetchInventoryProduct]);
 
   // Fetch Filtered POS Data
   const fetchPOSData = useCallback(async (selectedRange) => {
@@ -124,7 +124,10 @@ export default function StorePage() {
 
   // Triggers whenever dateRange state changes, plus on initial component mount
   useEffect(() => {
-    fetchPOSData(dateRange);
+    const initializeFunction = async () => {
+      fetchPOSData(dateRange);
+    };
+    initializeFunction();
   }, [dateRange, fetchPOSData]);
 
   // Derived Values calculated instantly on every render update

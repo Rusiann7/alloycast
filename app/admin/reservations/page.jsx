@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
@@ -16,8 +16,6 @@ const DynamicToast = dynamic(() => import("../../components/Toast"));
 const supabase = createClient();
 
 export default function AdminReservations() {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All Items");
   const [activeReservation, setActiveReservation] = useState(null);
   const [reservation, setReservation] = useState([]);
@@ -50,12 +48,12 @@ export default function AdminReservations() {
 
   useEffect(() => {
     const fetchTableData = async () => {
-      const { data: reservationData, error: reservationError } = await supabase
+      const { data: reservationData } = await supabase
         .from("Reservation")
         .select("*, Users(id, email), Inventory(item_name, item_image, brand)")
         .order("created_at", { ascending: false });
 
-      const { data: customerData, error: customerError } = await supabase
+      const { data: customerData } = await supabase
         .from("Customer")
         .select("user_id, firstname, lastname");
 

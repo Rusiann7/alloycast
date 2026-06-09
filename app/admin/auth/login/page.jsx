@@ -304,7 +304,7 @@ export default function AdminLoginPage() {
             </div>
             <div className="flex flex-col gap-4">
               <p className="text-xs text-white/90 uppercase tracking-widest text-center">
-                Didn't receive the email?
+                Didn&apos;t receive the email?
                 <button
                   type="button"
                   onClick={resendVerification}

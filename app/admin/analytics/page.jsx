@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import {
   AreaChart,
@@ -152,9 +152,11 @@ export default function AdminAnalytics() {
 
   // 5. Run effects when date filters or callback references change
   useEffect(() => {
-    fetchAllAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange]);
+    const initializeFunction = async () => {
+      fetchAllAnalytics();
+    };
+    initializeFunction();
+  }, [dateRange, fetchAllAnalytics]);
 
   return (
     <div className="text-font-color min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">

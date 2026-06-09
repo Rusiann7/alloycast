@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import emailjs from "@emailjs/browser";
-import * as XLSX from "xlsx";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
@@ -156,8 +155,11 @@ export default function AdminDashboard() {
 
   // 6. Hook trigger relies on stable reference functions
   useEffect(() => {
-    fetchDashboardData();
-    fetchAllAnalytics();
+    const initializeFunction = async () => {
+      fetchDashboardData();
+      fetchAllAnalytics();
+    };
+    initializeFunction();
   }, [fetchDashboardData, fetchAllAnalytics]);
 
   // 7. Decoupled Excel export handler
@@ -274,6 +276,7 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       showToast("Status updated, but email failed to send.", "error");
+      console.error(err);
     }
 
     // 3. Update local state
@@ -861,15 +864,6 @@ const KPICard = ({
     <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
       <span className="material-symbols-outlined text-8xl">{icon}</span>
     </div>
-  </div>
-);
-
-const LegendItem = ({ color, label }) => (
-  <div className="flex items-center space-x-1">
-    <div className={`w-3 h-3 ${color} rounded-full`}></div>
-    <span className="text-sm font-headline font-bold uppercase tracking-widest">
-      {label}
-    </span>
   </div>
 );
 
