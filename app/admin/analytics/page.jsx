@@ -215,394 +215,405 @@ export default function AdminAnalytics() {
         </div>
         <div className="pt-5 space-y-8 max-w-[1600px] mx-auto">
           {loading ? (
-             <div className="space-y-8">
-               <div className="h-[450px] w-full bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden">
-                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-container/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
-               </div>
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="h-[400px] bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden"></div>
-                  <div className="h-[400px] bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden"></div>
-               </div>
-             </div>
+            <div className="space-y-8">
+              <div className="h-[450px] w-full bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-container/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="h-[400px] bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden"></div>
+                <div className="h-[400px] bg-secondary-container/50 animate-pulse rounded-lg relative overflow-hidden"></div>
+              </div>
+            </div>
           ) : (
-          <>
-          {/* Revenue Analysis */}
-          <section className="bg-input-field  rounded-lg shadow-lg/30 p-4 reveal-up">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-6">
-              <h3 className="font-headline font-black text-3xl  text-white/90 uppercase tracking-tighter italic">
-                Revenue Analysis Graph
-              </h3>
-              <div className="flex gap-3 items-center">
-                <LegendItem
-                  dotColor="bg-primary-container"
-                  label="TOTAL REVENUE"
-                  value={`₱${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  valueColor="text-green-500"
-                />
-                <span
-                  title="Actual sales from POS. Potential reservation revenue is shown separately as 'Potential Revenue (Approved)'"
-                  className="material-symbols-outlined ml-2 text-sm"
-                  aria-hidden
+            <>
+              {/* Revenue Analysis */}
+              <section className="bg-input-field  rounded-lg shadow-lg/30 p-4 reveal-up">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-6">
+                  <h3 className="font-headline font-black text-3xl  text-white/90 uppercase tracking-tighter italic">
+                    Revenue Analysis Graph
+                  </h3>
+                  <div className="flex gap-3 items-center">
+                    <LegendItem
+                      dotColor="bg-primary-container"
+                      label="TOTAL REVENUE"
+                      value={`₱${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      valueColor="text-green-500"
+                    />
+                    <span
+                      title="Actual sales from POS. Potential reservation revenue is shown separately as 'Potential Revenue (Approved)'"
+                      className="material-symbols-outlined ml-2 text-sm"
+                      aria-hidden
+                    >
+                      info
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-[350px] w-full relative mt-8 ">
+                  {revenueData.length === 0 ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="text-white/50 text-xl font-headline font-black uppercase tracking-widest italic">
+                        No data for {dateRange.toLowerCase()}
+                      </p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={revenueData}
+                        margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="colorRev"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#22C55E"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#22C55E"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <XAxis
+                          dataKey="name"
+                          stroke="#ffffff"
+                          fontSize={12}
+                          tickMargin={11}
+                        />
+                        <YAxis
+                          stroke="#ffffff"
+                          fontSize={12}
+                          tickFormatter={(value) => `₱${value}`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#131313",
+                            borderColor: "#333",
+                          }}
+                          itemStyle={{ color: "#22C55E" }}
+                          formatter={(value) => `₱${Number(value).toFixed(2)}`}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#22C55E"
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#colorRev)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </section>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Top Reserved Products */}
+                <section
+                  className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
+                  style={{ animationDelay: "0.1s" }}
                 >
-                  info
-                </span>
-              </div>
-            </div>
+                  <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
+                    Top Selling Products
+                  </h3>
+                  <div className="space-y-6">
+                    {topProducts.map((topProduct, index) => (
+                      <div key={topProduct.name} className="space-y-3 group">
+                        <div className="flex justify-between text-sm text-white/90   font-black uppercase tracking-widest">
+                          <span className="group-hover:scale-105 transition-colors">
+                            {topProduct.name}
+                          </span>
+                          <span className=" text-primary-container tabular-nums">
+                            {topProduct.units} ORDERS
+                          </span>
+                        </div>
+                        <div className="h-2 w-full  rounded-full overflow-hidden border border-white/5 relative">
+                          <div
+                            className="h-full bg-primary-container transition-all duration-1000"
+                            style={{
+                              width: `${topProduct.percentage}%`,
+                              transitionDelay: `${index * 100}ms`,
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
 
-            <div className="h-[350px] w-full relative mt-8 ">
-              {revenueData.length === 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-white/50 text-xl font-headline font-black uppercase tracking-widest italic">
-                    No data for {dateRange.toLowerCase()}
-                  </p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={revenueData}
-                    margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#22C55E"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#22C55E"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="name"
-                      stroke="#ffffff"
-                      fontSize={12}
-                      tickMargin={11}
-                    />
-                    <YAxis
-                      stroke="#ffffff"
-                      fontSize={12}
-                      tickFormatter={(value) => `₱${value}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#131313",
-                        borderColor: "#333",
-                      }}
-                      itemStyle={{ color: "#22C55E" }}
-                      formatter={(value) => `₱${Number(value).toFixed(2)}`}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#22C55E"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorRev)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </section>
+                {/* Low Selling Products */}
+                <section
+                  className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  <h3 className="font-headline font-black text-white/90 text-2xl uppercase tracking-tighter mb-10 italic">
+                    Low Selling Products
+                  </h3>
+                  <div className="space-y-6">
+                    {lowProducts.map((lowProducts, index) => (
+                      <div key={lowProducts.name} className="space-y-3 group">
+                        <div className="flex justify-between text-sm text-white/90 font-black uppercase tracking-widest">
+                          <span className="group-hover:scale-105 transition-colors">
+                            {lowProducts.name}
+                          </span>
+                          <span className=" text-primary-container tabular-nums">
+                            {lowProducts.units} ORDERS
+                          </span>
+                        </div>
+                        <div className="h-2 w-full  rounded-full overflow-hidden border border-white/5 relative">
+                          <div
+                            className="h-full bg-red-500 transition-all duration-1000"
+                            style={{
+                              width: `${lowProducts.percentage}%`,
+                              transitionDelay: `${index * 100}ms`,
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Top Reserved Products */}
-            <section
-              className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
-              style={{ animationDelay: "0.1s" }}
-            >
-              <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
-                Top Selling Products
-              </h3>
-              <div className="space-y-6">
-                {topProducts.map((topProduct, index) => (
-                  <div key={topProduct.name} className="space-y-3 group">
-                    <div className="flex justify-between text-sm text-white/90   font-black uppercase tracking-widest">
-                      <span className="group-hover:scale-105 transition-colors">
-                        {topProduct.name}
-                      </span>
-                      <span className=" text-primary-container tabular-nums">
-                        {topProduct.units} ORDERS
-                      </span>
-                    </div>
-                    <div className="h-2 w-full  rounded-full overflow-hidden border border-white/5 relative">
-                      <div
-                        className="h-full bg-primary-container transition-all duration-1000"
-                        style={{
-                          width: `${topProduct.percentage}%`,
-                          transitionDelay: `${index * 100}ms`,
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-pulse" />
+                {/* Market Share by Brand */}
+                <section
+                  className="bg-secondary-container  rounded-lg p-8 reveal-up"
+                  style={{ animationDelay: "0.2s" }}
+                >
+                  <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
+                    Market Share by Brand
+                  </h3>
+                  <div className="flex flex-col md:flex-row items-center gap-12">
+                    <div className="relative w-72 h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={topBrands}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={90}
+                            outerRadius={120}
+                            paddingAngle={5}
+                            dataKey="units"
+                            stroke="black"
+                          >
+                            {topBrands.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={BRAND_COLORS[index % BRAND_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-7xl font-headline font-black text-white/90  tracking-tighter">
+                          {topBrands.reduce(
+                            (sum, brand) => sum + (brand.units || 0),
+                            0,
+                          )}
+                        </span>
+                        <span className="text-xs font-black  text-white/80 uppercase tracking-[0.2em] leading-none mt-2">
+                          TOTAL ORDERS
+                        </span>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
 
-            {/* Low Selling Products */}
-            <section
-              className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
-              style={{ animationDelay: "0.1s" }}
-            >
-              <h3 className="font-headline font-black text-white/90 text-2xl uppercase tracking-tighter mb-10 italic">
-                Low Selling Products
-              </h3>
-              <div className="space-y-6">
-                {lowProducts.map((lowProducts, index) => (
-                  <div key={lowProducts.name} className="space-y-3 group">
-                    <div className="flex justify-between text-sm text-white/90 font-black uppercase tracking-widest">
-                      <span className="group-hover:scale-105 transition-colors">
-                        {lowProducts.name}
-                      </span>
-                      <span className=" text-primary-container tabular-nums">
-                        {lowProducts.units} ORDERS
-                      </span>
-                    </div>
-                    <div className="h-2 w-full  rounded-full overflow-hidden border border-white/5 relative">
-                      <div
-                        className="h-full bg-red-500 transition-all duration-1000"
-                        style={{
-                          width: `${lowProducts.percentage}%`,
-                          transitionDelay: `${index * 100}ms`,
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 animate-pulse" />
-                      </div>
+                    {/* Dynamic Legend List */}
+                    <div className="flex-1 w-full space-y-4">
+                      {topBrands.map((brand, index) => (
+                        <BrandLegendItem
+                          key={brand.name}
+                          color={
+                            index === 0
+                              ? "#10B981"
+                              : BRAND_COLORS[index % BRAND_COLORS.length]
+                          }
+                          label={brand.name}
+                          percentage={`${brand.percentage}%`}
+                        />
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
 
-            {/* Market Share by Brand */}
-            <section
-              className="bg-secondary-container  rounded-lg p-8 reveal-up"
-              style={{ animationDelay: "0.2s" }}
-            >
-              <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
-                Market Share by Brand
-              </h3>
-              <div className="flex flex-col md:flex-row items-center gap-12">
-                <div className="relative w-72 h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={topBrands}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={90}
-                        outerRadius={120}
-                        paddingAngle={5}
-                        dataKey="units"
-                        stroke="black"
-                      >
-                        {topBrands.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={BRAND_COLORS[index % BRAND_COLORS.length]}
+                {/* Fulfillment Pipeline */}
+                <section
+                  className="bg-secondary-container shadow-lg/30  rounded-lg p-8 reveal-up"
+                  style={{ animationDelay: "0.3s" }}
+                >
+                  <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
+                    Fulfillment Pipeline
+                  </h3>
+                  <div className="h-14 w-full flex rounded-lg overflow-hidden mb-10 border border-white/5 p-1 bg-black/40">
+                    {(() => {
+                      const total =
+                        pipelineCounts.Pending +
+                        pipelineCounts.Approved +
+                        pipelineCounts.Declined +
+                        pipelineCounts.Cancelled;
+                      if (total === 0)
+                        return (
+                          <PipelineSegment
+                            color="bg-white/10"
+                            percentage="100%"
+                            label="No Data"
                           />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-7xl font-headline font-black text-white/90  tracking-tighter">
-                      {topBrands.reduce(
-                        (sum, brand) => sum + (brand.units || 0),
-                        0,
-                      )}
-                    </span>
-                    <span className="text-xs font-black  text-white/80 uppercase tracking-[0.2em] leading-none mt-2">
-                      TOTAL ORDERS
-                    </span>
-                  </div>
-                </div>
-
-                {/* Dynamic Legend List */}
-                <div className="flex-1 w-full space-y-4">
-                  {topBrands.map((brand, index) => (
-                    <BrandLegendItem
-                      key={brand.name}
-                      color={
-                        index === 0
-                          ? "#10B981"
-                          : BRAND_COLORS[index % BRAND_COLORS.length]
-                      }
-                      label={brand.name}
-                      percentage={`${brand.percentage}%`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Fulfillment Pipeline */}
-            <section
-              className="bg-secondary-container shadow-lg/30  rounded-lg p-8 reveal-up"
-              style={{ animationDelay: "0.3s" }}
-            >
-              <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
-                Fulfillment Pipeline
-              </h3>
-              <div className="h-14 w-full flex rounded-lg overflow-hidden mb-10 border border-white/5 p-1 bg-black/40">
-                {(() => {
-                  const total =
-                    pipelineCounts.Pending +
-                    pipelineCounts.Approved +
-                    pipelineCounts.Declined +
-                    pipelineCounts.Cancelled;
-                  if (total === 0)
-                    return (
-                      <PipelineSegment
-                        color="bg-white/10"
-                        percentage="100%"
-                        label="No Data"
-                      />
-                    );
-                  return (
-                    <>
-                      <PipelineSegment
-                        color="bg-blue-500"
-                        percentage={`${Math.round((pipelineCounts.Pending / total) * 100)}%`}
-                        label={`${Math.round((pipelineCounts.Pending / total) * 100)}%`}
-                      />
-                      <PipelineSegment
-                        color="bg-emerald-500"
-                        percentage={`${Math.round((pipelineCounts.Approved / total) * 100)}%`}
-                        label={`${Math.round((pipelineCounts.Approved / total) * 100)}%`}
-                      />
-                      <PipelineSegment
-                        color="bg-rose-500"
-                        percentage={`${Math.round((pipelineCounts.Declined / total) * 100)}%`}
-                        label={`${Math.round((pipelineCounts.Declined / total) * 100)}%`}
-                      />
-                      <PipelineSegment
-                        color="bg-slate-500"
-                        percentage={`${Math.round((pipelineCounts.Cancelled / total) * 100)}%`}
-                        label={`${Math.round((pipelineCounts.Cancelled / total) * 100)}%`}
-                      />
-                    </>
-                  );
-                })()}
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <StatusCard
-                  border="border-blue-500"
-                  label="Pending"
-                  count={pipelineCounts.Pending}
-                />
-                <StatusCard
-                  border="border-emerald-500"
-                  label="Approved"
-                  count={pipelineCounts.Approved}
-                />
-                <StatusCard
-                  border="border-rose-500"
-                  label="Declined"
-                  count={pipelineCounts.Declined}
-                />
-                <StatusCard
-                  border="border-slate-500"
-                  label="Cancelled"
-                  count={pipelineCounts.Cancelled}
-                />
-              </div>
-            </section>
-            {/* Revenue Channels Comparison */}
-            <section
-              className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
-              style={{ animationDelay: "0.4s" }}
-            >
-              <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
-                POS and Reservations Revenue Comparison
-              </h3>
-
-              {(() => {
-                const totalChannelRev = posRevenue + approvedReservationRevenue;
-                const posPercent =
-                  totalChannelRev > 0
-                    ? Math.round((posRevenue / totalChannelRev) * 100)
-                    : 0;
-                const resPercent =
-                  totalChannelRev > 0
-                    ? Math.round(
-                        (approvedReservationRevenue / totalChannelRev) * 100,
-                      )
-                    : 0;
-
-                return (
-                  <>
-                    {/* Split Progress Bar */}
-                    <div className="h-14 w-full flex rounded-lg overflow-hidden mb-10 border border-white/5 p-1 bg-black/40">
-                      {totalChannelRev === 0 ? (
-                        <PipelineSegment
-                          color="bg-white/10"
-                          percentage="100%"
-                          label="No Revenue"
-                        />
-                      ) : (
+                        );
+                      return (
                         <>
-                          {posPercent > 0 && (
-                            <PipelineSegment
-                              color="bg-green-400"
-                              percentage={`${posPercent}%`}
-                              label={`${posPercent}%`}
-                            />
-                          )}
-                          {resPercent > 0 && (
-                            <PipelineSegment
-                              color="bg-slate-500"
-                              percentage={`${resPercent}%`}
-                              label={`${resPercent}%`}
-                            />
-                          )}
+                          <PipelineSegment
+                            color="bg-blue-500"
+                            percentage={`${Math.round((pipelineCounts.Pending / total) * 100)}%`}
+                            label={`${Math.round((pipelineCounts.Pending / total) * 100)}%`}
+                          />
+                          <PipelineSegment
+                            color="bg-emerald-500"
+                            percentage={`${Math.round((pipelineCounts.Approved / total) * 100)}%`}
+                            label={`${Math.round((pipelineCounts.Approved / total) * 100)}%`}
+                          />
+                          <PipelineSegment
+                            color="bg-rose-500"
+                            percentage={`${Math.round((pipelineCounts.Declined / total) * 100)}%`}
+                            label={`${Math.round((pipelineCounts.Declined / total) * 100)}%`}
+                          />
+                          <PipelineSegment
+                            color="bg-slate-500"
+                            percentage={`${Math.round((pipelineCounts.Cancelled / total) * 100)}%`}
+                            label={`${Math.round((pipelineCounts.Cancelled / total) * 100)}%`}
+                          />
                         </>
-                      )}
-                    </div>
+                      );
+                    })()}
+                  </div>
 
-                    {/* Metric Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-emerald-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
-                        <span className="block text-sm font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
-                          In-Store (POS)
-                        </span>
-                        <span className="text-[40px]  font-headline font-black text-green-400 italic truncate block">
-                          ₱
-                          {posRevenue.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <StatusCard
+                      border="border-blue-500"
+                      label="Pending"
+                      count={pipelineCounts.Pending}
+                    />
+                    <StatusCard
+                      border="border-emerald-500"
+                      label="Approved"
+                      count={pipelineCounts.Approved}
+                    />
+                    <StatusCard
+                      border="border-rose-500"
+                      label="Declined"
+                      count={pipelineCounts.Declined}
+                    />
+                    <StatusCard
+                      border="border-slate-500"
+                      label="Cancelled"
+                      count={pipelineCounts.Cancelled}
+                    />
+                  </div>
+                </section>
+                {/* Revenue Channels Comparison */}
+                <section
+                  className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
+                  style={{ animationDelay: "0.4s" }}
+                >
+                  <h3 className="font-headline font-black text-2xl text-white/90 uppercase tracking-tighter mb-10 italic">
+                    POS and Reservations Revenue Comparison
+                  </h3>
 
-                      <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-slate-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
-                        <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
-                          Potential Revenue{" "}
-                          <span className="text-green-400">(Approved)</span>
-                        </span>
-                        <span className="text-[40px]  font-headline font-black text-white/90 italic truncate block">
-                          ₱
-                          {approvedReservationRevenue.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </section>
-          </div>
-          </>
+                  {(() => {
+                    const totalChannelRev =
+                      posRevenue + approvedReservationRevenue;
+                    const posPercent =
+                      totalChannelRev > 0
+                        ? Math.round((posRevenue / totalChannelRev) * 100)
+                        : 0;
+                    const resPercent =
+                      totalChannelRev > 0
+                        ? Math.round(
+                            (approvedReservationRevenue / totalChannelRev) *
+                              100,
+                          )
+                        : 0;
+
+                    return (
+                      <>
+                        {/* Split Progress Bar */}
+                        <div className="h-14 w-full flex rounded-lg overflow-hidden mb-10 border border-white/5 p-1 bg-black/40">
+                          {totalChannelRev === 0 ? (
+                            <PipelineSegment
+                              color="bg-white/10"
+                              percentage="100%"
+                              label="No Revenue"
+                            />
+                          ) : (
+                            <>
+                              {posPercent > 0 && (
+                                <PipelineSegment
+                                  color="bg-green-400"
+                                  percentage={`${posPercent}%`}
+                                  label={`${posPercent}%`}
+                                />
+                              )}
+                              {resPercent > 0 && (
+                                <PipelineSegment
+                                  color="bg-slate-500"
+                                  percentage={`${resPercent}%`}
+                                  label={`${resPercent}%`}
+                                />
+                              )}
+                            </>
+                          )}
+                        </div>
+
+                        {/* Metric Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-emerald-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
+                            <span className="block text-sm font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
+                              In-Store (POS)
+                            </span>
+                            <span className="text-[40px]  font-headline font-black text-green-400 italic truncate block">
+                              ₱
+                              {posRevenue.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+
+                          <div className="p-5 bg-white/[0.01] rounded-[2px] border-l-[3px] border-slate-500 group hover:bg-white/[0.03] transition-all cursor-pointer">
+                            <span className="block text-xs font-black text-white/90 uppercase tracking-[0.3em] mb-3 group-hover:text-white/40 transition-colors">
+                              Potential Revenue{" "}
+                              <span className="text-green-400">(Approved)</span>
+                            </span>
+                            <span className="text-[40px]  font-headline font-black text-white/90 italic truncate block">
+                              ₱
+                              {approvedReservationRevenue.toLocaleString(
+                                "en-US",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </section>
+              </div>
+            </>
           )}
         </div>
       </main>

@@ -242,7 +242,7 @@ export default function Product() {
               /* 1. THE LOADING STATE */
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 reveal-up">
                 {Array.from({ length: 8 }).map((_, i) => (
-                   <ProductCardSkeleton key={i} />
+                  <ProductCardSkeleton key={i} />
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
