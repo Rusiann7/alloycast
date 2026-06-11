@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Toast from "../../components/Toast";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
+import { TableSkeleton } from "../../components/Skeleton";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
@@ -15,12 +15,11 @@ const DynamicDeleteConfirmationModal = dynamic(
 );
 
 export default function FeedbackPage() {
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [commentDB, setCommentDB] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -58,6 +57,7 @@ export default function FeedbackPage() {
     if (error) throw error;
     setCommentDB(data || []);
     console.log(data);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function FeedbackPage() {
       await getCommentsAuto();
     };
     fetchComments();
-  }, []);
+  }, [getCommentsAuto]);
 
   const confirmDeleteReview = async () => {
     if (!itemToDelete) return;
@@ -112,73 +112,87 @@ export default function FeedbackPage() {
           </div>
 
           {/* Review Table */}
-          <div
-            className="bg-secondary-container shadow-lg/30 rounded-lg  overflow-x-auto reveal-up scrollbar-hide"
-            style={{ animationDelay: "0.2s" }}
-          >
-            <table className="w-full text-left border-collapse min-w-[1000px]">
-              <thead>
-                <tr className="bg-input-field">
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    PRODUCT NAME
-                  </th>
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    BRAND
-                  </th>
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    CUSTOMER
-                  </th>
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    RATING
-                  </th>
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    REVIEW
-                  </th>
-                  <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                    ACTIONS
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-white/[0.02]">
-                {commentDB.map((comments) => (
-                  <tr key={comments.id}>
-                    <td className="px-8 py-5 text-center text-white/90">
-                      {comments.Inventory?.item_name}
-                    </td>
-                    <td className="px-8 py-5 text-center text-white/90">
-                      {comments.Inventory?.brand}
-                    </td>
-                    <td className="px-8 py-5 text-center text-white/90">
-                      {comments.Users?.Customer?.[0]?.firstname}{" "}
-                      {comments.Users?.Customer?.[0]?.lastname}
-                    </td>
-                    <td className="px-8 py-5 text-center text-white/90">
-                      {comments.rating}
-                    </td>
-                    <td className="px-8 py-5 text-center text-white/90">
-                      {comments.comment}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          onClick={() => {
-                            setItemToDelete(comments);
-                            setDeleteModalOpen(true);
-                          }}
-                          className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            delete
-                          </span>
-                        </button>
-                      </div>
-                    </td>
+          {loading ? (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="p-6">
+                <TableSkeleton columns={6} rows={5} />
+              </div>
+            </div>
+          ) : (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg  overflow-x-auto reveal-up scrollbar-hide"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                <thead className="border-b border-primary-container">
+                  <tr className="bg-input-field">
+                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                      PRODUCT NAME
+                    </th>
+                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                      BRAND
+                    </th>
+                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                      CUSTOMER
+                    </th>
+                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                      RATING
+                    </th>
+                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                      REVIEW
+                    </th>
+                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                      ACTIONS
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody className="divide-y divide-white/[0.02]">
+                  {commentDB.map((comments) => (
+                    <tr
+                      key={comments.id}
+                      className="border-b border-primary-container"
+                    >
+                      <td className="px-8 py-5 text-center text-white/90">
+                        {comments.Inventory?.item_name}
+                      </td>
+                      <td className="px-8 py-5 text-center text-white/90">
+                        {comments.Inventory?.brand}
+                      </td>
+                      <td className="px-8 py-5 text-center text-white/90">
+                        {comments.Users?.Customer?.[0]?.firstname}{" "}
+                        {comments.Users?.Customer?.[0]?.lastname}
+                      </td>
+                      <td className="px-8 py-5 text-center text-white/90">
+                        {comments.rating}
+                      </td>
+                      <td className="px-8 py-5 text-center text-white/90">
+                        {comments.comment}
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            onClick={() => {
+                              setItemToDelete(comments);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              delete
+                            </span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
 

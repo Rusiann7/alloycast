@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import Link from "next/link";
 import RemoveAccountModal from "../../components/RemoveAccountModal";
+import { TableSkeleton } from "../../components/Skeleton";
+
+const supabase = createClient();
 
 export default function AdminCustomers() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -11,32 +14,32 @@ export default function AdminCustomers() {
   const [customers, setCustomer] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   const itemsPerPage = 10;
 
-  const supabase = createClient();
-
-  const getCustomer = async () => {
-    try {
-      const { data, error } = await supabase.from("Customer").select(
-        `id, firstname, lastname, user_id, gender, dob,
-        Users!user_id( id, email, created_at,
-          Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
-            Inventory!inventory_id( id, item_name, item_image, price, brand, category )
-          )
-        )`,
-      );
-
-      if (error) throw error;
-
-      setCustomer(data || []);
-      console.log(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
+    const getCustomer = async () => {
+      try {
+        const { data, error } = await supabase.from("Customer").select(
+          `id, firstname, lastname, user_id, gender, dob,
+          Users!user_id( id, email, created_at,
+            Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
+              Inventory!inventory_id( id, item_name, item_image, price, brand, category )
+            )
+          )`,
+        );
+
+        if (error) throw error;
+
+        setCustomer(data || []);
+        console.log(data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
     getCustomer();
   }, []);
 
@@ -134,150 +137,163 @@ export default function AdminCustomers() {
           </div>
 
           {/* Users Table */}
-          <div
-            className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
-            style={{ animationDelay: "0.2s" }}
-          >
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-input-field">
-                  <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
-                    CUSTOMER NAME
-                  </th>
-                  <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
-                    RESERVATIONS
-                  </th>
-                  <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
-                    GENDER
-                  </th>
-                  <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
-                    DATE OF BIRTH
-                  </th>
-                  <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
-                    DETAILS
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.02]">
-                {searchedCustomers.length > 0 ? (
-                  searchedCustomers
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )
-                    .map((c) => (
-                      <tr
-                        key={c.id}
-                        onClick={() => handleRowClick(c.id)}
-                        className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer ${
-                          selectedCustomer?.id === c.id ? "bg-white/[0.03]" : ""
-                        }`}
-                      >
-                        {/* Identity */}
-                        <td className="px-6 sm:px-8 py-5">
-                          <div className="flex items-center gap-4 justify-center">
-                            <div className="text-center">
-                              <p className="text-md sm:text-xl text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
-                                {c.firstname} {c.lastname}
-                              </p>
-                              <p className="text-sm text-white/60 font-bold mt-1 italic lowercase">
-                                {c.Users?.email}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Reservations */}
-                        <td className="px-6 sm:px-8 py-5 text-center">
-                          <span className="text-lg text-white font-headline font-bold">
-                            {c.Users?.Reservation?.length || 0}
-                          </span>
-                        </td>
-
-                        {/* Gender */}
-                        <td className="px-6 sm:px-8 py-5 text-center">
-                          <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
-                            {c.gender || "N/A"}
-                          </p>
-                        </td>
-
-                        {/* Date of Birth */}
-                        <td className="px-6 sm:px-8 py-5 text-center">
-                          <p className="text-lg font-headline font-bold text-primary-container">
-                            {c.dob || "N/A"}
-                          </p>
-                        </td>
-
-                        {/* Details */}
-                        <td className="px-6 sm:px-8 py-5 text-center">
-                          <button className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all mx-auto">
-                            <span className="material-symbols-outlined text-sm">
-                              {selectedCustomer?.id === c.id
-                                ? "arrow_forward_ios"
-                                : "chevron_right"}
-                            </span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center gap-4 opacity-80">
-                        <span className="material-symbols-outlined text-6xl">
-                          person_off
-                        </span>
-                        <p className="text-xl text-white/90 font-headline font-black uppercase tracking-[0.2em]">
-                          No users found
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            {/* Pagination */}
-            <div className="w-full flex items-center justify-center p-8 bg-input-field border-t border-primary-container">
-              <div className="flex items-center gap-3">
-                {/* Previous */}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
-                >
-                  <span className="material-symbols-outlined text-md">
-                    chevron_left
-                  </span>
-                </button>
-
-                {/* Current Page Indicator */}
-                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black font-black text-md">
-                  {currentPage}
-                </button>
-
-                {/* Next */}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) =>
-                      Math.min(
-                        p + 1,
-                        Math.ceil(searchedCustomers.length / itemsPerPage),
-                      ),
-                    )
-                  }
-                  disabled={
-                    currentPage >=
-                    Math.ceil(searchedCustomers.length / itemsPerPage)
-                  }
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
-                >
-                  <span className="material-symbols-outlined text-md">
-                    chevron_right
-                  </span>
-                </button>
+          {loading ? (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="p-6">
+                <TableSkeleton columns={5} rows={5} />
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead className="border-b border-primary-container">
+                  <tr className="bg-input-field">
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      CUSTOMER NAME
+                    </th>
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      RESERVATIONS
+                    </th>
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      GENDER
+                    </th>
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      DATE OF BIRTH
+                    </th>
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      DETAILS
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.02]">
+                  {searchedCustomers.length > 0 ? (
+                    searchedCustomers
+                      .slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )
+                      .map((c) => (
+                        <tr
+                          key={c.id}
+                          onClick={() => handleRowClick(c.id)}
+                          className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer  border-b border-primary-container${
+                            selectedCustomer?.id === c.id
+                              ? "bg-white/[0.03]"
+                              : ""
+                          }`}
+                        >
+                          {/* Identity */}
+                          <td className="px-6 sm:px-8 py-5">
+                            <div className="flex items-center gap-4 justify-center">
+                              <div className="text-center">
+                                <p className="text-md sm:text-xl text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                                  {c.firstname} {c.lastname}
+                                </p>
+                                <p className="text-sm text-white/60 font-bold mt-1 italic lowercase">
+                                  {c.Users?.email}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Reservations */}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <span className="text-lg text-white font-headline font-bold">
+                              {c.Users?.Reservation?.length || 0}
+                            </span>
+                          </td>
+
+                          {/* Gender */}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
+                              {c.gender || "N/A"}
+                            </p>
+                          </td>
+
+                          {/* Date of Birth */}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <p className="text-lg font-headline font-bold text-primary-container">
+                              {c.dob || "N/A"}
+                            </p>
+                          </td>
+
+                          {/* Details */}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <button className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all mx-auto">
+                              <span className="material-symbols-outlined text-sm">
+                                {selectedCustomer?.id === c.id
+                                  ? "arrow_forward_ios"
+                                  : "chevron_right"}
+                              </span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center gap-4 opacity-80">
+                          <span className="material-symbols-outlined text-6xl">
+                            person_off
+                          </span>
+                          <p className="text-xl text-white/90 font-headline font-black uppercase tracking-[0.2em]">
+                            No users found
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {/* Pagination */}
+              <div className="w-full flex items-center justify-center p-8 bg-input-field border-t border-primary-container">
+                <div className="flex items-center gap-3">
+                  {/* Previous */}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      chevron_left
+                    </span>
+                  </button>
+
+                  {/* Current Page Indicator */}
+                  <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black font-black text-md">
+                    {currentPage}
+                  </button>
+
+                  {/* Next */}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) =>
+                        Math.min(
+                          p + 1,
+                          Math.ceil(searchedCustomers.length / itemsPerPage),
+                        ),
+                      )
+                    }
+                    disabled={
+                      currentPage >=
+                      Math.ceil(searchedCustomers.length / itemsPerPage)
+                    }
+                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -480,7 +496,7 @@ export default function AdminCustomers() {
   );
 }
 
-const DrawerContactCard = ({ label, value, icon }) => (
+const DrawerContactCard = ({ label, value }) => (
   <div className="flex items-center justify-between p-4 sm:p-5 bg-input-field border-b-4 border-primary-container rounded-lg group hover:scale-105 cursor-pointer transition-all">
     <div className="flex flex-col">
       <span className="text-xs font-headline font-bold text-white/80 uppercase tracking-widest mb-1.5">

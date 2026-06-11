@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
+import { TableSkeleton } from "../../components/Skeleton";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
 const supabase = createClient();
 export default function FeedbackPage() {
   const [feedbacks, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({
     visible: false,
@@ -39,6 +41,9 @@ export default function FeedbackPage() {
         console.log("Feedback Reloaded!");
       } catch (error) {
         showToast("Error loading feedbacks.", "error");
+        console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
     getFeedback();
@@ -62,115 +67,129 @@ export default function FeedbackPage() {
           </div>
 
           {/* Review Table */}
-          <div
-            className="bg-secondary-container shadow-lg/30 rounded-lg overflow-hidden reveal-up border border-white/5"
-            style={{ animationDelay: "0.2s" }}
-          >
-            <div className="overflow-x-auto scrollbar-hide">
-              <table className="w-full text-left border-collapse min-w-[600px] md:min-w-[1000px]">
-                <thead>
-                  <tr className="bg-input-field">
-                    <th className="px-4 sm:px-8 py-4 sm:py-5 text-center text-sm sm:text-lg font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-container">
-                      RATING
-                    </th>
-                    <th className="px-4 sm:px-8 py-4 sm:py-5 text-center text-sm sm:text-lg font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-container">
-                      FEEDBACK
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.02]">
-                  {feedbacks.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="2"
-                        className="px-4 sm:px-8 py-20 text-center"
-                      >
-                        <div className="flex flex-col items-center gap-4 opacity-20">
-                          <span className="material-symbols-outlined text-6xl">
-                            search_off
-                          </span>
-                          <p className="text-lg sm:text-xl font-headline font-black uppercase tracking-[0.2em]">
-                            Feedback not available
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    feedbacks
-                      .slice(
-                        (currentPage - 1) * itemsPerPage,
-                        currentPage * itemsPerPage,
-                      )
-                      .map((feedback, index) => (
-                        <tr key={index}>
-                          <td className="px-4 sm:px-8 py-4 sm:py-5 text-center">
-                            <div className="flex justify-center items-center gap-0.5 sm:gap-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <span
-                                  key={star}
-                                  className={`material-symbols-outlined text-lg sm:text-2xl transition-all duration-300 ${
-                                    feedback.rating >= star
-                                      ? "text-primary-container [font-variation-settings:'FILL'_1]"
-                                      : "text-white/20 [font-variation-settings:'FILL'_0]"
-                                  }`}
-                                >
-                                  star
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="px-4 sm:px-8 py-4 sm:py-5 text-center">
-                            <p className="text-sm sm:text-lg text-white font-bold font-headline uppercase tracking-tight">
-                              {feedback.comment}
-                            </p>
-                          </td>
-                        </tr>
-                      ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            {/* Pagination */}
-            <div className="flex items-center justify-center p-8 bg-input-field ">
-              <div className="flex items-center gap-3">
-                {/* Previous */}
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
-                >
-                  <span className="material-symbols-outlined text-md">
-                    chevron_left
-                  </span>
-                </button>
-
-                {/* Current Page Indicator */}
-                <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
-                  {currentPage}
-                </button>
-
-                {/* Next */}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) =>
-                      Math.min(
-                        p + 1,
-                        Math.ceil(feedbacks.length / itemsPerPage),
-                      ),
-                    )
-                  }
-                  disabled={
-                    currentPage >= Math.ceil(feedbacks.length / itemsPerPage)
-                  }
-                  className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
-                >
-                  <span className="material-symbols-outlined text-md">
-                    chevron_right
-                  </span>
-                </button>
+          {loading ? (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-hidden reveal-up border border-white/5"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="p-6">
+                <TableSkeleton columns={2} rows={5} />
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-hidden reveal-up border border-white/5"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="overflow-x-auto scrollbar-hide">
+                <table className="w-full text-left border-collapse min-w-[600px] md:min-w-[1000px]">
+                  <thead className="border-b border-primary-container">
+                    <tr className="bg-input-field">
+                      <th className="px-4 sm:px-8 py-4 sm:py-5 text-center text-sm sm:text-lg font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-container">
+                        RATING
+                      </th>
+                      <th className="px-4 sm:px-8 py-4 sm:py-5 text-center text-sm sm:text-lg font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-container">
+                        FEEDBACK
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.02]">
+                    {feedbacks.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="2"
+                          className="px-4 sm:px-8 py-20 text-center"
+                        >
+                          <div className="flex flex-col items-center gap-4 opacity-20">
+                            <span className="material-symbols-outlined text-6xl">
+                              search_off
+                            </span>
+                            <p className="text-lg sm:text-xl font-headline font-black uppercase tracking-[0.2em]">
+                              Feedback not available
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      feedbacks
+                        .slice(
+                          (currentPage - 1) * itemsPerPage,
+                          currentPage * itemsPerPage,
+                        )
+                        .map((feedback, index) => (
+                          <tr
+                            key={index}
+                            className="border-b border-primary-container"
+                          >
+                            <td className="px-4 sm:px-8 py-4 sm:py-5 text-center">
+                              <div className="flex justify-center items-center gap-0.5 sm:gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <span
+                                    key={star}
+                                    className={`material-symbols-outlined text-lg sm:text-2xl transition-all duration-300 ${
+                                      feedback.rating >= star
+                                        ? "text-primary-container [font-variation-settings:'FILL'_1]"
+                                        : "text-white/20 [font-variation-settings:'FILL'_0]"
+                                    }`}
+                                  >
+                                    star
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 sm:px-8 py-4 sm:py-5 text-center">
+                              <p className="text-sm sm:text-lg text-white font-bold font-headline uppercase tracking-tight">
+                                {feedback.comment}
+                              </p>
+                            </td>
+                          </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination */}
+              <div className="flex items-center justify-center p-8 bg-input-field ">
+                <div className="flex items-center gap-3">
+                  {/* Previous */}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      chevron_left
+                    </span>
+                  </button>
+
+                  {/* Current Page Indicator */}
+                  <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
+                    {currentPage}
+                  </button>
+
+                  {/* Next */}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) =>
+                        Math.min(
+                          p + 1,
+                          Math.ceil(feedbacks.length / itemsPerPage),
+                        ),
+                      )
+                    }
+                    disabled={
+                      currentPage >= Math.ceil(feedbacks.length / itemsPerPage)
+                    }
+                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 

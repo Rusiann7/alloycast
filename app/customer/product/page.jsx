@@ -12,6 +12,8 @@ const DynamicProductCards = dynamic(
   },
 );
 
+import { ProductCardSkeleton } from "../../components/Skeleton";
+
 const DynamicFooter = dynamic(() => import("../../components/CustomerFooter"), {
   ssr: false,
 });
@@ -61,10 +63,13 @@ export default function Product() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast, supabase]);
 
   useEffect(() => {
-    loadInventoryProduct();
+    const initializeFunction = async () => {
+      loadInventoryProduct();
+    };
+    initializeFunction();
   }, [loadInventoryProduct]);
 
   const filterBrand = (brandCode) => {
@@ -235,14 +240,10 @@ export default function Product() {
           <div className="flex-1">
             {loading ? (
               /* 1. THE LOADING STATE */
-              <div className="w-full py-32 flex flex-col items-center justify-center  bg-background rounded-sm reveal-up">
-                <div className="size-12 border-4 border-secondary-container border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h3 className="font-headline text-2xl font-black uppercase italic text-font-color animate-pulse">
-                  Loading Products...
-                </h3>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-white/10 mt-2">
-                  Please wait for the products to load
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 reveal-up">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="w-full py-32 flex flex-col items-center justify-center bg-background rounded-lg reveal-up">

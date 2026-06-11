@@ -11,11 +11,6 @@ export default function OrderStatusConfirmationModal({
 }) {
   const [reasonCancellation, setReasonCancellation] = useState("");
 
-  // resets the text area if the modal is closed
-  useEffect(() => {
-    if (!isOpen) setReasonCancellation("");
-  }, [isOpen]);
-
   if (!isOpen) return null;
   const isApprove = status === "Approved";
 
@@ -24,6 +19,12 @@ export default function OrderStatusConfirmationModal({
 
   const confirmRejectOrder = () => {
     onConfirm(reasonCancellation);
+    setReasonCancellation("");
+  };
+
+  const handleCancel = () => {
+    setReasonCancellation("");
+    onCancel();
   };
 
   return (

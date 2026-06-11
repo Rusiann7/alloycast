@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import Image from "next/image";
 
 const CustomerFooter = () => {
   const [modalContent, setModalContent] = useState(null);
@@ -16,7 +17,7 @@ const CustomerFooter = () => {
     } else if (type === "Selling") {
       setModalContent({
         title: "What We Sell",
-        text: "They sell 1/64 diecast scales from Hot Wheels, AutoWorld, Nascar, and other famous brands that targets collectors Olongapo City.",
+        text: "We sell 1/64 diecast scales from Hot Wheels, AutoWorld, Nascar, and other famous brands that targets collectors Olongapo City.",
       });
     }
   };
@@ -29,7 +30,13 @@ const CustomerFooter = () => {
         <div className="max-w-[300px]">
           <div className="flex items-center gap-3 text-font-color mb-6">
             <div className="size-6 text-primary-container">
-              <img src="/logo.jpg" alt="Ethan Marcus Diecast" />
+              <Image
+                src="/logo.jpg"
+                alt="Ethan Marcus Diecast"
+                width={50}
+                height={50}
+                className="object-cover rounded bg-black/40 border border-white/10 shrink-0"
+              />
             </div>
             <h2 className="font-headline text-xl text-font-color  font-bold uppercase tracking-tight">
               Ethan Marcus Diecast

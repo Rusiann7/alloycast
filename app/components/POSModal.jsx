@@ -14,7 +14,6 @@ export default function POSModal({
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [stockCheck, setStockCheck] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -67,6 +66,9 @@ export default function POSModal({
     setEmailAddr("");
     setQuantity(1);
   };
+
+  if (!isOpen) return null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"

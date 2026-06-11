@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/client";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { AuthFormSkeleton } from "../../../components/Skeleton";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
 
@@ -26,6 +27,15 @@ export default function RegisterAdminPage() {
     message: "",
     type: "error",
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      await supabase.auth.getSession();
+      setLoading(false);
+    };
+    checkSession();
+  }, [supabase.auth]);
 
   function getRandomString(n) {
     const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -163,6 +173,11 @@ export default function RegisterAdminPage() {
         visible={toast.visible}
       />
 
+      {loading ? (
+        <div className="w-full max-w-4xl">
+          <AuthFormSkeleton />
+        </div>
+      ) : (
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 border-b-4 border-primary-container hero-border-glow rounded-xl overflow-hidden border  shadow-2xl animate-fade-in">
         <div className="relative hidden md:flex flex-col justify-between p-12 bg-black text-white overflow-hidden">
           <div className="relative z-10">
@@ -325,6 +340,7 @@ export default function RegisterAdminPage() {
           </form>
         </div>
       </div>
+      )}
     </div>
   );
 }

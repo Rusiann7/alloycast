@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function CriticalStockModal({ isOpen, onClose, items }) {
   if (!isOpen) return null;
   return (
@@ -42,10 +44,13 @@ export default function CriticalStockModal({ isOpen, onClose, items }) {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <img
+                          <Image
                             src={item.item_image || "/placeholder-car.png"}
                             alt={item.item_name}
-                            className="w-12 h-12 object-cover rounded bg-black/40 border border-white/10 shrink-0"
+                            width={50}
+                            height={50}
+                            className="object-cover rounded bg-black/40 border border-white/10 shrink-0"
+                            loading="lazy"
                           />
                           <p className="text-sm text-center font-bold uppercase truncate max-w-[200px] sm:max-w-xs">
                             {item.item_name}
