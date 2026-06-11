@@ -35,9 +35,6 @@ export default function AdminLoginPage() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [userId, setUserId] = useState([]);
-
-  const newCode = Math.floor(10000 + Math.random() * 90000).toString();
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -121,6 +118,8 @@ export default function AdminLoginPage() {
 
   const changeCode = async () => {
     try {
+      const newCode = Math.floor(10000 + Math.random() * 90000).toString();
+
       const { error } = await supabase
         .from("Users")
         .update({ reset: newCode })
