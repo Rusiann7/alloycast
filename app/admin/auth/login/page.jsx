@@ -57,6 +57,7 @@ export default function AdminLoginPage() {
     }));
   };
 
+  //check if the email exists on the DB
   const checkEmail = async () => {
     try {
       setEmail(loginForm.email.trim().toLowerCase());
@@ -77,6 +78,7 @@ export default function AdminLoginPage() {
     }
   };
 
+  //check if the code sent matches the DB
   const checkCode = async () => {
     try {
       const { count, error } = await supabase
@@ -95,6 +97,7 @@ export default function AdminLoginPage() {
     }
   };
 
+  //reset password call to the api
   const resetPassword = async () => {
     try {
       const res = await fetch("/api/reset-password", {
@@ -116,6 +119,7 @@ export default function AdminLoginPage() {
     }
   };
 
+  //change the code to a new one
   const changeCode = async () => {
     try {
       const newCode = Math.floor(10000 + Math.random() * 90000).toString();
