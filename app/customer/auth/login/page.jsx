@@ -92,7 +92,7 @@ function LoginContent() {
 
     const sanitizedData = formValidation.data;
     // gagamit na tayo ng supabase auth para sa login
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: sanitizedData.email, // kukunin email sa supabase Auth
       password: sanitizedData.password, // kukunin password sa supabase Auth
     });
