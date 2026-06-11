@@ -142,10 +142,6 @@ export default function AdminSidebar() {
     }
   };
 
-  // itatago nito ung navbar sa register at login page ng admin
-  const hideNavbarOn = ["/admin/auth/login", "/admin/auth/register"];
-  if (hideNavbarOn.includes(linkName)) return null;
-
   return (
     <>
       {/* Mobile header (hamburger)  */}
