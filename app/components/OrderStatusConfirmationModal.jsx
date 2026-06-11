@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function OrderStatusConfirmationModal({
   isOpen,
@@ -20,11 +20,6 @@ export default function OrderStatusConfirmationModal({
   const confirmRejectOrder = () => {
     onConfirm(reasonCancellation);
     setReasonCancellation("");
-  };
-
-  const handleCancel = () => {
-    setReasonCancellation("");
-    onCancel();
   };
 
   return (
