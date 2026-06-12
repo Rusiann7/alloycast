@@ -14,7 +14,6 @@ const DynamicToast = dynamic(() => import("../../components/Toast"), {
 export default function Feedback() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null); // for checking auth users
   const [toast, setToast] = useState({
     visible: false,
