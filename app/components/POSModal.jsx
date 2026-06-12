@@ -7,7 +7,7 @@ const DynamicToast = dynamic(() => import("./Toast"));
 
 export default function POSModal({
   isOpen,
-  onClose,
+  isClose,
   selectedItem,
   onPurchase,
 }) {
@@ -72,7 +72,7 @@ export default function POSModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
-      onClick={onClose}
+      onClick={isClose}
     >
       <div
         className="bg-modal-background shadow-lg/30  rounded-lg p-6 max-w-md w-full mx-4"
@@ -132,7 +132,7 @@ export default function POSModal({
           </div>
           <div className="flex gap-3 mt-4">
             <button
-              onClick={onClose}
+              onClick={isClose}
               className="flex-1 py-2 shadow-lg/30 bg-secondary-container rounded-lg text-white text-md font-bold hover:scale-105 transition-all"
             >
               Cancel

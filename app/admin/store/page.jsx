@@ -16,8 +16,6 @@ export default function StorePage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [posDB, setPos] = useState([]);
-  const [id, setId] = useState(0);
-  const [scannedBarCode, setScannedBarCode] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState("Annual");
@@ -235,11 +233,11 @@ export default function StorePage() {
   };
 
   const handelScannedBarCode = (decodedText) => {
-    setScannedBarCode(decodedText);
     setScannerOpen(false);
     purchaseBarCode(decodedText);
   };
 
+  //scan the barcode and check DB
   const purchaseBarCode = async (barcodeData) => {
     try {
       const matchedItem = inventory.find(
@@ -262,6 +260,7 @@ export default function StorePage() {
     }
   };
 
+  //insert DB
   const addSales = async (productId, formData) => {
     try {
       const { error } = await supabase.from("POS").insert({
@@ -281,7 +280,8 @@ export default function StorePage() {
     }
   };
 
-  const purchaseItems = async (productId, formData) => {
+  //the shopping cart button
+  const purchaseItems = async (formData) => {
     try {
       const matchedItem = inventory.find(
         (item) => item.id === parseInt(selectedItem.id),
@@ -299,7 +299,6 @@ export default function StorePage() {
 
       if (error) throw error;
 
-      setId(selectedItem.id);
       addSales(selectedItem.id, formData);
       setIsOpen(false);
     } catch (error) {
