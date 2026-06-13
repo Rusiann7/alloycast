@@ -133,13 +133,13 @@ export default function POSModal({
           <div className="flex gap-3 mt-4">
             <button
               onClick={isClose}
-              className="flex-1 py-2 shadow-lg/30 bg-secondary-container rounded-lg text-white text-md font-bold hover:scale-105 transition-all"
+              className="flex-1 py-2 shadow-lg/30 bg-secondary-container rounded-lg text-white text-md font-bold hover:scale-105 active:scale-105 active:bg-input-field transition-all"
             >
               Cancel
             </button>
 
             <button
-              className="flex-1 py-2 shadow-lg/30 bg-primary-container rounded-lg text-black text-md font-bold hover:scale-105 transition-all"
+              className="flex-1 py-2 shadow-lg/30 bg-primary-container rounded-lg text-black text-md font-bold hover:scale-105 active:scale-105 active:bg-secondary-container transition-all"
               onClick={handleConfirm}
             >
               Confirm Purchase

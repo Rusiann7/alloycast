@@ -49,17 +49,17 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
 
           {/* Typography Metadata Section */}
           <div className="card__text flex-1 flex flex-col mt-3">
-            <p className="text-xs font-black uppercase tracking-widest mb-1 text-black/60">
+            <p className="text-xs font-black uppercase tracking-widest mb-1 text-black/60 ">
               {product.brand}
             </p>
-            <h3 className="card__title font-extrabold text-sm uppercase mb-2 text-black">
+            <h3 className="card__title font-extrabold text-sm uppercase mb-2 text-black/90">
               {product.item_name}
             </h3>
           </div>
 
           {/* Pricing & Call-To-Action Footer Area */}
           <div className="card__footer mt-auto flex items-center justify-between">
-            <span className="card__price font-black text-lg text-black">
+            <span className="card__price font-black text-lg text-black/90">
               ₱ {product.price}
             </span>
 
@@ -84,7 +84,7 @@ const StyledWrapper = styled.div`
   height: 100%;
 
   .card {
-    --card-bg: #f8e408;
+    --card-bg: var(--primary-container);
     --card-accent: #000000;
     --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
@@ -99,17 +99,48 @@ const StyledWrapper = styled.div`
     border: 1px solid rgba(0, 0, 0, 0.05);
   }
 
+  body.dark & .card {
+    --card-bg: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    --card-accent: #ffffff;
+    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
   .card__glow {
     position: absolute;
-    inset: -10px;
+    inset: -20px;
     background: radial-gradient(
       circle at 50% 0%,
-      rgba(0, 0, 0, 0.05) 0%,
+      color-mix(in srgb, var(--primary-container) 40%, transparent) 0%,
       transparent 70%
     );
     opacity: 0;
     transition: opacity 0.5s ease;
     pointer-events: none;
+  }
+
+  .card__shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--primary-container) 30%, transparent),
+      transparent
+    );
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 3;
   }
 
   .card__content {
@@ -148,8 +179,9 @@ const StyledWrapper = styled.div`
     transform: translateY(-8px);
     box-shadow:
       0 20px 25px -5px rgba(0, 0, 0, 0.15),
-      0 10px 10px -5px rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.15);
+      0 10px 10px -5px rgba(0, 0, 0, 0.1),
+      0 0 20px 0 color-mix(in srgb, var(--primary-container) 40%, transparent);
+    border-color: var(--primary-container);
   }
 
   .card:hover .card__shine {
