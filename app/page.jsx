@@ -33,17 +33,78 @@ export default function LandingPage() {
   useEffect(() => {
     const loadInventoryProduct = async () => {
       try {
-        let { data, error } = await supabase
-          .from("Inventory")
-          .select("*")
-          .order("created_at", { ascending: false });
+        // 1. Fetch POS data to determine top selling products
+        let { data: posData, error: posError } = await supabase
+          .from("POS")
+          .select("product_id, quantity");
 
-        if (error) throw error;
-        setInventory(data || []); // ilagay sa inventory state ung nafetch na product
-        console.log("Product loaded successfully");
+        if (posError) throw posError;
+
+        // Aggregate sales by product_id
+        const salesByProduct = {};
+        if (posData && posData.length > 0) {
+          posData.forEach((record) => {
+            const pid = record.product_id;
+            const qty = record.quantity || 1; // Default to 1 if missing
+            if (pid) {
+              salesByProduct[pid] = (salesByProduct[pid] || 0) + qty;
+            }
+          });
+        }
+
+        // Sort product IDs by total quantity sold (descending)
+        const sortedProductIds = Object.keys(salesByProduct).sort(
+          (a, b) => salesByProduct[b] - salesByProduct[a],
+        );
+
+        // Limit to Top 12 products
+        const topProductIds = sortedProductIds.slice(0, 12);
+
+        let finalInventory = [];
+
+        if (topProductIds.length > 0) {
+          // 2. Fetch the top products from Inventory
+          let { data: inventoryData, error: inventoryError } = await supabase
+            .from("Inventory")
+            .select("*")
+            .in("id", topProductIds);
+
+          if (inventoryError) throw inventoryError;
+
+          if (inventoryData) {
+            // Re-sort the fetched inventory to match the topProductIds order
+            finalInventory = inventoryData.sort((a, b) => {
+              return (
+                topProductIds.indexOf(a.id.toString()) -
+                topProductIds.indexOf(b.id.toString())
+              );
+            });
+          }
+        }
+
+        // 3. Fallback: If no sales or fewer than 4 top products, fill with newest products
+        if (finalInventory.length < 4) {
+          let { data: fallbackData, error: fallbackError } = await supabase
+            .from("Inventory")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(12);
+
+          if (fallbackError) throw fallbackError;
+
+          // Merge without duplicates
+          const existingIds = new Set(finalInventory.map((item) => item.id));
+          const additionalItems = (fallbackData || []).filter(
+            (item) => !existingIds.has(item.id),
+          );
+
+          finalInventory = [...finalInventory, ...additionalItems].slice(0, 12);
+        }
+
+        setInventory(finalInventory); // ilagay sa inventory state ung nafetch na product
+        console.log("Top products loaded successfully");
       } catch (error) {
-        showToast("Error loading products from Inventory");
-        console.error(error.message);
+        console.error("Error loading products:", error.message);
       }
     };
     loadInventoryProduct();

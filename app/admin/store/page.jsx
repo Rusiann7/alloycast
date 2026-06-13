@@ -256,6 +256,7 @@ export default function StorePage() {
       setSelectedItem(matchedItem);
       setIsOpen(true);
     } catch (error) {
+      showToast("Failed to add items to POS.", "error");
       console.log(error);
     }
   };
@@ -754,8 +755,8 @@ export default function StorePage() {
 
       {scannerOpen && (
         <DynamicScanner
-          isOpen={scannerOpen}
-          onClose={() => setScannerOpen(false)}
+          scannerOpen={scannerOpen}
+          scannerClose={() => setScannerOpen(false)}
           onScan={handelScannedBarCode}
         />
       )}
