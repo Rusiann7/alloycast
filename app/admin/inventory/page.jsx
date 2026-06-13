@@ -149,7 +149,7 @@ export default function AdminInventory() {
         .eq("id", editingProductId);
 
       if (error) throw error;
-      showToast("Updated successfully!", "success");
+      showToast("Product Details Successfully Updated!", "success");
       setEditingProductId(null);
       fetchInventoryProduct();
     } catch (error) {

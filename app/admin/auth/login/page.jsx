@@ -265,12 +265,6 @@ export default function AdminLoginPage() {
         },
       },
     });
-
-    if (error) {
-      showToast(error.message);
-    } else {
-      showToast("Login Successful!", "success");
-    }
   };
 
   return (

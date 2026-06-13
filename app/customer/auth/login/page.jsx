@@ -156,10 +156,6 @@ function LoginContent() {
         },
       },
     });
-
-    if (error) {
-      showToast(error.message);
-    }
   };
 
   //check if the email exists on the DB
