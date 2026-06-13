@@ -18,7 +18,6 @@ const supabase = createClient();
 
 export default function AdminReservations() {
   const [activeTab, setActiveTab] = useState("All Items");
-  const [activeReservation, setActiveReservation] = useState(null);
   const [reservation, setReservation] = useState([]);
   const [reservationDB, setReservationDB] = useState([]);
   const [todayCount, setTodayCount] = useState(0);

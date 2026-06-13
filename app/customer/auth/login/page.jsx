@@ -33,6 +33,9 @@ function LoginContent() {
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const timeoutRef = useRef(null);
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
 
   const router = useRouter();
   const searchParams = useSearchParams(); // for capturing clicked product url and id
@@ -62,23 +65,6 @@ function LoginContent() {
     }));
   };
 
-  const checkEmail = async () => {
-    try {
-      const { count } = await supabase
-        .from("Users")
-        .select("*", { count: "exact" })
-        .eq("email", loginForm.email.trim().toLowerCase());
-
-      if (!count) {
-        showToast("Email Not Found", "error");
-      } else {
-        setIsForgotOpen(true);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const inputSanitizerFunction = () => {
     // panglinis ng email input
     const sanitizedForm = {
@@ -106,7 +92,7 @@ function LoginContent() {
 
     const sanitizedData = formValidation.data;
     // gagamit na tayo ng supabase auth para sa login
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: sanitizedData.email, // kukunin email sa supabase Auth
       password: sanitizedData.password, // kukunin password sa supabase Auth
     });
@@ -176,6 +162,84 @@ function LoginContent() {
     }
   };
 
+  //check if the email exists on the DB
+  const checkEmail = async () => {
+    try {
+      setEmail(loginForm.email.trim().toLowerCase());
+      console.log("Check email: " + email);
+
+      const { count, error } = await supabase
+        .from("Users")
+        .select("*", { count: "exact", head: true })
+        .eq("email", email);
+
+      if (error || !count) {
+        showToast("Email Not Found", "error");
+      } else {
+        setIsForgotOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //check if the code sent matches the DB
+  const checkCode = async () => {
+    try {
+      const { count, error } = await supabase
+        .from("Users")
+        .select("*", { count: "exact", head: true })
+        .eq("reset", code)
+        .eq("email", email);
+
+      if (error || !count) {
+        showToast("Invalid Code", "error");
+      } else {
+        setIsNewOpen(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //reset password call to the api
+  const resetPassword = async () => {
+    try {
+      const res = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await res.json();
+
+      if (result.error) {
+        showToast(result.error, "error");
+      } else {
+        showToast("Password reset successfully!", "success");
+        changeCode();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //change the code to a new one
+  const changeCode = async () => {
+    try {
+      const newCode = Math.floor(10000 + Math.random() * 90000).toString();
+
+      const { error } = await supabase
+        .from("Users")
+        .update({ reset: newCode })
+        .eq("email", email);
+
+      if (error) throw error;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand">
       <DynamicToast
@@ -188,148 +252,154 @@ function LoginContent() {
           <AuthFormSkeleton />
         </div>
       ) : (
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 border border-primary-container hero-border-glow bg-surface-container-high rounded-lg  overflow-hidden  shadow-lg/30 animate-fade-in">
-        {/* Left Side: Branding/Visual */}
-        <div className="relative hidden md:flex flex-col justify-between  p-12 bg-black text-white overflow-hidden">
-          <div className="relative z-10">
-            <h1 className="font-headline font-black text-4xl uppercase text-primary-container italic leading-none mb-4">
-              Join the Hunt
-            </h1>
-            <p className="text-sm font-light uppercase tracking-widest opacity-80">
-              The premier destination for elite diecast collectors.
-            </p>
-          </div>
+        <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 border border-primary-container hero-border-glow bg-surface-container-high rounded-lg  overflow-hidden  shadow-lg/30 animate-fade-in">
+          {/* Left Side: Branding/Visual */}
+          <div className="relative hidden md:flex flex-col justify-between  p-12 bg-black text-white overflow-hidden">
+            <div className="relative z-10">
+              <h1 className="font-headline font-black text-4xl uppercase text-primary-container italic leading-none mb-4">
+                Join the Hunt
+              </h1>
+              <p className="text-sm font-light uppercase tracking-widest opacity-80">
+                The premier destination for elite diecast collectors.
+              </p>
+            </div>
 
-          <div className="absolute -bottom-10 -right-20 w-[150%] opacity-20 pointer-events-none transform rotate-[-15deg]">
-            <img
-              alt="Car Silhouette"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL-AWm0406EG-1UZke8iuF1oZxcY65Vq6dc_9-A1GnFbAoiFAWnkMBVZgKMgaVRrrRUJYiw4nqzaDQd1xGgpwmcWvsEgj79XUUyMY5S2nZYlyPKfUOAWjiQ526D-dlyERFA5g4vM428anIhTgnebUse3SrzDJ-KFXe1uL4dTXtd2m6zn7W9gdZTxRKoEkXLyJSbUtC_04soQqG8Y9gtrtxozmtOzC2Dn_cxQRGR3D-A3F6oSplCvPXJHKZHEGE26GEuAPJ9owfaUc"
-            />
-          </div>
-
-          <div className="relative z-10 flex items-center gap-2 text-primary-container">
-            <span className="material-symbols-outlined">flare</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-              Diecast Vault established 2026
-            </span>
-          </div>
-        </div>
-
-        {/* Right Side: Form */}
-        <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary-container">
-          <div className="mb-8">
-            <h2 className="text-2xl font-headline text-primary-container uppercase italic mb-2">
-              LOGIN YOUR ACCOUNT
-            </h2>
-            <p className="text-sm text-white/90 uppercase tracking-widest">
-              To order the product you want
-            </p>
-          </div>
-
-          <form className="space-y-6" onSubmit={loginAccount}>
-            <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="hello@gmail.com..."
-                className="w-full bg-input-field dark:border-b dark:border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
-                name="email"
-                value={loginForm.email}
-                onChange={getInputValue}
+            <div className="absolute -bottom-10 -right-20 w-[150%] opacity-20 pointer-events-none transform rotate-[-15deg]">
+              <img
+                alt="Car Silhouette"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL-AWm0406EG-1UZke8iuF1oZxcY65Vq6dc_9-A1GnFbAoiFAWnkMBVZgKMgaVRrrRUJYiw4nqzaDQd1xGgpwmcWvsEgj79XUUyMY5S2nZYlyPKfUOAWjiQ526D-dlyERFA5g4vM428anIhTgnebUse3SrzDJ-KFXe1uL4dTXtd2m6zn7W9gdZTxRKoEkXLyJSbUtC_04soQqG8Y9gtrtxozmtOzC2Dn_cxQRGR3D-A3F6oSplCvPXJHKZHEGE26GEuAPJ9owfaUc"
               />
             </div>
-            <div className="relative">
-              <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
-                Password
-              </label>
-              <div className="relative">
+
+            <div className="relative z-10 flex items-center gap-2 text-primary-container">
+              <span className="material-symbols-outlined">flare</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+                Diecast Vault established 2026
+              </span>
+            </div>
+          </div>
+
+          {/* Right Side: Form */}
+          <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary-container">
+            <div className="mb-8">
+              <h2 className="text-2xl font-headline text-primary-container uppercase italic mb-2">
+                LOGIN YOUR ACCOUNT
+              </h2>
+              <p className="text-sm text-white/90 uppercase tracking-widest">
+                To order the product you want
+              </p>
+            </div>
+
+            <form className="space-y-6" onSubmit={loginAccount}>
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
+                  Email Address
+                </label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="w-full bg-input-field dark:border-b dark:border-primary-container  rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
-                  name="password"
-                  value={loginForm.password}
+                  type="email"
+                  placeholder="hello@gmail.com..."
+                  className="w-full bg-input-field dark:border-b dark:border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
+                  name="email"
+                  value={loginForm.email}
                   onChange={getInputValue}
                 />
+              </div>
+              <div className="relative">
+                <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="w-full bg-input-field dark:border-b dark:border-primary-container  rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight pr-12"
+                    name="password"
+                    value={loginForm.password}
+                    onChange={getInputValue}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-3 text-[#A8A8A0] hover:text-white transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      {showPassword ? "visibility" : "visibility_off"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-white/90 uppercase tracking-widest text-center">
+                Didn&apos;t receive the email?{" "}
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-3 text-[#A8A8A0] hover:text-white transition-colors"
+                  onClick={resendVerification}
+                  className="text-primary-container hover:underline italic font-bold uppercase cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-md">
-                    {showPassword ? "visibility" : "visibility_off"}
-                  </span>
+                  Resend Link
+                </button>
+              </p>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => checkEmail()}
+                  className=" text-blue-400   hover:underline text-xs drop-shadow-lg/30 italic font-bold uppercase cursor-pointer"
+                >
+                  Forgot Password?
                 </button>
               </div>
-            </div>
-            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
-              Didn&apos;t receive the email?{" "}
               <button
                 type="button"
-                onClick={resendVerification}
-                className="text-primary-container hover:underline italic font-bold uppercase cursor-pointer"
+                className="w-full flex items-center justify-center gap-3 shadow-lg/30  bg-white hover:scale-105 transition-all text-black font-bold py-3 px-4 rounded-lg  mb-6 border border-gray-300"
+                onClick={googleLogin}
               >
-                Resend Link
+                <img
+                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                  alt="Google Logo"
+                  className="w-5 h-5"
+                />
+                <span className="uppercase text-xs tracking-widest font-black">
+                  Sign in with Google
+                </span>
               </button>
-            </p>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => checkEmail()}
-                className=" text-blue-400   hover:underline text-xs drop-shadow-lg/30 italic font-bold uppercase cursor-pointer"
-              >
-                Forgot Password?
+
+              <button className="w-full bg-primary-container shadow-lg/30 rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:scale-105  transition-all transform active:scale-[0.98]">
+                LOGIN
               </button>
+            </form>
+
+            <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
+              <p className="text-xs text-white/90 uppercase tracking-widest text-center">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/customer/auth/register"
+                  className="text-primary-container hover:underline italic font-bold"
+                >
+                  SIGN UP
+                </Link>
+              </p>
             </div>
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-3 shadow-lg/30  bg-white hover:scale-105 transition-all text-black font-bold py-3 px-4 rounded-lg  mb-6 border border-gray-300"
-              onClick={googleLogin}
-            >
-              <img
-                src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
-                alt="Google Logo"
-                className="w-5 h-5"
-              />
-              <span className="uppercase text-xs tracking-widest font-black">
-                Sign in with Google
-              </span>
-            </button>
-
-            <button className="w-full bg-primary-container shadow-lg/30 rounded-lg text-black/90 py-3 px-4  font-headline font-black uppercase tracking-[0.2em] text-sm hover:scale-105  transition-all transform active:scale-[0.98]">
-              LOGIN
-            </button>
-          </form>
-
-          <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-            <p className="text-xs text-white/90 uppercase tracking-widest text-center">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/customer/auth/register"
-                className="text-primary-container hover:underline italic font-bold"
-              >
-                SIGN UP
-              </Link>
-            </p>
           </div>
         </div>
-      </div>
       )}
       <DynamicForgotPasswordModal
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
-        onSubmit={() => {
+        onSubmit={(code) => {
+          console.log("Recieved code: " + code);
+          setCode(code);
           setIsForgotOpen(false);
-          setIsNewOpen(true);
+          checkCode();
         }}
       />
 
       <DynamicNewPasswordModal
         isOpen={isNewOpen}
         onClose={() => setIsNewOpen(false)}
-        onSubmit={() => setIsNewOpen(false)}
+        onSubmit={(password) => {
+          setPassword(password);
+          setIsNewOpen(false);
+          resetPassword();
+        }}
       />
     </div>
   );

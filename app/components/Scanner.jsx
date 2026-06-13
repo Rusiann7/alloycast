@@ -53,7 +53,7 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
         scannerRef.current
           .stop()
           .then(() => scannerRef.current.clear())
-          .catch((err) => showToast("Failed to stop scanner:", "error"));
+          .catch((err) => showToast("Failed to stop scanner:", err));
       }
     };
   }, [scannerOpen, onScan]);

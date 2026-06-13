@@ -57,10 +57,11 @@ export default function AdminLoginPage() {
     }));
   };
 
+  //check if the email exists on the DB
   const checkEmail = async () => {
     try {
       setEmail(loginForm.email.trim().toLowerCase());
-      console.log(email);
+      console.log("Check email: " + email);
 
       const { count, error } = await supabase
         .from("Users")
@@ -77,6 +78,7 @@ export default function AdminLoginPage() {
     }
   };
 
+  //check if the code sent matches the DB
   const checkCode = async () => {
     try {
       const { count, error } = await supabase
@@ -95,24 +97,39 @@ export default function AdminLoginPage() {
     }
   };
 
+  //reset password call to the api
   const resetPassword = async () => {
     try {
-      const { data: user } = await supabase
-        .from("users")
-        .select("auth_id") // whatever column links to auth.users id
-        .eq("email", email)
-        .single();
-
-      const { error } = await supabase.auth.admin.updateUserById(user.auth_id, {
-        password: password,
+      const res = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (!error) {
-        await supabase
-          .from("users")
-          .update({ reset_code: null })
-          .eq("email", email);
+      const result = await res.json();
+
+      if (result.error) {
+        showToast(result.error, "error");
+      } else {
+        showToast("Password reset successfully!", "success");
+        changeCode();
       }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //change the code to a new one
+  const changeCode = async () => {
+    try {
+      const newCode = Math.floor(10000 + Math.random() * 90000).toString();
+
+      const { error } = await supabase
+        .from("Users")
+        .update({ reset: newCode })
+        .eq("email", email);
+
+      if (error) throw error;
     } catch (error) {
       console.log(error);
     }
@@ -364,7 +381,7 @@ export default function AdminLoginPage() {
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
         onSubmit={(code) => {
-          console.log(code);
+          console.log("Recieved code: " + code);
           setCode(code);
           setIsForgotOpen(false);
           checkCode();
