@@ -154,7 +154,7 @@ export default function RegisterPage() {
     // ok so binago ko na ung pag request kay supabase
     // gagamit na ito ng supabase auth at Users Table
 
-    const newCode = Math.floor(10000 + Math.random() * 90000).toString();
+    const newCode = Math.floor(10000 + Math.random() * 90000);
 
     const { error } = await supabase.auth.signUp({
       // supabase Auth sign up
@@ -167,7 +167,7 @@ export default function RegisterPage() {
           gender: sanitizedData.gender, // store sa Customers Table
           dob: sanitizedData.dob, // store sa Customers Table
           is_admin: false, // matik false para Customers
-          reset: newCode,
+          reset: newCode, // d ito gumagana
         },
       },
     });
