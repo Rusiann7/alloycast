@@ -161,17 +161,19 @@ function LoginContent() {
   //check if the email exists on the DB
   const checkEmail = async () => {
     try {
-      setEmail(loginForm.email.trim().toLowerCase());
-      console.log("Check email: " + email);
+      const targetEmail = loginForm.email.trim().toLowerCase();
+      setEmail(targetEmail);
+      console.log("Check email: " + targetEmail);
 
-      const { count, error } = await supabase
+      const { count: checkCount, error: checkError } = await supabase
         .from("Users")
         .select("*", { count: "exact", head: true })
-        .eq("email", email);
+        .eq("email", targetEmail);
 
-      if (error || !count) {
+      if (checkError || !checkCount) {
         showToast("Email Not Found", "error");
       } else {
+        sendEmail(targetEmail);
         setIsForgotOpen(true);
       }
     } catch (error) {
@@ -179,13 +181,41 @@ function LoginContent() {
     }
   };
 
+  const sendEmail = async (receivedEmail) => {
+    const { data: data, error: codeError } = await supabase
+      .from("Users")
+      .select("reset")
+      .eq("email", receivedEmail);
+
+    if (codeError || !data) {
+      showToast("Code Not Found", "error");
+    } else {
+      const targetCode = data[0]?.reset;
+      setCode(targetCode);
+
+      const res = await fetch("/api/send-nodes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to_email: receivedEmail, code: targetCode }),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        showToast("Email has been sent", "success");
+      } else {
+        showToast("Failed to send email", "error");
+      }
+    }
+  };
+
   //check if the code sent matches the DB
-  const checkCode = async () => {
+  const checkCode = async (submittedCode) => {
     try {
       const { count, error } = await supabase
         .from("Users")
         .select("*", { count: "exact", head: true })
-        .eq("reset", code)
+        .eq("reset", submittedCode)
         .eq("email", email);
 
       if (error || !count) {
@@ -199,12 +229,12 @@ function LoginContent() {
   };
 
   //reset password call to the api
-  const resetPassword = async () => {
+  const resetPassword = async (submittedPassword) => {
     try {
       const res = await fetch("/api/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password: submittedPassword }),
       });
 
       const result = await res.json();
@@ -384,7 +414,7 @@ function LoginContent() {
           console.log("Recieved code: " + code);
           setCode(code);
           setIsForgotOpen(false);
-          checkCode();
+          checkCode(code);
         }}
       />
 
@@ -394,7 +424,7 @@ function LoginContent() {
         onSubmit={(password) => {
           setPassword(password);
           setIsNewOpen(false);
-          resetPassword();
+          resetPassword(password);
         }}
       />
     </div>
