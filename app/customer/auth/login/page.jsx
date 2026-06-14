@@ -182,30 +182,35 @@ function LoginContent() {
   };
 
   const sendEmail = async (receivedEmail) => {
-    const { data: data, error: codeError } = await supabase
-      .from("Users")
-      .select("reset")
-      .eq("email", receivedEmail);
+    try {
+      const newCode = Math.floor(10000 + Math.random() * 90000).toString();
 
-    if (codeError || !data) {
-      showToast("Code Not Found", "error");
-    } else {
-      const targetCode = data[0]?.reset;
-      setCode(targetCode);
+      const { error: codeError } = await supabase
+        .from("Users")
+        .update({ reset: newCode })
+        .eq("email", receivedEmail);
 
-      const res = await fetch("/api/send-nodes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to_email: receivedEmail, code: targetCode }),
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        showToast("Email has been sent", "success");
+      if (codeError) {
+        showToast("Failed to generate code", "error");
       } else {
-        showToast("Failed to send email", "error");
+        setCode(newCode);
+
+        const res = await fetch("/api/send-nodes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to_email: receivedEmail, code: newCode }),
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          showToast("Email has been sent", "success");
+        } else {
+          showToast("Failed to send email", "error");
+        }
       }
+    } catch (error) {
+      console.log(error);
     }
   };
 
