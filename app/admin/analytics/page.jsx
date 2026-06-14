@@ -38,6 +38,7 @@ const BRAND_COLORS = [
 
 export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("Last 30 Days");
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -128,6 +129,8 @@ export default function AdminAnalytics() {
     } catch (err) {
       console.error("Error fetching analytics: ", err);
       showToast("Error getting analytics data", "error");
+    } finally {
+      setLoading(false);
     } finally {
       setLoading(false);
     }
