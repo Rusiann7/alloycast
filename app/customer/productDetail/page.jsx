@@ -633,6 +633,7 @@ function ProductDetail() {
                         className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-[0.98]"
                         onClick={() => updateComment(rating, comment)}
                       >
+                        <span className="material-symbols-outlined">edit</span>
                         Edit Review
                       </button>
                     ) : (
