@@ -388,9 +388,14 @@ export default function Account() {
                 filteredReservations.map((res) => (
                   <div
                     key={res.id}
-                    className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-colors"
+                    onClick={() =>
+                      router.push(
+                        `/customer/productDetail?id=${res.inventory_id}`,
+                      )
+                    }
+                    className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-all cursor-pointer hover:scale-105"
                   >
-                    <div className="relative w-full sm:w-40 h-64 sm:h-40 bg-surface-container-highest rounded flex items-center justify-center p-3 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
+                    <div className="relative w-full sm:w-40 h-64 sm:h-40 rounded flex items-center justify-center p-3 flex-shrink-0 transition-transform duration-500 overflow-hidden">
                       <Image
                         src={
                           res.Inventory?.item_image ||
@@ -433,7 +438,8 @@ export default function Account() {
                           res.status === "Approved" ||
                           !res.status) && (
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setReservationToCancel({
                                 reservationId: res.id,
                                 inventoryId: res.inventory_id,
