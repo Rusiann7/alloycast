@@ -1,7 +1,7 @@
 "use client";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import emailjs from "@emailjs/browser";
@@ -118,12 +118,13 @@ function ProductDetail() {
     checkUser(); // calls the checkUser function
   }, []);
 
-  const getComments = async (product_id) => {
-    try {
-      const { data, error } = await supabase
-        .from("Ratings")
-        .select(
-          `
+  const getComments = useCallback(
+    async (product_id) => {
+      try {
+        const { data, error } = await supabase
+          .from("Ratings")
+          .select(
+            `
           id,
           product_id,
           user_id,
@@ -143,15 +144,17 @@ function ProductDetail() {
             )
           )
         `,
-        )
-        .eq("product_id", product_id);
+          )
+          .eq("product_id", product_id);
 
-      if (error) throw error;
-      setCommentDB(data || []);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+        if (error) throw error;
+        setCommentDB(data || []);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [supabase],
+  );
 
   //fella this shyte works the clear functons
   useEffect(() => {
@@ -307,7 +310,14 @@ function ProductDetail() {
         return;
       }
 
-      if (rating === 0 || !comment) return;
+      if (rating === 0) {
+        showToast("Please provide a star rating.", "error");
+        return;
+      }
+      if (!comment || comment.trim() === "") {
+        showToast("Please write a comment.", "error");
+        return;
+      }
 
       const { error } = await supabase.from("Ratings").insert({
         product_id: productId,
@@ -323,6 +333,7 @@ function ProductDetail() {
 
       console.log(rating, comment);
     } catch (error) {
+      showToast("Error Adding comment. Try again later", "error");
       console.log(error);
     }
   };
@@ -343,7 +354,14 @@ function ProductDetail() {
         return;
       }
 
-      if (rating === 0 || !comment) return;
+      if (rating === 0) {
+        showToast("Please provide a star rating.", "error");
+        return;
+      }
+      if (!comment || comment.trim() === "") {
+        showToast("Please write a comment.", "error");
+        return;
+      }
 
       const { error } = await supabase
         .from("Ratings")
@@ -361,6 +379,7 @@ function ProductDetail() {
 
       console.log(rating, comment);
     } catch (error) {
+      showToast("Error updating comment. Try again later.", "error");
       console.log(error);
     }
   };
@@ -371,16 +390,16 @@ function ProductDetail() {
       <div className="font-body selection:bg-primary-container selection:text-white min-h-screen pt-24 lg:pt-32">
         <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 px-6 lg:px-12 pb-24">
           <div className="h-[450px] w-full rounded-lg relative overflow-hidden flex items-center justify-center">
-             <Skeleton className="w-full h-full" />
+            <Skeleton className="w-full h-full" />
           </div>
           <div className="py-0 space-y-8">
-             <Skeleton className="h-8 w-1/3 rounded-lg" />
-             <Skeleton className="h-16 w-3/4 rounded-lg" />
-             <div className="flex gap-4">
-                <Skeleton className="h-8 w-1/2 rounded-lg" />
-             </div>
-             <Skeleton className="h-24 w-full rounded-lg mt-10" />
-             <Skeleton className="h-16 w-full rounded-lg mt-6" />
+            <Skeleton className="h-8 w-1/3 rounded-lg" />
+            <Skeleton className="h-16 w-3/4 rounded-lg" />
+            <div className="flex gap-4">
+              <Skeleton className="h-8 w-1/2 rounded-lg" />
+            </div>
+            <Skeleton className="h-24 w-full rounded-lg mt-10" />
+            <Skeleton className="h-16 w-full rounded-lg mt-6" />
           </div>
         </div>
       </div>
@@ -611,23 +630,16 @@ function ProductDetail() {
                   <div className="flex gap-2 justify-end">
                     {!submitBtn ? (
                       <button
-                        className="flex items-center gap-2 bg-secondary-container text-white/90 text-sm px-4 py-3 rounded-lg drop-shadow-lg/50 font-bold uppercase hover:scale-105 active:scale-[0.98] transition-all"
-                        onClick={() => {
-                          const textarea = document.querySelector("textarea");
-                          if (textarea) textarea.focus();
-                        }}
+                        className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-[0.98]"
+                        onClick={() => updateComment(rating, comment)}
                       >
                         <span className="material-symbols-outlined">edit</span>
-                        Edit Comment
+                        Edit Review
                       </button>
                     ) : (
                       <button
                         className="w-full sm:w-auto p-3 bg-primary-container drop-shadow-lg/30 rounded-lg font-bold text-sm text-black uppercase tracking-[0.2em] hover:scale-105 transition-all active:scale-[0.98]"
-                        onClick={() =>
-                          !submitBtn
-                            ? updateComment(rating, comment)
-                            : insertComment(rating, comment)
-                        }
+                        onClick={() => insertComment(rating, comment)}
                       >
                         Submit Review
                       </button>
