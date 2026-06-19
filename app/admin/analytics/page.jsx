@@ -131,8 +131,6 @@ export default function AdminAnalytics() {
       showToast("Error getting analytics data", "error");
     } finally {
       setLoading(false);
-    } finally {
-      setLoading(false);
     }
   }, [dateRange, showToast]);
 
