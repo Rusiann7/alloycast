@@ -256,7 +256,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     if (error) {
       showToast("Error adding product to Inventory");
     } else {
-      showToast("Product Added!", "success");
+      showToast("Product Successfully Added to Inventory!", "success");
       setAddFormData({
         item_name: "",
         item_brand: "",
@@ -514,17 +514,17 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       />
       {cameraOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-lg bg-background rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-lg bg-modal-background rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
             <div className="p-4 flex justify-between items-center border-b border-white/10">
-              <h4 className="text-lg text-white font-bold font-headline uppercase tracking-wider">
+              <h4 className="text-lg text-font-color font-bold font-headline uppercase tracking-wider">
                 Take Photo
               </h4>
               <button
                 type="button"
                 onClick={stopCamera}
-                className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                className="w-8 h-8 flex items-center justify-center bg-primary-container hover:scale-105 rounded-full transition-colors"
               >
-                <span className="material-symbols-outlined text-white text-sm">
+                <span className="material-symbols-outlined text-black/90 text-sm">
                   close
                 </span>
               </button>
@@ -539,7 +539,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
               />
               <canvas ref={canvasRef} className="hidden" />
             </div>
-            <div className="p-6 flex justify-center bg-background border-t border-white/10">
+            <div className="p-6 flex justify-center bg-modal-background border-t border-white/10">
               <button
                 type="button"
                 onClick={captureImage}

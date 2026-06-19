@@ -36,7 +36,11 @@ export default function Scanner({ scannerOpen, scannerClose, onScan }) {
           { facingMode: "environment" },
           config,
           (decodedText) => {
+            if (scannerRef.current?.hasScanned) return;
+            scannerRef.current.hasScanned = true;
+
             if (onScan) onScan(decodedText);
+            scannerClose();
           },
         );
       } catch (err) {
