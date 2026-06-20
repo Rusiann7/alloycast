@@ -476,7 +476,14 @@ function ProductDetail() {
                   {averageRating < 1 ? (
                     <span>(No Rating)</span>
                   ) : (
-                    <span>Star ({averageRating})</span>
+                    <div className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs text-primary-container [font-variation-settings:'FILL'_1]">
+                        star
+                      </span>
+                      <span className="text-xs text-primary-container font-bold">
+                        {averageRating.toFixed(1)}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
