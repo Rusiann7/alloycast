@@ -32,8 +32,6 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false); // false muna para d mapakita password unless i-click ung button
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [isNewOpen, setIsNewOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
 
   const showToast = (message, type = "error") => {
@@ -92,8 +90,6 @@ export default function AdminLoginPage() {
       if (codeError) {
         showToast("Failed to generate code", "error");
       } else {
-        setCode(newCode);
-
         const res = await fetch("/api/send-nodes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -270,6 +266,8 @@ export default function AdminLoginPage() {
         },
       },
     });
+
+    if (error) throw error;
   };
 
   return (
@@ -410,8 +408,6 @@ export default function AdminLoginPage() {
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
         onSubmit={(submittedCode) => {
-          console.log("Recieved code: " + submittedCode);
-          setCode(submittedCode);
           setIsForgotOpen(false);
           checkCode(submittedCode);
         }}
@@ -421,7 +417,6 @@ export default function AdminLoginPage() {
         isOpen={isNewOpen}
         onClose={() => setIsNewOpen(false)}
         onSubmit={(submittedPassword) => {
-          setPassword(submittedPassword);
           setIsNewOpen(false);
           resetPassword(submittedPassword);
         }}
