@@ -33,8 +33,6 @@ function LoginContent() {
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const timeoutRef = useRef(null);
-  const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
 
   const router = useRouter();
@@ -156,6 +154,8 @@ function LoginContent() {
         },
       },
     });
+
+    if (error) throw error;
   };
 
   //check if the email exists on the DB
@@ -193,8 +193,6 @@ function LoginContent() {
       if (codeError) {
         showToast("Failed to generate code", "error");
       } else {
-        setCode(newCode);
-
         const res = await fetch("/api/send-nodes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -416,8 +414,6 @@ function LoginContent() {
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
         onSubmit={(code) => {
-          console.log("Recieved code: " + code);
-          setCode(code);
           setIsForgotOpen(false);
           checkCode(code);
         }}
@@ -427,7 +423,6 @@ function LoginContent() {
         isOpen={isNewOpen}
         onClose={() => setIsNewOpen(false)}
         onSubmit={(password) => {
-          setPassword(password);
           setIsNewOpen(false);
           resetPassword(password);
         }}

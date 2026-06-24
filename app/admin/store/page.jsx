@@ -55,7 +55,7 @@ export default function StorePage() {
     } finally {
       setLoadingInventory(false);
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     const initializeFunction = async () => {
@@ -65,40 +65,41 @@ export default function StorePage() {
   }, [fetchInventoryProduct]);
 
   // Fetch Filtered POS Data
-  const fetchPOSData = useCallback(async (selectedRange) => {
-    try {
-      const now = new Date();
-      let startDate = new Date();
-      let endDate = new Date();
+  const fetchPOSData = useCallback(
+    async (selectedRange) => {
+      try {
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
 
-      switch (selectedRange) {
-        case "Today":
-          startDate.setHours(0, 0, 0, 0);
-          break;
-        case "Yesterday":
-          startDate.setDate(now.getDate() - 1);
-          startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(startDate);
-          endDate.setHours(23, 59, 59, 999);
-          break;
-        case "This Week":
-          startDate.setDate(now.getDate() - 7);
-          break;
-        case "This Month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case "Annual":
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date();
-          break;
-        default:
-          startDate.setDate(now.getDate() - 30);
-      }
+        switch (selectedRange) {
+          case "Today":
+            startDate.setHours(0, 0, 0, 0);
+            break;
+          case "Yesterday":
+            startDate.setDate(now.getDate() - 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(startDate);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+          case "This Week":
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case "This Month":
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case "Annual":
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date();
+            break;
+          default:
+            startDate.setDate(now.getDate() - 30);
+        }
 
-      const { data, error } = await supabase
-        .from("POS")
-        .select(
-          `
+        const { data, error } = await supabase
+          .from("POS")
+          .select(
+            `
           id,
           product_id,
           quantity,
@@ -113,19 +114,21 @@ export default function StorePage() {
             price,
             category
           )`,
-        )
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
-        .order("created_at", { ascending: false });
+          )
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString())
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setPos(data || []);
-    } catch (error) {
-      console.error("Error fetching POS records:", error);
-    } finally {
-      setLoadingPos(false);
-    }
-  }, []);
+        if (error) throw error;
+        setPos(data || []);
+      } catch (error) {
+        console.error("Error fetching POS records:", error);
+      } finally {
+        setLoadingPos(false);
+      }
+    },
+    [supabase],
+  );
 
   // Triggers whenever dateRange state changes, plus on initial component mount
   useEffect(() => {
