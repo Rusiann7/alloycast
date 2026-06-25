@@ -19,6 +19,8 @@ const DynamicSessionModal = dynamic(() => import("./SessionModal"), {
   ssr: false,
 });
 
+const DynamicThemeToggle = dynamic(() => import("./ThemeToggle"));
+
 const SidebarLink = ({
   icon,
   label,
@@ -262,6 +264,8 @@ export default function AdminSidebar() {
             isCollapsed={isCollapsed}
             isMobileOpen={isMobileOpen}
           />
+
+          <DynamicThemeToggle />
         </nav>
 
         <div className="px-4 mt-auto space-y-4">

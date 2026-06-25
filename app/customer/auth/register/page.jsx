@@ -1,11 +1,8 @@
 "use client";
-import React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Toast from "../../../components/Toast";
-import TermsModal from "../../../components/TermsModal";
-import DataPrivacyModal from "../../../components/DataPrivacyModal";
+import Image from "next/image";
 import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import { AuthFormSkeleton } from "../../../components/Skeleton";
@@ -459,10 +456,11 @@ export default function RegisterPage() {
                   className="w-full flex items-center justify-center gap-3 bg-white hover:scale-105 shadow-lg/30  text-black font-bold py-3 px-4 rounded-lg  transition-all mb-2 border border-gray-300"
                   onClick={googleSignUp}
                 >
-                  <img
-                    src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                  <Image
+                    src="/google-icon.png"
                     alt="Google Logo"
-                    className="w-5 h-5"
+                    width={24}
+                    height={24}
                   />
                   <span className="uppercase text-xs tracking-widest font-black">
                     Sign up with Google

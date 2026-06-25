@@ -2,7 +2,6 @@ import "./globals.css";
 import { Space_Grotesk, Inter, Rubik } from "next/font/google";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import { ThemeProvider } from "next-themes";
-import ThemeToggle from "./components/ThemeToggle";
 import DotGrid from "./components/DotGrid";
 
 export const metadata = {
@@ -49,8 +48,6 @@ export default function RootLayout({ children }) {
 
           {/* Main App Content Layer */}
           <div className="relative z-10 min-h-screen w-full">{children}</div>
-
-          <ThemeToggle />
         </ThemeProvider>
       </body>
     </html>
