@@ -43,13 +43,30 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  //   mga links na hindi pwede maacess unless nakalogin at may session
-  if (
-    request.nextUrl.pathname.startsWith("/admin") && // lahat ng nasa admin protektado
-    !request.nextUrl.pathname.startsWith("/admin/auth") &&
-    !user
-  ) {
-    return NextResponse.redirect(new URL("/admin/auth/login", request.url));
+  if (!user) {
+    //   mga links na hindi pwede maacess unless nakalogin at may session
+    if (
+      request.nextUrl.pathname.startsWith("/admin") && // lahat ng nasa admin protektado
+      !request.nextUrl.pathname.startsWith("/admin/auth") &&
+      !user
+    ) {
+      return NextResponse.redirect(new URL("/admin/auth/login", request.url));
+    }
+  } else {
+    const { data: userData } = await supabase
+      .from("Users")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    //   mga links na hindi pwede maacess unless nakalogin at may session
+    if (
+      request.nextUrl.pathname.startsWith("/admin") && // lahat ng nasa admin protektado
+      !request.nextUrl.pathname.startsWith("/admin/auth") &&
+      !userData?.is_admin
+    ) {
+      return NextResponse.redirect(new URL("/admin/auth/login", request.url));
+    }
   }
 
   //   kung ok lahat, pwede maredirect c admin
