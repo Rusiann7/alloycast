@@ -429,7 +429,7 @@ export default function AdminInventory() {
                               <input
                                 name="stock"
                                 type="number"
-                                value={editProductForm.stock}
+                                value={editProductForm.stock || 0}
                                 onChange={editProduct}
                                 className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                               />

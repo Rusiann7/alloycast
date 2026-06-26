@@ -1,9 +1,9 @@
 "use client";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Toast from "../../../components/Toast";
+import Image from "next/image";
 import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import { AuthFormSkeleton } from "../../../components/Skeleton";
@@ -74,7 +74,7 @@ function LoginContent() {
     const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     // kailangan may symbol na "@"
     if (!emailFormat.test(sanitizedForm.email)) {
-      return { isValid: false, message: "Invalid email format!" };
+      return showToast("Invalid email format!", "error");
     }
 
     // kung ok lahat
@@ -381,10 +381,11 @@ function LoginContent() {
                 className="w-full flex items-center justify-center gap-3 shadow-lg/30  bg-white hover:scale-105 transition-all text-black font-bold py-3 px-4 rounded-lg  mb-6 border border-gray-300"
                 onClick={googleLogin}
               >
-                <img
-                  src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000"
+                <Image
+                  src="/google-icon.png"
                   alt="Google Logo"
-                  className="w-5 h-5"
+                  width={24}
+                  height={24}
                 />
                 <span className="uppercase text-xs tracking-widest font-black">
                   Sign in with Google

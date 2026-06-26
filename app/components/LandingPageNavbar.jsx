@@ -9,6 +9,7 @@ import Image from "next/image";
 
 const DynamicToast = dynamic(() => import("./Toast"));
 const DynamicSessionModal = dynamic(() => import("./SessionModal"));
+const DynamicThemeToggle = dynamic(() => import("./ThemeToggle"));
 
 export default function LandingPageNavbar() {
   const router = useRouter();
@@ -124,6 +125,7 @@ export default function LandingPageNavbar() {
             ) : (
               <div className="flex items-center gap-6">
                 {/* Link to the user's profile/dashboard */}
+                <DynamicThemeToggle />
                 <Link
                   href="/customer/account"
                   className="hidden lg:flex items-center gap-2 text-sm font-black uppercase tracking-widest text-input-field hover:cursor-pointer transition-colors"
@@ -177,6 +179,7 @@ export default function LandingPageNavbar() {
                 {navLink.label}
               </Link>
             ))}
+
             {!user ? (
               <button className="bg-primary-container text-black/90 text-xs font-black uppercase tracking-widest px-6 h-10 rounded btn-premium">
                 <Link
@@ -188,6 +191,7 @@ export default function LandingPageNavbar() {
               </button>
             ) : (
               <>
+                <DynamicThemeToggle />
                 <Link
                   href="/customer/account"
                   className="text-2xl font-headline font-black uppercase italic text-white/90"

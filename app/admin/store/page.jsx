@@ -659,69 +659,74 @@ export default function StorePage() {
                     </thead>
                     <tbody className="divide-y divide-white/[0.02]">
                       {posDB.length > 0 ? (
-                        posDB.map((pos) => (
-                          <tr
-                            key={pos.id}
-                            className="group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container"
-                          >
-                            <td className="px-8 py-5">
-                              <div className="flex items-center justify-center">
-                                <div className="w-32 h-20 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
-                                  <Image
-                                    src={
-                                      pos.Inventory?.item_image ||
-                                      "/placeholder-car.png"
-                                    }
-                                    alt={pos.Inventory?.item_name || "Image"}
-                                    width={100}
-                                    height={100}
-                                    className="w-full h-full object-cover filter group-hover:scale-110 transition-all duration-700"
-                                  />
+                        posDB
+                          .slice(
+                            (currentPage - 1) * itemsPerPage,
+                            currentPage * itemsPerPage,
+                          )
+                          .map((pos) => (
+                            <tr
+                              key={pos.id}
+                              className="group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container"
+                            >
+                              <td className="px-8 py-5">
+                                <div className="flex items-center justify-center">
+                                  <div className="w-32 h-20 bg-black/40 rounded-lg overflow-hidden border border-white/5 relative group-hover:border-primary-container/30 transition-all duration-500">
+                                    <Image
+                                      src={
+                                        pos.Inventory?.item_image ||
+                                        "/placeholder-car.png"
+                                      }
+                                      alt={pos.Inventory?.item_name || "Image"}
+                                      width={100}
+                                      height={100}
+                                      className="w-full h-full object-cover filter group-hover:scale-110 transition-all duration-700"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-8 py-5 text-center">
-                              <p className="font-bold text-md tracking-tight uppercase text-primary-container">
-                                {pos.Inventory?.item_name}
-                              </p>
-                            </td>
-                            <td className="px-8 py-5 text-center">
-                              <span className="inline-block px-2.5 py-1 bg-white/5 border border-white/10 text-sm font-black tracking-[0.1em] text-white/90 rounded-lg uppercase">
-                                {pos.Inventory?.brand}
-                              </span>
-                            </td>
-                            <td className="px-8 py-5 text-center">
-                              <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
-                                {pos.Inventory?.category}
-                              </p>
-                            </td>
-                            <td className="px-8 py-5 text-center">
-                              <p className="text-2xl text-primary-container">
-                                ₱
-                                {(
-                                  pos.Inventory?.price * pos.quantity
-                                ).toLocaleString()}{" "}
-                                <span className="text-sm text-white/80 italic block">
-                                  (₱{pos.Inventory?.price} each)
+                              </td>
+                              <td className="px-8 py-5 text-center">
+                                <p className="font-bold text-md tracking-tight uppercase text-primary-container">
+                                  {pos.Inventory?.item_name}
+                                </p>
+                              </td>
+                              <td className="px-8 py-5 text-center">
+                                <span className="inline-block px-2.5 py-1 bg-white/5 border border-white/10 text-sm font-black tracking-[0.1em] text-white/90 rounded-lg uppercase">
+                                  {pos.Inventory?.brand}
                                 </span>
-                              </p>
-                            </td>
-                            <td className="px-8 py-5 text-center font-black text-md tabular-nums text-white">
-                              {pos.quantity}
-                            </td>
-                            <td className="px-8 py-5 text-center">
-                              <p className="font-black text-md text-primary-container tracking-tight uppercase">
-                                {pos.name || "Name not provided"}
-                              </p>
-                              <p className="font-body text-sm text-white/80 mt-1 tabular-nums italic">
-                                {pos.email || "Email not provided"}
-                              </p>
-                            </td>
-                            <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest">
-                              {new Date(pos.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                              <td className="px-8 py-5 text-center">
+                                <p className="text-md text-white font-bold uppercase tracking-[0.2em]">
+                                  {pos.Inventory?.category}
+                                </p>
+                              </td>
+                              <td className="px-8 py-5 text-center">
+                                <p className="text-2xl text-primary-container">
+                                  ₱
+                                  {(
+                                    pos.Inventory?.price * pos.quantity
+                                  ).toLocaleString()}{" "}
+                                  <span className="text-sm text-white/80 italic block">
+                                    (₱{pos.Inventory?.price} each)
+                                  </span>
+                                </p>
+                              </td>
+                              <td className="px-8 py-5 text-center font-black text-md tabular-nums text-white">
+                                {pos.quantity}
+                              </td>
+                              <td className="px-8 py-5 text-center">
+                                <p className="font-black text-md text-primary-container tracking-tight uppercase">
+                                  {pos.name || "Name not provided"}
+                                </p>
+                                <p className="font-body text-sm text-white/80 mt-1 tabular-nums italic">
+                                  {pos.email || "Email not provided"}
+                                </p>
+                              </td>
+                              <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest">
+                                {new Date(pos.created_at).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))
                       ) : (
                         <tr>
                           <td
@@ -734,6 +739,44 @@ export default function StorePage() {
                       )}
                     </tbody>
                   </table>
+
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(p - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                      >
+                        <span className="material-symbols-outlined text-md">
+                          chevron_left
+                        </span>
+                      </button>
+                      <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black font-black text-md rounded-lg">
+                        {currentPage}
+                      </button>
+                      <button
+                        onClick={() =>
+                          setCurrentPage((p) =>
+                            Math.min(
+                              p + 1,
+                              Math.ceil(posDB.length / itemsPerPage),
+                            ),
+                          )
+                        }
+                        disabled={
+                          currentPage >= Math.ceil(posDB.length / itemsPerPage)
+                        }
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-md">
+                          chevron_right
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -752,7 +795,7 @@ export default function StorePage() {
           isOpen={isOpen}
           isClose={() => setIsOpen(false)}
           selectedItem={selectedItem}
-          onPurchase={(formData) => purchaseItems(selectedItem.id, formData)}
+          onPurchase={purchaseItems}
         />
       )}
 

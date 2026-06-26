@@ -6,17 +6,17 @@ export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Prevent hydration mismatch
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-primary-container text-black shadow-lg/30 transition-transform active:scale-95 z-50 font-black italic uppercase tracking-widest text-[10px] flex items-center justify-center"
-      aria-label="Toggle Theme"
+      className="relative  left-5 w-10 h-10 flex items-center justify-center rounded-lg bg-input-field border border-white/5 text-white/90 hover:scale-105 transition-all"
+      title="Toggle Theme"
     >
-      <span className="material-symbols-outlined text-[20px] transition-transform duration-500 group-hover:rotate-12 leading-none">
+      <span className="material-symbols-outlined text-[20px]">
         {theme === "dark" ? "light_mode" : "dark_mode"}
       </span>
     </button>
