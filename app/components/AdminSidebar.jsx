@@ -60,6 +60,7 @@ export default function AdminSidebar() {
   const [adminName, setAdminName] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -264,8 +265,6 @@ export default function AdminSidebar() {
             isCollapsed={isCollapsed}
             isMobileOpen={isMobileOpen}
           />
-
-          <DynamicThemeToggle />
         </nav>
 
         <div className="px-4 mt-auto space-y-4">
@@ -292,7 +291,12 @@ export default function AdminSidebar() {
               {!isCollapsed && <span>Collapse Sidebar</span>}
             </button>
           </div>
-          <div className="pt-4 border-t border-surface-container-highest">
+          <div className="pt-4 border-t border-surface-container-highest space-y-2">
+            {/* Theme Toggle — styled to match sidebar buttons */}
+            <DynamicThemeToggle
+              isCollapsed={isCollapsed}
+              isMobileOpen={isMobileOpen}
+            />
             <button
               onClick={showLogoutModal}
               className="w-full flex items-center space-x-3 rounded-lg border border-secondary-container text-black/90 px-4 py-2 hover:bg-secondary-container hover:text-white/90  hover:scale-105 transition-all"

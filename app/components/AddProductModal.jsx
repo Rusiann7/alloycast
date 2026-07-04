@@ -25,6 +25,23 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     message: "",
     type: "error",
   });
+  const [nameSuggestions, setNameSuggestions] = useState([]);
+  const [inventory, setInventory] = useState([]); // Fetched internally
+
+  // Fetch lightweight inventory data when modal opens
+  React.useEffect(() => {
+    const fetchInventoryForSuggestions = async () => {
+      if (isOpen) {
+        const { data, error } = await supabase
+          .from("Inventory")
+          .select("id, item_name, item_brand");
+        if (!error && data) {
+          setInventory(data);
+        }
+      }
+    };
+    fetchInventoryForSuggestions();
+  }, [isOpen]);
 
   const fileInputRef = React.useRef(null); // pang kuha ng image file
   const videoRef = React.useRef(null); // opens camera to capture image of product
@@ -324,20 +341,59 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 lg:p-10 space-y-8 custom-scrollbar">
-          {/* Name */}
           <div className="space-y-3">
-            <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
+            <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em] inline-block border-l-2 border-secondary-container pl-2">
               ITEM NAME
             </label>
-            <input
-              name="item_name"
-              type="text"
-              value={addFormData.item_name}
-              required
-              placeholder="e.g. Ferrari F40"
-              className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/60"
-              onChange={getInputValue}
-            />
+            {/* Item Name with Autocomplete */}
+            <div className="relative">
+              <input
+                name="item_name"
+                type="text"
+                value={addFormData.item_name}
+                required
+                placeholder="e.g. Ferrari F40"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/60"
+                onChange={(e) => {
+                  getInputValue(e);
+                  const val = e.target.value.toLowerCase();
+                  if (val.length < 2) {
+                    setNameSuggestions([]);
+                    return;
+                  }
+                  const matches = inventory
+                    .filter((item) =>
+                      item.item_name.toLowerCase().includes(val),
+                    )
+                    .slice(0, 5);
+                  setNameSuggestions(matches);
+                }}
+                onBlur={() => setTimeout(() => setNameSuggestions([]), 150)}
+              />
+              {/* Suggestions Dropdown */}
+              {nameSuggestions.length > 0 && (
+                <ul className="absolute z-50 top-full left-0 w-full mt-1 bg-secondary-container border border-white/10 rounded-lg overflow-hidden shadow-xl">
+                  {nameSuggestions.map((item) => (
+                    <li
+                      key={item.id}
+                      onMouseDown={() => {
+                        setAddFormData((prev) => ({
+                          ...prev,
+                          item_name: item.item_name,
+                        }));
+                        setNameSuggestions([]);
+                      }}
+                      className="px-6 py-3 text-sm font-headline font-bold tracking-widest text-white/80 hover:bg-primary-container hover:text-black cursor-pointer transition-colors border-b border-white/5 last:border-none"
+                    >
+                      {item.item_name}
+                      <span className="ml-2 text-xs opacity-50">
+                        {item.item_brand}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           {/* Brand & Category */}
