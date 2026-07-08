@@ -34,7 +34,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       if (isOpen) {
         const { data, error } = await supabase
           .from("Inventory")
-          .select("id, item_name, item_brand");
+          .select("id, item_name, item_brand, category");
         if (!error && data) {
           setInventory(data);
         }
@@ -195,6 +195,25 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
   // function para mag-add product sa Inventory Table
   const addProduct = async (e) => {
     e.preventDefault();
+
+    // Check for strict duplicates first (Name + Brand + Category)
+    const isDuplicate = inventory.some((item) => {
+      const isSameName =
+        item.item_name.toLowerCase() ===
+        addFormData.item_name.trim().toLowerCase();
+      const isSameBrand = item.item_brand === addFormData.item_brand;
+      const isSameCategory = item.category === addFormData.category;
+      return isSameName && isSameBrand && isSameCategory;
+    });
+
+    if (isDuplicate) {
+      showToast(
+        "This exact product (Name, Brand, Category) already exists in your inventory!",
+        "error",
+      );
+      return;
+    }
+
     let imageUrl = ""; // para sa image string url
 
     //upload muna ung image sa Supabase Storage

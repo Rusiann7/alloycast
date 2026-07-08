@@ -245,7 +245,7 @@ export default function LandingPage() {
             ].map((brand) => (
               <div
                 key={brand}
-                className="flex flex-col items-center justify-center gap-3 rounded-lg drop-shadow-lg/50 bg-primary-container p-6 hover:scale-105 transition-all cursor-pointer group"
+                className="flex flex-col items-center justify-center gap-3 rounded-lg drop-shadow-lg/50 bg-primary-container p-6 hover:scale-105 transition-all group"
               >
                 <span className="material-symbols-outlined text-secondary-container   transition-transform group-hover:scale-110">
                   flare

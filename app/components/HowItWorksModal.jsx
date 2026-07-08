@@ -46,7 +46,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
           {/* Header */}
           <div className="flex justify-between items-start mb-10">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-headline font-black uppercase  leading-none text-secondary-container dark:text-primary-container">
+              <h2 className="text-3xl sm:text-4xl font-headline font-black uppercase  leading-none text-secondary-container dark:text-primary-container drop-shadow-md/50">
                 HOW IT WORKS
               </h2>
               <p className="text-[12px] uppercase tracking-[0.4em] text-font-color font-bold mt-2">

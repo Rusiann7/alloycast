@@ -16,32 +16,33 @@ export default function AdminCustomers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    const getCustomer = async () => {
-      try {
-        const { data, error } = await supabase.from("Customer").select(
-          `id, firstname, lastname, user_id, gender, dob,
-          Users!user_id( id, email, created_at,
-            Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
-              Inventory!inventory_id( id, item_name, item_image, price, brand, category )
-            )
-          )`,
-        );
-
-        if (error) throw error;
-
-        setCustomer(data || []);
-        console.log(data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     getCustomer();
   }, []);
+
+  const getCustomer = async () => {
+    try {
+      const { data, error } = await supabase.from("Customer").select(
+        `id, firstname, lastname, user_id, gender, dob,
+        Users!user_id( id, email, created_at,
+          Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
+            Inventory!inventory_id( id, item_name, item_image, price, brand, category )
+          )
+        )`,
+      );
+
+      if (error) throw error;
+
+      setCustomer(data || []);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const searchedCustomers = customers.filter((c) => {
     const fullName = `${c.firstname} ${c.lastname}`.toLowerCase();
@@ -76,6 +77,9 @@ export default function AdminCustomers() {
       setIsRemoveOpen(false);
       setSelectedCustomer(null);
       getCustomer();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.log(error);
     }
