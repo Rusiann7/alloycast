@@ -556,7 +556,6 @@ export default function AdminInventory() {
         onClose={() => setIsAddModalOpen(false)}
         showToast={showToast}
         onSuccess={fetchInventoryProduct} // refresh kaagad once na may bagong added na product
-        inventory={inventory}
       />
 
       <DynamicDeleteConfirmationModal

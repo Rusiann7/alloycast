@@ -567,7 +567,8 @@ export default function AdminReservations() {
                                   className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
                                   disabled={
                                     res.status === "Approved" ||
-                                    res.status === "Declined"
+                                    res.status === "Declined" ||
+                                    res.status === "Cancelled"
                                   }
                                   onClick={() =>
                                     handleActionClick(
@@ -590,7 +591,8 @@ export default function AdminReservations() {
                                   className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
                                   disabled={
                                     res.status === "Approved" ||
-                                    res.status === "Declined"
+                                    res.status === "Declined" ||
+                                    res.status === "Cancelled"
                                   }
                                   onClick={() =>
                                     handleActionClick(
