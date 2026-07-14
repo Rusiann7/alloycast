@@ -121,6 +121,25 @@ export default function FeedbackPage() {
                 <TableSkeleton columns={6} rows={5} />
               </div>
             </div>
+          ) : !commentDB.length ? (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg reveal-up scrollbar-hide"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="p-12 md:p-16 text-center">
+                <div className="flex justify-center mb-6">
+                  <span className="material-symbols-outlined text-6xl text-primary-container/60">
+                    star_outline
+                  </span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black font-headline uppercase tracking-[0.2em] text-font-color mb-2">
+                  No Reviews Yet
+                </h2>
+                <p className="text-sm md:text-base text-white/60 font-body">
+                  Reviews from customers will appear here
+                </p>
+              </div>
+            </div>
           ) : (
             <div
               className="bg-secondary-container shadow-lg/30 rounded-lg  overflow-x-auto reveal-up scrollbar-hide"

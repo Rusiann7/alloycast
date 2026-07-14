@@ -259,7 +259,7 @@ export default function AdminSidebar() {
 
           <SidebarLink
             icon="people"
-            label="CUSTOMER"
+            label="USERS"
             href="/admin/customers"
             linkName={linkName}
             isCollapsed={isCollapsed}

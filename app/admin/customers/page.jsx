@@ -15,6 +15,7 @@ export default function AdminCustomers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [admins, setAdmin] = useState([]);
 
   const itemsPerPage = 5;
 
@@ -36,13 +37,36 @@ export default function AdminCustomers() {
       if (error) throw error;
 
       setCustomer(data || []);
-      console.log(data);
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
     }
   };
+
+  const getAdmin = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Admin")
+        .select(
+          `id, firstname, lastname, user_id, Users!user_id(id, email, created_at)`,
+        );
+
+      if (error) throw error;
+
+      setAdmin(data || []);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getAdmin();
+  }, []);
+
+  const [activeTab, setActiveTab] = useState("Customers");
 
   const searchedCustomers = customers.filter((c) => {
     const fullName = `${c.firstname} ${c.lastname}`.toLowerCase();
@@ -51,7 +75,19 @@ export default function AdminCustomers() {
     return fullName.includes(query) || email.includes(query);
   });
 
-  const totalUsers = searchedCustomers.length;
+  const searchedAdmins = admins.filter((a) => {
+    const fullName = `${a.firstname} ${a.lastname}`.toLowerCase();
+    const email = a.Users?.email?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return fullName.includes(query) || email.includes(query);
+  });
+
+  const showToast = (message, type = "error") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
+  };
+
+  const totalUsers = searchedCustomers.length + searchedAdmins.length;
 
   const handleRowClick = (customerId) => {
     const matchedCustomer = customers.find(
@@ -59,8 +95,14 @@ export default function AdminCustomers() {
     );
 
     setSelectedCustomer(matchedCustomer);
-    console.log(matchedCustomer);
     setIsDrawerOpen(true);
+  };
+
+  const adminHandleRowClick = (adminId) => {
+    const matchedAdmin = admins.find((item) => item.id === parseInt(adminId));
+
+    setSelectedCustomer(matchedAdmin);
+    setIsRemoveOpen(true);
   };
 
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
@@ -76,10 +118,9 @@ export default function AdminCustomers() {
       setIsDrawerOpen(false);
       setIsRemoveOpen(false);
       setSelectedCustomer(null);
+      showToast("Account Deleted", "success");
       getCustomer();
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      getAdmin();
     } catch (error) {
       console.log(error);
     }
@@ -94,11 +135,11 @@ export default function AdminCustomers() {
           <div className="mb-10 sm:mb-14 reveal-up flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
             <div>
               <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
-                CUSTOMERS
+                USERS
               </h3>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
-                  TOTAL CUSTOMERS:{" "}
+                  TOTAL USERS:{" "}
                   <span className="text-font-color font-bold">
                     {totalUsers}
                   </span>
@@ -116,6 +157,29 @@ export default function AdminCustomers() {
                 <span>Register New Admin?</span>
               </Link>
             </div>
+          </div>
+
+          {/*Tabs*/}
+          <div className="flex items-center gap-10 mb-10 overflow-x-auto scrollbar-hide reveal-up border-b border-white/5">
+            {["Customers", "Admins"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setCurrentPage(1);
+                }}
+                className={`pb-5 text-md font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all relative ${
+                  activeTab === tab
+                    ? "text-secondary-container opacity-100"
+                    : "text-font-color opacity-100 hover:opacity-60"
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <div className="absolute bottom-0 left-0 w-full h-[3px] bg-secondary-container animate-scale-in" />
+                )}
+              </button>
+            ))}
           </div>
 
           {/* Search/Filter Bar */}
@@ -150,7 +214,7 @@ export default function AdminCustomers() {
                 <TableSkeleton columns={5} rows={5} />
               </div>
             </div>
-          ) : (
+          ) : activeTab === "Customers" ? (
             <div
               className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
               style={{ animationDelay: "0.2s" }}
@@ -234,6 +298,141 @@ export default function AdminCustomers() {
                                 {selectedCustomer?.id === c.id
                                   ? "arrow_forward_ios"
                                   : "chevron_right"}
+                              </span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center gap-4 opacity-80">
+                          <span className="material-symbols-outlined text-6xl">
+                            person_off
+                          </span>
+                          <p className="text-xl text-white/90 font-headline font-black uppercase tracking-[0.2em]">
+                            No users found
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {/* Pagination */}
+              <div className="w-full flex items-center justify-center p-8 bg-input-field border-t border-primary-container">
+                <div className="flex items-center gap-3">
+                  {/* Previous */}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      chevron_left
+                    </span>
+                  </button>
+
+                  {/* Current Page Indicator */}
+                  <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black font-black text-md">
+                    {currentPage}
+                  </button>
+
+                  {/* Next */}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) =>
+                        Math.min(
+                          p + 1,
+                          Math.ceil(searchedCustomers.length / itemsPerPage),
+                        ),
+                      )
+                    }
+                    disabled={
+                      currentPage >=
+                      Math.ceil(searchedCustomers.length / itemsPerPage)
+                    }
+                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-md">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead className="border-b border-primary-container">
+                  <tr className="bg-input-field">
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      ADMIN NAME
+                    </th>
+
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      CREATED AT
+                    </th>
+
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      DELETE
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.02]">
+                  {searchedAdmins.length > 0 ? (
+                    searchedAdmins
+                      .slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )
+                      .map((a) => (
+                        <tr
+                          key={a.id}
+                          onClick={() => adminHandleRowClick(a.id)}
+                          className={`group hover:bg-white/[0.01] transition-all duration-300 cursor-pointer  border-b border-primary-container${
+                            selectedCustomer?.id === a.id
+                              ? "bg-white/[0.03]"
+                              : ""
+                          }`}
+                        >
+                          {/* Identity */}
+                          <td className="px-6 sm:px-8 py-5">
+                            <div className="flex items-center gap-4 justify-center">
+                              <div className="text-center">
+                                <p className="text-md sm:text-xl text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                                  {a.firstname} {a.lastname}
+                                </p>
+                                <p className="text-sm text-white/60 font-bold mt-1 italic lowercase">
+                                  {a.Users?.email}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Created At */}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <p className="text-lg font-headline font-bold text-primary-container">
+                              {a.Users?.created_at
+                                ? new Date(
+                                    a.Users.created_at,
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "—"}
+                            </p>
+                          </td>
+
+                          {/* Details */}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <button className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/80 hover:text-white/80 transition-all mx-auto">
+                              <span className="material-symbols-outlined text-sm">
+                                delete
                               </span>
                             </button>
                           </td>
