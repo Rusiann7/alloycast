@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "../../../../lib/supabase/client";
@@ -53,13 +53,28 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const searchParams = useSearchParams(); // for capturing clicked product url and id
+
   useEffect(() => {
     const checkSession = async () => {
-      await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const redirectTo = searchParams.get("redirectTo"); // kinukuha ung specific productDetail url (if meron)
+        const destination = redirectTo || "/customer/account"; // kung meron, balik, kung wla, punta sa account
+        const id = setTimeout(() => {
+          if (typeof window !== "undefined" && router && router.push) {
+            router.push(destination); // redirects back to clicked productDetail
+          }
+        }, 1500);
+        timeoutRef.current = id;
+      }
       setLoading(false);
     };
     checkSession();
-  }, [supabase.auth]);
+  }, [supabase.auth, router, searchParams]);
 
   // Function to show toast (gawa ni AI)
   const showToast = (message, type = "error") => {

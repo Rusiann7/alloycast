@@ -41,11 +41,19 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     const checkSession = async () => {
-      await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        setTimeout(() => {
+          router.push("/admin/dashboard");
+        }, 1500);
+      }
       setLoading(false);
     };
     checkSession();
-  }, [supabase.auth]);
+  }, [supabase.auth, router]);
 
   const getInputValue = (e) => {
     const { name, value } = e.target;
