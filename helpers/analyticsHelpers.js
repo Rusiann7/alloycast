@@ -129,19 +129,39 @@ export const aggregateRevenueChartData = (posData = [], dateRange) => {
 /**
  * Processes reservation data to find top-selling and low-selling items.
  */
-export const computeProductStats = (reservationData = [], limit = 6) => {
+export const computeProductStats = (
+  reservationData = [],
+  posData = [],
+  inventoryData = [],
+  limit = 6,
+) => {
   // Sets up local variables to calculate relative physical sales metrics,
   // tracking individual unit totals alongside overall inventory velocity.
   const productCounts = {};
   let totalReserved = 0;
 
-  // Aggregates order quantities by individual scale model item names,
-  // maintaining an accurate count of total units moved through the reservation pipeline.
+  // Initialize all inventory items with 0 sales to include them in the statistics
+  inventoryData.forEach((item) => {
+    if (item.item_name) {
+      productCounts[item.item_name] = 0;
+    }
+  });
+
+  // Aggregates order quantities by individual scale model item names from Reservation
   reservationData.forEach((res) => {
     const name = res.Inventory?.item_name;
     if (name) {
       productCounts[name] = (productCounts[name] || 0) + res.quantity;
       totalReserved += res.quantity;
+    }
+  });
+
+  // Aggregates order quantities by individual scale model item names from POS
+  posData.forEach((pos) => {
+    const name = pos.Inventory?.item_name;
+    if (name) {
+      productCounts[name] = (productCounts[name] || 0) + pos.quantity;
+      totalReserved += pos.quantity;
     }
   });
 
@@ -160,11 +180,13 @@ export const computeProductStats = (reservationData = [], limit = 6) => {
     .sort((a, b) => b.units - a.units);
 
   // Simultaneously derives your high and low performance brackets from the same pre-sorted dataset.
-  // It slices the top 6 entries for your best-sellers list,
-  // then uses a non-destructive array copy ([...sortedProducts]) to reverse the list
-  // and grab the bottom 6 struggling products without corrupting the master array.
-  const topProducts = sortedProducts.slice(0, limit);
-  const lowProducts = [...sortedProducts].reverse().slice(0, limit);
+  // Top Selling Products must have at least 5 orders and never 0 orders.
+  const topProducts = sortedProducts.filter((p) => p.units >= 5).slice(0, limit);
+  // Low Selling Products must have 0 or 1 orders.
+  const lowProducts = [...sortedProducts]
+    .reverse()
+    .filter((p) => p.units <= 1)
+    .slice(0, limit);
 
   return { topProducts, lowProducts };
 };

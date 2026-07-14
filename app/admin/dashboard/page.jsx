@@ -125,10 +125,10 @@ export default function AdminDashboard() {
         totalReservations: resData?.length || 0,
         pendingReservations:
           resData?.filter((r) => r.status === "Pending").length || 0,
-        criticalStockCount: invData?.filter((i) => i.stock <= 5).length || 0,
+        criticalStockCount: invData?.filter((i) => i.stock <= 2).length || 0,
         loading: false,
       });
-      const criticalItems = invData?.filter((i) => i.stock <= 5) || [];
+      const criticalItems = invData?.filter((i) => i.stock <= 2) || [];
       setLowStockProducts(criticalItems);
       const { data: arrivalsData } = await supabase
         .from("Inventory")
