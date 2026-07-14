@@ -41,11 +41,24 @@ function LoginContent() {
 
   useEffect(() => {
     const checkSession = async () => {
-      await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const redirectTo = searchParams.get("redirectTo"); // kinukuha ung specific productDetail url (if meron)
+        const destination = redirectTo || "/customer/account"; // kung meron, balik, kung wla, punta sa account
+        const id = setTimeout(() => {
+          if (typeof window !== "undefined" && router && router.push) {
+            router.push(destination); // redirects back to clicked productDetail
+          }
+        }, 1500);
+        timeoutRef.current = id;
+      }
       setLoading(false);
     };
     checkSession();
-  }, [supabase.auth]);
+  }, [supabase.auth, router, searchParams]);
 
   // const redirectTo = searchParams.get("redirectTo") || "/customer/dashboard"; // gets the redirect path from capturedCurrentPath in productDetail
 

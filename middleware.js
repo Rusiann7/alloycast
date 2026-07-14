@@ -47,7 +47,7 @@ export async function middleware(request) {
     //   mga links na hindi pwede maacess unless nakalogin at may session
     if (
       request.nextUrl.pathname.startsWith("/admin") && // lahat ng nasa admin protektado
-      !request.nextUrl.pathname.startsWith("/admin/auth") &&
+      !request.nextUrl.pathname.startsWith("/admin/auth/login") &&
       !user
     ) {
       return NextResponse.redirect(new URL("/admin/auth/login", request.url));

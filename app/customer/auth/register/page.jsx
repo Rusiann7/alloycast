@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "../../../../lib/supabase/client";
@@ -24,7 +24,8 @@ const DynamicDataPrivacyModal = dynamic(
     ssr: false,
   },
 );
-export default function RegisterPage() {
+
+function RegisterPageContent() {
   const supabase = createClient();
   const router = useRouter(); // pang navigate to sa login page kung successfull na login
   // dto muna mastore mga input fields bago mapunta sa Users at Customers Table
@@ -53,13 +54,28 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const searchParams = useSearchParams(); // for capturing clicked product url and id
+
   useEffect(() => {
     const checkSession = async () => {
-      await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const redirectTo = searchParams.get("redirectTo"); // kinukuha ung specific productDetail url (if meron)
+        const destination = redirectTo || "/customer/account"; // kung meron, balik, kung wla, punta sa account
+        const id = setTimeout(() => {
+          if (typeof window !== "undefined" && router && router.push) {
+            router.push(destination); // redirects back to clicked productDetail
+          }
+        }, 1500);
+        timeoutRef.current = id;
+      }
       setLoading(false);
     };
     checkSession();
-  }, [supabase.auth]);
+  }, [supabase.auth, router, searchParams]);
 
   // Function to show toast (gawa ni AI)
   const showToast = (message, type = "error") => {
@@ -494,5 +510,19 @@ export default function RegisterPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
+        <div className="w-full max-w-4xl">
+          <AuthFormSkeleton />
+        </div>
+      </div>
+    }>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
