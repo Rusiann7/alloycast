@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,7 +24,8 @@ const DynamicDataPrivacyModal = dynamic(
     ssr: false,
   },
 );
-export default function RegisterPage() {
+
+function RegisterPageContent() {
   const supabase = createClient();
   const router = useRouter(); // pang navigate to sa login page kung successfull na login
   // dto muna mastore mga input fields bago mapunta sa Users at Customers Table
@@ -509,5 +510,19 @@ export default function RegisterPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
+        <div className="w-full max-w-4xl">
+          <AuthFormSkeleton />
+        </div>
+      </div>
+    }>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
