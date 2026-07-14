@@ -84,14 +84,22 @@ export default function AdminAnalytics() {
       // Fetch POS Data
       const { data: posData, error: posError } = await supabase
         .from("POS")
-        .select("quantity, created_at, Inventory(price)")
+        .select("quantity, created_at, Inventory(item_name, price)")
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
       if (posError) throw posError;
 
+      // Fetch Inventory Data to include products with 0 orders
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from("Inventory")
+        .select("item_name");
+
+      if (inventoryError) throw inventoryError;
+
       const safeReservations = reservationData || [];
       const safePOS = posData || [];
+      const safeInventory = inventoryData || [];
 
       // Calculate in-store vs booking revenues
       const {
@@ -110,6 +118,8 @@ export default function AdminAnalytics() {
       // Process product statistics (Top 6 / Low 6)
       const { topProducts: tops, lowProducts: lows } = computeProductStats(
         safeReservations,
+        safePOS,
+        safeInventory,
         6,
       );
       setTopProducts(tops);

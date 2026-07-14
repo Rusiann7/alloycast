@@ -276,7 +276,7 @@ export default function StorePage() {
 
       if (error) throw error;
 
-      showToast("Successfully Reserved", "success");
+      showToast("Purchased Successfully", "success");
       fetchInventoryProduct();
       fetchPOSData(dateRange); // Refresh POS data view after adding items
     } catch (error) {

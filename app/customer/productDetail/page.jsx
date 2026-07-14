@@ -474,7 +474,9 @@ function ProductDetail() {
                     {product.brand} OFFICIAL SERIES
                   </p>
                   {averageRating < 1 ? (
-                    <span>(No Rating)</span>
+                    <span className="rounded-lg p-1 bg-primary-container font-headline font-black text-black/90">
+                      (No Rating)
+                    </span>
                   ) : (
                     <div className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-xs text-primary-container [font-variation-settings:'FILL'_1]">

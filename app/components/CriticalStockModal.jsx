@@ -69,7 +69,7 @@ export default function CriticalStockModal({ isOpen, onClose, items }) {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className="text-md opacity-60 italic font-bold">
-                          {item.reorder_point || 5}
+                          {item.reorder_point || 2}
                         </span>
                       </td>
                     </tr>
