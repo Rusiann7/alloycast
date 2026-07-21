@@ -27,7 +27,7 @@ export default function AdminCustomers() {
     try {
       const { data, error } = await supabase.from("Customer").select(
         `id, firstname, lastname, user_id, gender, dob,
-        Users!user_id( id, email, created_at,
+        Users!user_id( id, email, created_at, is_active,
           Reservation!user_id( id, quantity, discount, created_at, status, inventory_id,
             Inventory!inventory_id( id, item_name, item_image, price, brand, category )
           )
@@ -49,7 +49,7 @@ export default function AdminCustomers() {
       const { data, error } = await supabase
         .from("Admin")
         .select(
-          `id, firstname, lastname, user_id, Users!user_id(id, email, created_at)`,
+          `id, firstname, lastname, user_id, Users!user_id(id, email, created_at, is_active)`,
         );
 
       if (error) throw error;
@@ -111,7 +111,7 @@ export default function AdminCustomers() {
     try {
       const { error } = await supabase
         .from("Users")
-        .delete()
+        .update({ is_active: false })
         .eq("id", selectedCustomer?.Users?.id);
 
       if (error) throw error;
@@ -226,6 +226,9 @@ export default function AdminCustomers() {
                       CUSTOMER NAME
                     </th>
                     <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      STATUS
+                    </th>
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
                       RESERVATIONS
                     </th>
                     <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
@@ -268,6 +271,13 @@ export default function AdminCustomers() {
                                 </p>
                               </div>
                             </div>
+                          </td>
+
+                          {/* Status */}
+                          <td>
+                            <span className="text-lg text-white font-headline font-bold">
+                              {c.Users?.is_active ? "Active" : "Removed"}
+                            </span>
                           </td>
 
                           {/* Reservations */}
@@ -551,12 +561,21 @@ export default function AdminCustomers() {
               <section>
                 {/* Footer Actions */}
                 <div className="space-y-3 pt-4 pb-10">
-                  <button
-                    onClick={() => setIsRemoveOpen(true)}
-                    className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
-                  >
-                    REMOVE CUSTOMER ACCOUNT?
-                  </button>
+                  {selectedCustomer?.Users?.is_active ? (
+                    <button
+                      onClick={() => setIsRemoveOpen(true)}
+                      className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
+                    >
+                      REMOVE CUSTOMER ACCOUNT?
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsRemoveOpen(true)}
+                      className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
+                    >
+                      RESTORE CUSTOMER ACCOUNT?
+                    </button>
+                  )}
                 </div>
                 <h3 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary-container mb-6 border-l-2 border-primary-container pl-4">
                   Communication
