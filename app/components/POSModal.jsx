@@ -60,6 +60,10 @@ export default function POSModal({
       );
       return;
     }
+    if (!userName) {
+      showToast("Please enter a name for the customer", "error");
+      return;
+    }
 
     onPurchase({ userName, emailAddr, quantity: parsedQuantity });
     setUserName("");
@@ -106,7 +110,7 @@ export default function POSModal({
 
             <div>
               <label className="text-font-color text-lg mt-2">
-                Customer Name (Optional):
+                Customer Name:
               </label>
               <input
                 type="text"
@@ -114,6 +118,7 @@ export default function POSModal({
                 className="w-full bg-input-field text-white/90 p-2 rounded-lg"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
+                required
               />
             </div>
 
