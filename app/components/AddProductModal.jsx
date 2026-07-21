@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
 import Scanner from "./Scanner";
 import Toast from "./Toast";
@@ -20,6 +20,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedBarCode, setScannedBarCode] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [user, setUser] = useState(null); // for checking auth users
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -55,6 +56,18 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     }
     setCameraOpen(false);
   };
+
+  // for checking if user is currently logged
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      console.log("Supabase Auth User:", user);
+      setUser(user); // if user is authenticated
+    };
+    checkUser(); // calls the checkUser function
+  }, []);
 
   // closes the camera when X button is clicked
   React.useEffect(() => {
@@ -276,18 +289,37 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       stock: Math.abs(parseInt(addFormData.stock)) || 0, // Ensure stock is positive
     };
 
-    const { error } = await supabase.from("Inventory").insert([
-      //upload ung inventory sa Inventory Table
-      {
-        item_name: sanitizedInput.item_name,
-        brand: sanitizedInput.brand,
-        category: sanitizedInput.category,
-        price: sanitizedInput.price,
-        stock: sanitizedInput.stock,
-        item_image: imageUrl,
-        barcode: scannedBarCode,
-      },
-    ]);
+    const { data: insertedProduct, error } = await supabase
+      .from("Inventory")
+      .insert([
+        {
+          item_name: sanitizedInput.item_name,
+          brand: sanitizedInput.brand,
+          category: sanitizedInput.category,
+          price: sanitizedInput.price,
+          stock: sanitizedInput.stock,
+          item_image: imageUrl,
+          barcode: scannedBarCode,
+        },
+      ])
+      .select("id")
+      .single();
+
+    const productId = insertedProduct?.id;
+
+    const { error: historyError } = await supabase.from("History").insert({
+      product_id: productId,
+      item_name: sanitizedInput.item_name,
+      brand: sanitizedInput.brand,
+      category: sanitizedInput.category,
+      price: sanitizedInput.price,
+      stock: sanitizedInput.stock,
+      item_image: imageUrl,
+      user_id: user.id,
+      comment: "Added",
+    });
+
+    if (historyError) throw historyError;
 
     if (error) {
       showToast("Error adding product to Inventory");
