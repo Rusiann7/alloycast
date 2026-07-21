@@ -37,6 +37,7 @@ function ProductDetail() {
   const [commentDB, setCommentDB] = useState([]);
   const [submitBtn, setSubmitBtn] = useState(true);
   const [canReview, setCanReview] = useState(false);
+  const [wishlistStatus, setWishlistStatus] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -215,7 +216,7 @@ function ProductDetail() {
     }
     if (!user) {
       // is user is not logged in
-      showToast("You must login first to reserve this product", "error");
+      showToast("You must login first to order this product", "error");
       const captureCurrentPath =
         window.location.pathname + window.location.search; // capture current page url with product id
       setTimeout(() => {
@@ -384,6 +385,58 @@ function ProductDetail() {
     }
   };
 
+  const checkWishlist = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Wishlist")
+        .select("is_active")
+        .eq("product_id", productId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setWishlistStatus(data || false);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const doWishlistCheck = async () => {
+      checkWishlist();
+    };
+    doWishlistCheck();
+  }, []);
+
+  const addWishlist = async () => {
+    try {
+      if (!user) {
+        // is user is not logged in
+        showToast("You must login first to comment on this product", "error");
+        const captureCurrentPath =
+          window.location.pathname + window.location.search; // capture current page url with product id
+        setTimeout(() => {
+          router.push(
+            // pass the captured current path url to login page
+            `/customer/auth/login?redirectTo=${encodeURIComponent(captureCurrentPath)}`,
+          );
+        }, 4000);
+        return;
+      }
+
+      const { error } = await supabase.from("Wishlist").insert({
+        product_id: productId,
+        user_id: user.id,
+        is_active: true,
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // for loading product
   if (loading) {
     return (
@@ -517,17 +570,25 @@ function ProductDetail() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-6 mt-10">
+              <div className="flex gap-4 mt-10">
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
-                  className={`w-full rounded-lg py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge drop-shadow-lg/50 ${
+                  className={`flex-1 rounded-lg py-8 font-headline font-black text-2xl uppercase tracking-[0.3em] transition-all italic sharp-edge drop-shadow-lg/50 ${
                     product.stock === 0
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed grayscale" // 2. "Sold Out" styling
                       : "bg-primary-container text-black/90 hover:scale-105 active:scale-[0.98]" // regular styling
                   }`}
                 >
-                  {product.stock === 0 ? "Out of Stock" : "Reserve Product"}
+                  {product.stock === 0 ? "Out of Stock" : "Order Product"}
+                </button>
+                <button
+                  onClick={addWishlist}
+                  className="flex-shrink-0 w-16 h-16 rounded-lg bg-secondary-container border-2 border-primary-container text-primary-container transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                >
+                  <span className="material-symbols-outlined text-3xl">
+                    favorite
+                  </span>
                 </button>
               </div>
             </div>

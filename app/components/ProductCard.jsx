@@ -59,10 +59,6 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
 
           {/* Pricing & Call-To-Action Footer Area */}
           <div className="card__footer mt-auto flex items-center justify-between">
-            <span className="card__price font-black text-lg text-black/90">
-              ₱ {product.price}
-            </span>
-
             <Link
               href={`/customer/productDetail?id=${product.id}`}
               onClick={reservationAnalytics}
