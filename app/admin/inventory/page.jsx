@@ -34,6 +34,7 @@ export default function AdminInventory() {
   const [editProductForm, setEditProductForm] = useState({}); // holds the temporary form data from editing fields
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null); // for checking auth users
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -47,6 +48,18 @@ export default function AdminInventory() {
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 4000);
   };
 
+  // for checking if user is currently logged
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      console.log("Supabase Auth User:", user);
+      setUser(user); // if user is authenticated
+    };
+    checkUser(); // calls the checkUser function
+  }, []);
+
   // kunin mga product sa loob ng Inventory Table
   const fetchInventoryProduct = useCallback(async () => {
     setLoading(true);
@@ -57,7 +70,9 @@ export default function AdminInventory() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
       setInventory(data || []); // ilagay sa inventory state ung nafetch na product
+      console.log(data);
       console.log("Product Fetched successfully");
     } catch (error) {
       showToast("Error fetching products from Inventory");
@@ -135,8 +150,11 @@ export default function AdminInventory() {
         imageUrl = publicUrl;
       }
 
+      const oldRow = inventory.find((item) => item.id === editingProductId);
+      if (!oldRow) throw new Error("Original product not found in local state");
+
       // 2. Perform the update
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("Inventory")
         .update({
           item_name: editProductForm.item_name,
@@ -148,7 +166,22 @@ export default function AdminInventory() {
         })
         .eq("id", editingProductId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      const { error: historyError } = await supabase.from("History").insert({
+        product_id: editingProductId,
+        item_name: oldRow.item_name,
+        brand: oldRow.brand,
+        category: oldRow.category,
+        price: oldRow.price,
+        stock: oldRow.stock,
+        item_image: oldRow.item_image,
+        user_id: user.id,
+        comment: "Updated",
+      });
+
+      if (historyError) throw historyError;
+
       showToast("Product Details Successfully Updated!", "success");
       setEditingProductId(null);
       fetchInventoryProduct();
@@ -163,6 +196,23 @@ export default function AdminInventory() {
     setIsDeleting(true);
 
     try {
+      const oldRow = inventory.find((item) => item.id === itemToDelete.id);
+      if (!oldRow) throw new Error("Original product not found in local state");
+
+      const { error: historyError } = await supabase.from("History").insert({
+        product_id: editingProductId,
+        item_name: oldRow.item_name,
+        brand: oldRow.brand,
+        category: oldRow.category,
+        price: oldRow.price,
+        stock: oldRow.stock,
+        item_image: oldRow.item_image,
+        user_id: user.id,
+        comment: "Deleted",
+      });
+
+      if (historyError) throw historyError;
+
       const { error } = await supabase
         .from("Inventory")
         .delete()
