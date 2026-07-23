@@ -378,18 +378,18 @@ export default function AdminReservations() {
         <div className="text-font-color flex flex-col md:flex-row justify-between items-end mb-12 gap-6 reveal-up ">
           <div className="mb-14 reveal-up">
             <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
-              RESERVATIONS
+              ORDERS
             </h3>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
-                TOTAL RESREVATIONS:{" "}
+                TOTAL ORDERS:{" "}
                 <span className="text-font-color">
                   {reservation.length}
                 </span>{" "}
               </p>
               <div className="w-1 h-1 bg-secondary-container rounded-full" />
               <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
-                PENDING RESERVATIONS:{" "}
+                PENDING ORDERS:{" "}
                 <span className="text-font-color">
                   {reservation.filter((res) => res.status === "Pending").length}
                 </span>
