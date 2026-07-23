@@ -38,6 +38,7 @@ function ProductDetail() {
   const [submitBtn, setSubmitBtn] = useState(true);
   const [canReview, setCanReview] = useState(false);
   const [wishlistStatus, setWishlistStatus] = useState(false);
+  const [orderType, setOrderType] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -807,6 +808,8 @@ function ProductDetail() {
                 />
               </div>
               <p className="text-md ">Available stock: {product.stock} units</p>
+              <button>Pickup</button>
+              <button>Delivery</button>
             </div>
 
             {/* Summary Section - Compact padding and margins */}
