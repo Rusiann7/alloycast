@@ -15,9 +15,19 @@ const DynamicHowItWorksModal = dynamic(
   { ssr: false },
 );
 
-const DynamicProductCards = dynamic(() => import("./components/ProductCard"), {
-  ssr: false,
-});
+const DynamicProductCarousel = dynamic(
+  () => import("./components/ProductCarousel"),
+  {
+    ssr: false,
+  },
+);
+
+const DynamicFeedbacks = dynamic(
+  () => import("./components/Review&FeedbackCarousel"),
+  {
+    ssr: false,
+  },
+);
 
 const DynamicFooter = dynamic(() => import("./components/CustomerFooter"), {
   ssr: false,
@@ -218,21 +228,35 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
-            {inventory.slice(0, 4).map((product) => (
-              <DynamicProductCards
-                key={product.id}
-                product={product}
-                featured
-              />
-            ))}
+          <DynamicProductCarousel products={inventory.slice(0, 6)} speed={50} />
+        </div>
+      </section>
+
+      {/* Customer feedback & reviews */}
+      <section className="py-10">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-center mb-12 gap-6">
+            <div>
+              <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md text-center drop-shadow-xl/30">
+                WHAT OUR CUSTOMERS SAY
+              </h2>
+            </div>
           </div>
+
+          <DynamicFeedbacks speed={50} />
         </div>
       </section>
 
       {/* Brands Grid */}
       <section className="py-12">
         <div className="container mx-auto px-6 lg:px-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-center mb-12 gap-6">
+            <div>
+              <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md text-center drop-shadow-xl/30">
+                THE PRODUCTS WE SELL
+              </h2>
+            </div>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
               "Hot Wheels",

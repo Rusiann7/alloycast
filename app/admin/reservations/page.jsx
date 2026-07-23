@@ -71,7 +71,7 @@ export default function AdminReservations() {
               : "Details Not Provided",
             customer_email: reservation.Users?.email,
             item_name: reservation.Inventory?.item_name,
-            brand: reservation.Inventory?.brand || "Unkownd Brand",
+            brand: reservation.Inventory?.brand || "Unknown Brand",
             qty: (reservation.quantity || 0).toString().padStart(2, "0"),
             date: new Date(reservation.created_at).toLocaleDateString(),
             status: reservation.status || "Pending",

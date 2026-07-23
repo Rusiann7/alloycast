@@ -59,6 +59,13 @@ export default function ProductCard({ product, tag, tagColor, featured }) {
 
           {/* Pricing & Call-To-Action Footer Area */}
           <div className="card__footer mt-auto flex items-center justify-between">
+            {product.stock > 0 && product.stock <= 3 ? (
+              <span className="text-sm font-black uppercase text-red-600 bg-red-100 px-2 py-0.5 rounded-full animate-pulse">
+                Only {product.stock} left!
+              </span>
+            ) : (
+              <div />
+            )}
             <Link
               href={`/customer/productDetail?id=${product.id}`}
               onClick={reservationAnalytics}
