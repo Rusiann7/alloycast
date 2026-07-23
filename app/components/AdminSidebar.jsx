@@ -223,7 +223,7 @@ export default function AdminSidebar() {
           />
           <SidebarLink
             icon="calendar_today"
-            label="RESERVATIONS"
+            label="ORDERS"
             href="/admin/reservations"
             linkName={linkName}
             isCollapsed={isCollapsed}

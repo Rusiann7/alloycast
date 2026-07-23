@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import styled from "styled-components";
 
-export default function ProductCard({ product, tag, tagColor, featured }) {
+export default function ProductCard({ product, tag, tagColor }) {
   if (!product) return null;
 
   const reservationAnalytics = () => {
