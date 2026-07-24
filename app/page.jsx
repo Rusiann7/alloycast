@@ -283,6 +283,27 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="py-10">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="flex flex-col items-center justify-center mb-6 gap-6">
+            <div>
+              <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md text-center drop-shadow-xl/30">
+                GRAB YOUR DIECASTS NOW!
+              </h2>
+            </div>
+            <button
+              onClick={() => router.push("/customer/product")}
+              className="group flex items-center gap-2 border border-primary-container bg-primary-container p-3 rounded-xl italic tracking-tight uppercase text-md font-black text-black/90 drop-shadow-xl/30"
+            >
+              View More
+              <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
+                arrow_right
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <DynamicFooter />
     </div>
