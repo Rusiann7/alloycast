@@ -529,7 +529,7 @@ function ProductDetail() {
                   </p>
                   {averageRating < 1 ? (
                     <span className="rounded-lg p-1 bg-primary-container font-headline font-black text-black/90">
-                      (No Rating)
+                      NO RATING
                     </span>
                   ) : (
                     <div className="flex items-center gap-1">
@@ -556,7 +556,11 @@ function ProductDetail() {
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-headline font-black text-on-primary dark:text-red-500 uppercase tracking-tight animate-pulse">
-                      {product.stock} STOCKS LEFT!
+                      {product.stock === 1
+                        ? "1 STOCK LEFT!"
+                        : product.stock === 0
+                          ? "OUT OF STOCK"
+                          : product.stock + " STOCKS LEFT"}
                     </p>
                   </div>
                 </div>
