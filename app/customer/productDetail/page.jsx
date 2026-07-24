@@ -24,8 +24,15 @@ const DynamicFooter = dynamic(() => import("../../components/CustomerFooter"), {
   ssr: false,
 });
 
+const DynamicDeliveryAddressMapModal = dynamic(
+  () => import("../../components/DeliveryAddressMapModal"),
+  { ssr: false }
+);
+
 function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isSubmittingAddress, setIsSubmittingAddress] = useState(false);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null); // for checking auth users
@@ -38,7 +45,8 @@ function ProductDetail() {
   const [submitBtn, setSubmitBtn] = useState(true);
   const [canReview, setCanReview] = useState(false);
   const [wishlistStatus, setWishlistStatus] = useState(false);
-  const [orderType, setOrderType] = useState("");
+  const [orderType, setOrderType] = useState("Pickup");
+  const [paymentType, setPaymentType] = useState("Cash");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -231,6 +239,34 @@ function ProductDetail() {
     setIsModalOpen(true);
   };
 
+  const getOrderType = (event) => {
+    const val = event.target.value;
+    setOrderType(val);
+    if (val === "Delivery") {
+      setPaymentType("Online");
+    }
+  };
+
+  const getPaymentType = (event) => {
+    const val = event.target.value;
+    if (orderType === "Delivery" && val === "Cash") {
+      showToast("Cash on Pickup is not applicable for Delivery orders.", "error");
+      setPaymentType("Online");
+      return;
+    }
+    setPaymentType(val);
+  };
+
+  // Checks URL query parameters for PayMongo redirect callback
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "success") {
+      showToast("Online Payment Successful! Your order has been placed and sent to Admin.", "success");
+    } else if (paymentStatus === "cancelled") {
+      showToast("Payment was cancelled. You can retry anytime.", "error");
+    }
+  }, [searchParams]);
+
   // This will insert the reserve product to Reservation Table using the confirmation Modal
   const insertReservationToTable = async () => {
     const parsedQuantity = parseInt(quantity, 10);
@@ -246,53 +282,110 @@ function ProductDetail() {
       return;
     }
 
+    // If Delivery or Online Payment, open the Address & Map Modal
+    if (orderType === "Delivery" || paymentType === "Online") {
+      setIsModalOpen(false);
+      setIsAddressModalOpen(true);
+      return;
+    }
+
+    // Pickup + Cash Flow
     try {
       const reservationDataInsert = {
-        // these are the data that will be inserted into Reservation Table
-        user_id: user.id, // user_id on Reservation Table
-        inventory_id: product.id, // the reserved product id
-        quantity: parsedQuantity, // use the validated parsed number
-        discount: 0, // 0 for now since no discount for now
+        user_id: user.id,
+        inventory_id: product.id,
+        quantity: parsedQuantity,
+        discount: 0,
+        status: "Pending Pickup",
+        order_type: "Pickup",
+        payment_mode: "Cash",
       };
 
-      // Insert to Reservation Table
       const { error: reserveError } = await supabase
         .from("Reservation")
-        .insert([reservationDataInsert]); // inserts the reservationDataInsert items
+        .insert([reservationDataInsert]);
+
       if (reserveError) throw reserveError;
 
-      // fetch admins to send emails
-      const { data: admins } = await supabase
-        .from("Users")
-        .select("email")
-        .eq("is_admin", true);
-      const adminEmailsConcatenated = admins.map((a) => a.email).join(", ");
-
-      // Trigger Email Notification
-      const templateParams = {
-        userName: user.email,
-        productName: product.item_name,
-        quantity: quantity,
-        adminList: adminEmailsConcatenated,
-      };
-
-      await emailjs.send(
-        "service_mu3qrbd",
-        "template_do3kcc3",
-        templateParams,
-        "3ilQZwBk_Cxjfohab",
-      );
-      showToast(
-        "Reservation Completed. An email will be sent to Admins",
-        "success",
-      );
-      setIsModalOpen(false); // closes the confirmation modal
+      showToast("Pickup Reservation Placed! Please pay in-store upon pickup.", "success");
+      setIsModalOpen(false);
       setTimeout(() => {
-        window.location.reload(); // refreshes the page to show updated list/stocks
-      }, 3000);
+        window.location.reload();
+      }, 2500);
     } catch (error) {
       console.error("Reservation Failed: ", error.message);
-      showToast("Failed to process reservation. Try again later", "error");
+      showToast("Failed to process pickup reservation.", "error");
+    }
+  };
+
+  // Handles Delivery & Online Payment via PayMongo
+  const handleConfirmDeliveryAddress = async (addressData) => {
+    setIsSubmittingAddress(true);
+    const parsedQuantity = parseInt(quantity, 10) || 1;
+    const totalPrice = (product?.price || 0) * parsedQuantity;
+
+    try {
+      // 1. Insert order into Reservation table with Pending Payment status
+      const { data: inserted, error: dbError } = await supabase
+        .from("Reservation")
+        .insert([
+          {
+            user_id: user.id,
+            inventory_id: product.id,
+            quantity: parsedQuantity,
+            status: "Pending Payment",
+            payment_status: "Pending",
+            order_type: orderType || "Delivery",
+            payment_mode: paymentType || "Online",
+            customer_name: addressData.customerName,
+            contact_number: addressData.contactNumber,
+            street_address: addressData.streetAddress,
+            district: addressData.district,
+            zip_code: addressData.zipCode,
+            latitude: addressData.latitude,
+            longitude: addressData.longitude,
+            product_name: product.item_name,
+            total_price: totalPrice,
+          },
+        ])
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      // 2. Call PayMongo Checkout API Route
+      const response = await fetch("/api/paymongo/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: totalPrice,
+          item_name: product.item_name,
+          quantity: parsedQuantity,
+          reservation_id: inserted.id,
+          customer_name: addressData.customerName,
+          customer_email: user.email,
+          contact_number: addressData.contactNumber,
+          street_address: addressData.streetAddress,
+          district: addressData.district,
+          zip_code: addressData.zipCode,
+        }),
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || "Failed to initiate PayMongo payment session.");
+      }
+
+      // 3. Redirect customer to PayMongo GCash checkout URL
+      showToast("Redirecting to PayMongo GCash Checkout...", "success");
+      setTimeout(() => {
+        window.location.href = resData.checkout_url;
+      }, 1500);
+    } catch (err) {
+      console.error("Online Payment Error:", err);
+      showToast(err.message || "Payment initiation failed.", "error");
+      setIsSubmittingAddress(false);
     }
   };
 
@@ -763,7 +856,7 @@ function ProductDetail() {
             <div className="flex justify-between items-start mb-4 sm:mb-5">
               {/* Scaled down the massive heading sizes slightly */}
               <h2 className="text-xl sm:text-2xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">
-                Confirm Reservation?
+                Order Confirmation
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -776,6 +869,7 @@ function ProductDetail() {
 
             {/* Quantity Section - Tighter spacing */}
             <div className="space-y-2 mb-4 sm:mb-5 flex flex-col ">
+              <p className="text-md ">Available stock: {product.stock}</p>
               <label htmlFor="quantity-input" className="text-sm sm:text-base">
                 Enter amount of items you want to reserve
               </label>
@@ -811,14 +905,36 @@ function ProductDetail() {
                   placeholder="1"
                 />
               </div>
-              <p className="text-md ">Available stock: {product.stock} units</p>
-              <button>Pickup</button>
-              <button>Delivery</button>
+              <label htmlFor="">Order Type</label>
+              <select
+                name="orderType"
+                id="orderType"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                value={orderType}
+                onChange={getOrderType}
+              >
+                <option value="Pickup">Pickup</option>
+                <option value="Delivery">
+                  Delivery (Outside Olongapo Only)
+                </option>
+              </select>
+              <label htmlFor="">Mode of Payment:</label>
+              <select
+                name="paymentType"
+                id="paymentType"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                value={paymentType}
+                onChange={getPaymentType}
+              >
+                {/* Mode of payment */}
+                <option value="Cash">Cash</option>
+                <option value="Online">Online</option>
+              </select>
             </div>
 
             {/* Summary Section - Compact padding and margins */}
             <div className="border border-primary-container bg-input-field rounded-lg p-3 sm:p-4 mb-4 sm:mb-5">
-              <p className="text-center text-xs uppercase tracking-wider text-primary-container font-headline mb-1.5">
+              <p className="text-center text-md uppercase tracking-wider text-primary-container font-headline mb-1.5">
                 Order Summary
               </p>
               <div className="space-y-1.5 text-sm sm:text-base">
@@ -834,6 +950,16 @@ function ProductDetail() {
                     {quantity || 0} {quantity > 1 ? "units" : "unit"}
                   </span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-primary-container">Order Type:</span>
+                  <span className="font-bold text-white/90">{orderType}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-primary-container">
+                    Mode of Payment:
+                  </span>
+                  <span className="font-bold text-white/90">{paymentType}</span>
+                </div>
               </div>
             </div>
 
@@ -843,7 +969,7 @@ function ProductDetail() {
                 className="w-full py-2.5 sm:py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
                 onClick={insertReservationToTable}
               >
-                Confirm My Reservation
+                Confirm Order
               </button>
               <button
                 className="w-full py-2 sm:py-2.5 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-xs sm:text-sm text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
@@ -855,6 +981,14 @@ function ProductDetail() {
           </div>
         </div>
       )}
+
+      <DynamicDeliveryAddressMapModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onConfirmAddress={handleConfirmDeliveryAddress}
+        defaultCustomerName={user?.email ? user.email.split("@")[0] : ""}
+        isSubmitting={isSubmittingAddress}
+      />
 
       <DynamicToast
         message={toast.message}

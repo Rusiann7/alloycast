@@ -68,22 +68,30 @@ export default function AdminReservations() {
             id: reservation.id,
             customer: matchCustomer
               ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
-              : "Details Not Provided",
+              : reservation.customer_name || "Details Not Provided",
             customer_email: reservation.Users?.email,
             item_name: reservation.Inventory?.item_name,
             brand: reservation.Inventory?.brand || "Unknown Brand",
             qty: (reservation.quantity || 0).toString().padStart(2, "0"),
             date: new Date(reservation.created_at).toLocaleDateString(),
             status: reservation.status || "Pending",
+            order_type: reservation.order_type || "Pickup",
+            payment_mode: reservation.payment_mode || "Cash",
+            street_address: reservation.street_address || "",
+            district: reservation.district || "",
+            zip_code: reservation.zip_code || "",
+            latitude: reservation.latitude || null,
+            longitude: reservation.longitude || null,
+            contact_number: reservation.contact_number || "",
             statusColor:
-              reservation.status === "Approved"
+              reservation.status === "Approved" || reservation.status === "Paid"
                 ? "bg-green-700 text-white/90 border-green-500/20"
                 : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
                   ? "bg-red-400/50 text-red-300 border-red-500/20"
                   : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
-              reservation.status === "Approved"
+              reservation.status === "Approved" || reservation.status === "Paid"
                 ? "bg-green-500"
                 : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
