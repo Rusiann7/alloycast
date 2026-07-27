@@ -126,6 +126,25 @@ export default function AdminCustomers() {
     }
   };
 
+  const restoreUser = async () => {
+    try {
+      const { error } = await supabase
+        .from("Users")
+        .update({ is_active: true })
+        .eq("id", selectedCustomer?.Users?.id);
+
+      if (error) throw error;
+      setIsDrawerOpen(false);
+      setIsRemoveOpen(false);
+      setSelectedCustomer(null);
+      showToast("Account Restored", "success");
+      getCustomer();
+      getAdmin();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className=" text-font-color min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
@@ -384,6 +403,10 @@ export default function AdminCustomers() {
                     </th>
 
                     <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
+                      STATUS
+                    </th>
+
+                    <th className="px-6 sm:px-8 py-5 text-center text-xs sm:text-lg font-black font-headline uppercase tracking-[0.15em] sm:tracking-[0.3em] text-primary-container">
                       CREATED AT
                     </th>
 
@@ -421,6 +444,13 @@ export default function AdminCustomers() {
                                 </p>
                               </div>
                             </div>
+                          </td>
+
+                          {/* Status */}
+                          <td>
+                            <span className="text-lg text-white font-headline font-bold">
+                              {a.Users?.is_active ? "Active" : "Removed"}
+                            </span>
                           </td>
 
                           {/* Created At */}
