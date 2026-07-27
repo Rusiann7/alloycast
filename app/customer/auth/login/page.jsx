@@ -120,6 +120,17 @@ function LoginContent() {
       return showToast("Invalid Email or Password", "error");
     }
 
+    const { data, error: accountCheckError } = await supabase
+      .from("Users")
+      .select("is_active")
+      .eq(sanitizedData.email);
+
+    if (accountCheckError) throw accountCheckError;
+
+    if (!data) {
+      return showToast("Account Suspended, Contact the Administrator", "error");
+    }
+
     if (!error) {
       const redirectTo = searchParams.get("redirectTo"); // kinukuha ung specific productDetail url (if meron)
       const destination = redirectTo || "/customer/account"; // kung meron, balik, kung wla, punta sa account

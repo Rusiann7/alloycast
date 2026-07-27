@@ -181,6 +181,7 @@ function RegisterPageContent() {
           dob: sanitizedData.dob, // store sa Customers Table
           is_admin: false, // matik false para Customers
           reset: newCode, // d ito gumagana
+          is_active: true,
         },
       },
     });
@@ -515,13 +516,15 @@ function RegisterPageContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={
-      <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
-        <div className="w-full max-w-4xl">
-          <AuthFormSkeleton />
+    <Suspense
+      fallback={
+        <div className="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6 radial-brand relative overflow-x-hidden">
+          <div className="w-full max-w-4xl">
+            <AuthFormSkeleton />
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <RegisterPageContent />
     </Suspense>
   );

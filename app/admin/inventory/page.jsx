@@ -35,6 +35,7 @@ export default function AdminInventory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null); // for checking auth users
+  const [historyData, setHistoryData] = useState([]);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -229,6 +230,22 @@ export default function AdminInventory() {
       setIsDeleting(false);
     }
   };
+
+  const getInventoryHistory = async () => {
+    const { data, error } = await supabase.from("History").select("*");
+
+    if (error) throw error;
+
+    setHistoryData(data || []);
+  };
+
+  useEffect(() => {
+    const intializeFunction1 = async () => {
+      getInventoryHistory();
+    };
+    intializeFunction1();
+  }, [getInventoryHistory]);
+
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
