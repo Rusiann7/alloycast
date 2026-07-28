@@ -202,6 +202,19 @@ export default function AdminLoginPage() {
       password: sanitizedData.password, // kunin password sa Auth
     });
 
+    const { data: accountCheckData, error: accountCheckError } = await supabase
+      .from("Users")
+      .select("is_active")
+      .eq("email", sanitizedData.email)
+      .maybeSingle();
+
+    if (accountCheckError) throw accountCheckError;
+
+    if (!accountCheckData || !accountCheckData.is_active) {
+      await supabase.auth.signOut();
+      return showToast("Account Suspended, Contact the Administrator", "error");
+    }
+
     // email verification check kung verified o hindi
     if (error) {
       if (

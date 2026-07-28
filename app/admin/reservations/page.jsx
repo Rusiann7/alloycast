@@ -84,14 +84,16 @@ export default function AdminReservations() {
             longitude: reservation.longitude || null,
             contact_number: reservation.contact_number || "",
             statusColor:
-              reservation.status === "Approved" || reservation.status === "Paid"
+              reservation.status === "Completed" ||
+              reservation.status === "Paid"
                 ? "bg-green-700 text-white/90 border-green-500/20"
                 : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
                   ? "bg-red-400/50 text-red-300 border-red-500/20"
                   : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
-              reservation.status === "Approved" || reservation.status === "Paid"
+              reservation.status === "Completed" ||
+              reservation.status === "Paid"
                 ? "bg-green-500"
                 : reservation.status === "Declined" ||
                     reservation.status === "Cancelled"
@@ -210,7 +212,7 @@ export default function AdminReservations() {
     setReservation((prevReservations) =>
       prevReservations.map((res) => {
         if (res.id === reservationId) {
-          const isApproved = newStatus === "Approved";
+          const isApproved = newStatus === "Completed";
           const isRejected = newStatus === "Declined";
           let statusColor = "bg-white/5 text-white/60 border-white/10";
           let statusDot = "bg-white/40";
@@ -228,7 +230,7 @@ export default function AdminReservations() {
     );
 
     try {
-      if (newStatus === "Approved") {
+      if (newStatus === "Completed") {
         await emailjs.send(
           "service_mu3qrbd",
           "template_uhrasxf",
@@ -238,7 +240,7 @@ export default function AdminReservations() {
             productName: productName,
             status: newStatus,
             message:
-              newStatus === "Approved"
+              newStatus === "Completed"
                 ? "Great news! Your order is approved. Please visit the store to complete your pickup."
                 : "Unfortunately, your reservation could not be accommodated at this time.",
           },
@@ -337,14 +339,14 @@ export default function AdminReservations() {
               date: new Date(reservation.created_at).toLocaleDateString(),
               status: reservation.status || "Pending",
               statusColor:
-                reservation.status === "Approved"
+                reservation.status === "Completed"
                   ? "bg-green-700 text-white/90 border-green-500/20"
                   : reservation.status === "Declined" ||
                       reservation.status === "Cancelled"
                     ? "bg-red-400/50 text-red-300 border-red-500/20"
                     : "bg-primary-container text-secondary-container border-white/10",
               statusDot:
-                reservation.status === "Approved"
+                reservation.status === "Completed"
                   ? "bg-green-500"
                   : reservation.status === "Declined" ||
                       reservation.status === "Cancelled"
@@ -425,7 +427,7 @@ export default function AdminReservations() {
           {[
             "All Items",
             "Pending",
-            "Approved",
+            "Completed",
             "Declined",
             "Cancelled",
             "Reports",
@@ -574,14 +576,14 @@ export default function AdminReservations() {
                                 <button
                                   className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
                                   disabled={
-                                    res.status === "Approved" ||
+                                    res.status === "Completed" ||
                                     res.status === "Declined" ||
                                     res.status === "Cancelled"
                                   }
                                   onClick={() =>
                                     handleActionClick(
                                       res.id,
-                                      "Approved",
+                                      "Completed",
                                       res.customer_email,
                                       res.customer,
                                       res.item_name,
@@ -598,7 +600,7 @@ export default function AdminReservations() {
                                 <button
                                   className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
                                   disabled={
-                                    res.status === "Approved" ||
+                                    res.status === "Completed" ||
                                     res.status === "Declined" ||
                                     res.status === "Cancelled"
                                   }
