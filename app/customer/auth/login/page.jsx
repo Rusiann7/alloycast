@@ -123,11 +123,11 @@ function LoginContent() {
     const { data, error: accountCheckError } = await supabase
       .from("Users")
       .select("is_active")
-      .eq(sanitizedData.email);
+      .eq("email", sanitizedData.email);
 
     if (accountCheckError) throw accountCheckError;
 
-    if (!data) {
+    if (!data || !data.is_active) {
       return showToast("Account Suspended, Contact the Administrator", "error");
     }
 
