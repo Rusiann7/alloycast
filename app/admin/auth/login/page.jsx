@@ -202,7 +202,7 @@ export default function AdminLoginPage() {
       password: sanitizedData.password, // kunin password sa Auth
     });
 
-    const { data, error: accountCheckError } = await supabase
+    const { data: accountCheckData, error: accountCheckError } = await supabase
       .from("Users")
       .select("is_active")
       .eq("email", sanitizedData.email)
@@ -210,7 +210,7 @@ export default function AdminLoginPage() {
 
     if (accountCheckError) throw accountCheckError;
 
-    if (!data || !data.is_active) {
+    if (!accountCheckData || !accountCheckData.is_active) {
       await supabase.auth.signOut();
       return showToast("Account Suspended, Contact the Administrator", "error");
     }
