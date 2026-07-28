@@ -293,9 +293,9 @@ export default function AdminCustomers() {
                           </td>
 
                           {/* Status */}
-                          <td>
-                            <span className="text-lg text-white font-headline font-bold">
-                              {c.Users?.is_active ? "Active" : "Removed"}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <span className={`text-lg font-headline font-bold ${c.Users?.is_active ? "text-green-400" : "text-red-400"}`}>
+                              {c.Users?.is_active ? "Active" : "Suspended"}
                             </span>
                           </td>
 
@@ -447,9 +447,9 @@ export default function AdminCustomers() {
                           </td>
 
                           {/* Status */}
-                          <td>
-                            <span className="text-lg text-white font-headline font-bold">
-                              {a.Users?.is_active ? "Active" : "Removed"}
+                          <td className="px-6 sm:px-8 py-5 text-center">
+                            <span className={`text-lg font-headline font-bold ${a.Users?.is_active ? "text-green-400" : "text-red-400"}`}>
+                              {a.Users?.is_active ? "Active" : "Suspended"}
                             </span>
                           </td>
 
