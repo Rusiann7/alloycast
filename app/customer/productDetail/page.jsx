@@ -47,6 +47,7 @@ function ProductDetail() {
   const [wishlistStatus, setWishlistStatus] = useState(false);
   const [orderType, setOrderType] = useState("Pickup");
   const [paymentType, setPaymentType] = useState("Cash");
+  const [deliveryType, setDeliveryType] = useState("DoorToDoor");
   const [customerDetails, setCustomerDetails] = useState({
     fullName: "",
     phoneNumber: "",
@@ -272,12 +273,22 @@ function ProductDetail() {
     const val = event.target.value;
     setOrderType(val);
     if (val === "Delivery") {
+      // Reset to Door-to-Door and Online payment when switching to Delivery
+      setDeliveryType("DoorToDoor");
       setPaymentType("Online");
+    } else {
+      // Pickup: reset delivery type and default to Cash
+      setDeliveryType("DoorToDoor");
+      setPaymentType("Cash");
     }
   };
 
   const getPaymentType = (event) => {
     const val = event.target.value;
+    if (orderType === "Delivery" && deliveryType === "LbcBranch") {
+      // LBC branch is always Cash, do not allow changing
+      return;
+    }
     if (orderType === "Delivery" && val === "Cash") {
       showToast(
         "Cash on Pickup is not applicable for Delivery orders.",
@@ -287,6 +298,18 @@ function ProductDetail() {
       return;
     }
     setPaymentType(val);
+  };
+
+  const getDeliveryType = (event) => {
+    const val = event.target.value;
+    setDeliveryType(val);
+    if (val === "LbcBranch") {
+      // LBC local branch pickup is always Cash
+      setPaymentType("Cash");
+    } else {
+      // Door to Door is Online Payment
+      setPaymentType("Online");
+    }
   };
 
   // Checks URL query parameters for PayMongo redirect callback
@@ -323,33 +346,161 @@ function ProductDetail() {
       return;
     }
 
-    // If Delivery or Online Payment, open the Address & Map Modal
-    if (orderType === "Delivery" || paymentType === "Online") {
+    // Delivery always goes through address modal (for shipping details)
+    if (orderType === "Delivery") {
       setIsModalOpen(false);
       setIsAddressModalOpen(true);
       return;
     }
 
+    // Pickup + Online Payment → go straight to PayMongo (QR / GCash)
+    if (orderType === "Pickup" && paymentType === "Online") {
+      try {
+        // Fetch customer details
+        const { data: custData } = await supabase
+          .from("Customer")
+          .select("firstname, lastname")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const { data: userData } = await supabase
+          .from("Users")
+          .select("email, phone_number")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const customerFullName = custData
+          ? `${custData.firstname || ""} ${custData.lastname || ""}`.trim()
+          : "Valued Customer";
+        const customerEmail = userData?.email || user.email || "";
+        const contactNumber = userData?.phone_number
+          ? String(userData.phone_number)
+          : "";
+        const totalPrice = (product?.price || 0) * parsedQuantity;
+
+        // 1. Insert reservation with Pending Payment status
+        const { data: inserted, error: reserveError } = await supabase
+          .from("Reservation")
+          .insert([
+            {
+              user_id: user.id,
+              inventory_id: product.id,
+              quantity: parsedQuantity,
+              discount: 0,
+              status: "Pending",
+              order_type: "Pickup",
+              payment_mode: "Online",
+              payment_status: "Pending Payment",
+              fulfillment_status: "Pending Pickup",
+            },
+          ])
+          .select()
+          .single();
+
+        if (reserveError) throw reserveError;
+
+        // 2. Create PayMongo checkout session
+        const response = await fetch("/api/paymongo/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: totalPrice,
+            item_name: product.item_name,
+            quantity: parsedQuantity,
+            reservation_id: inserted.id,
+            customer_name: customerFullName,
+            customer_email: customerEmail,
+            contact_number: contactNumber,
+            // No shipping address needed for Pickup
+          }),
+        });
+
+        const resData = await response.json();
+
+        if (!response.ok || !resData.success) {
+          throw new Error(
+            resData.error || "Failed to initiate PayMongo payment session.",
+          );
+        }
+
+        // 3. Redirect to PayMongo checkout (supports QR Ph / GCash)
+        showToast("Redirecting to PayMongo for online payment...", "success");
+        setTimeout(() => {
+          window.location.href = resData.checkout_url;
+        }, 1500);
+        return;
+      } catch (err) {
+        console.error("Pickup Online Payment Error:", err);
+        showToast(err.message || "Payment initiation failed.", "error");
+        return;
+      }
+    }
+
     // Pickup + Cash Flow
     try {
+      // Fetch customer details for email notification
+      const { data: custData } = await supabase
+        .from("Customer")
+        .select("firstname, lastname")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const { data: userData } = await supabase
+        .from("Users")
+        .select("email, phone_number")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const customerFullName = custData
+        ? `${custData.firstname || ""} ${custData.lastname || ""}`.trim()
+        : "Valued Customer";
+      const customerEmail = userData?.email || user.email || "";
+      const contactNumber = userData?.phone_number
+        ? String(userData.phone_number)
+        : "";
+
+      const parsedTotalPrice = (product?.price || 0) * parsedQuantity;
+
       const reservationDataInsert = {
         user_id: user.id,
         inventory_id: product.id,
         quantity: parsedQuantity,
         discount: 0,
-        status: "Pending Pickup",
+        status: "Pending",
         order_type: "Pickup",
         payment_mode: "Cash",
+        payment_status: "Pending Payment",
+        fulfillment_status: "Pending Pickup",
       };
 
-      const { error: reserveError } = await supabase
+      const { data: inserted, error: reserveError } = await supabase
         .from("Reservation")
-        .insert([reservationDataInsert]);
+        .insert([reservationDataInsert])
+        .select()
+        .single();
 
       if (reserveError) throw reserveError;
 
+      // Send dual emails: Admin + Customer 48hr pickup reminder
+      await fetch("/api/notifications/send-pickup-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reservationId: inserted.id,
+          customerName: customerFullName,
+          customerEmail,
+          contactNumber,
+          productName: product.item_name,
+          quantity: parsedQuantity,
+          totalPrice: parsedTotalPrice,
+          orderType: "Pickup",
+          paymentMode: "Cash",
+          createdAt: inserted.created_at,
+        }),
+      });
+
       showToast(
-        "Pickup Reservation Placed! Please pay in-store upon pickup.",
+        "Pickup Reservation Placed! Please pay in-store upon pickup. A confirmation email has been sent.",
         "success",
       );
       setIsModalOpen(false);
@@ -894,7 +1045,7 @@ function ProductDetail() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
           {/* Removed mt-10 and adjusted padding to max out at p-6 instead of p-12 */}
-          <div className="relative w-full max-w-md bg-modal-background border border-white/10 rounded-lg p-5 sm:p-6 text-font-color shadow-2xl">
+          <div className="relative mt-30 w-full max-w-md bg-modal-background border border-white/10 rounded-lg p-5 sm:p-6 text-font-color shadow-2xl">
             {/* Header - Reduced mb */}
             <div className="flex justify-between items-start mb-4 sm:mb-5">
               {/* Scaled down the massive heading sizes slightly */}
@@ -961,13 +1112,39 @@ function ProductDetail() {
                   Delivery (Outside Olongapo Only)
                 </option>
               </select>
-              <label htmlFor="">Mode of Payment:</label>
+              {/* Delivery Type — only shown for Delivery orders */}
+              {orderType === "Delivery" && (
+                <>
+                  <label htmlFor="deliveryType">Delivery Type:</label>
+                  <select
+                    name="deliveryType"
+                    id="deliveryType"
+                    className="w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                    value={deliveryType}
+                    onChange={getDeliveryType}
+                  >
+                    <option value="DoorToDoor">
+                      Door to Door Delivery (Online Payment)
+                    </option>
+                    <option value="LbcBranch">
+                      LBC Local Branch Pickup (Cash)
+                    </option>
+                  </select>
+                </>
+              )}
+
+              <label htmlFor="paymentType">Mode of Payment:</label>
               <select
                 name="paymentType"
                 id="paymentType"
-                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
+                className={`w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10 ${
+                  orderType === "Delivery"
+                    ? "opacity-60 cursor-not-allowed"
+                    : ""
+                }`}
                 value={paymentType}
                 onChange={getPaymentType}
+                disabled={orderType === "Delivery"}
               >
                 {/* Mode of payment */}
                 <option value="Cash">Cash</option>
