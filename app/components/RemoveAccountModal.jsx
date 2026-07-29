@@ -33,7 +33,7 @@ export default function RemoveAccountModal({
             </div>
           )}
 
-          <div className="flex items-center gap-3 justify-end">
+          <div className="flex items-center gap-3 justify-center">
             <button
               onClick={onClose}
               className="px-6 py-4 bg-input-field text-white/90 text-sm font-headline font-black uppercase italic tracking-[0.05em]  rounded-lg hover:brightness-110 transition"

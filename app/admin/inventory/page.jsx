@@ -24,6 +24,7 @@ const DynamicDeleteConfirmationModal = dynamic(
 const supabase = createClient();
 
 export default function AdminInventory() {
+  const [activeTab, setActiveTab] = useState("inventory"); // "inventory" | "history"
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function AdminInventory() {
   const [editProductForm, setEditProductForm] = useState({}); // holds the temporary form data from editing fields
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
   const [user, setUser] = useState(null); // for checking auth users
   const [historyData, setHistoryData] = useState([]);
   const [toast, setToast] = useState({
@@ -154,6 +156,18 @@ export default function AdminInventory() {
       const oldRow = inventory.find((item) => item.id === editingProductId);
       if (!oldRow) throw new Error("Original product not found in local state");
 
+      const stockDiff = Number(editProductForm.stock) - Number(oldRow.stock);
+      const priceChanged = Number(oldRow.price) !== Number(editProductForm.price);
+      let commentDetail = "Updated product details";
+
+      if (stockDiff > 0) {
+        commentDetail = `Stock increased from ${oldRow.stock} to ${editProductForm.stock} (+${stockDiff})`;
+      } else if (stockDiff < 0) {
+        commentDetail = `Stock decreased from ${oldRow.stock} to ${editProductForm.stock} (${stockDiff})`;
+      } else if (priceChanged) {
+        commentDetail = `Price updated from ₱${oldRow.price} to ₱${editProductForm.price}`;
+      }
+
       // 2. Perform the update
       const { error: updateError } = await supabase
         .from("Inventory")
@@ -171,14 +185,14 @@ export default function AdminInventory() {
 
       const { error: historyError } = await supabase.from("History").insert({
         product_id: editingProductId,
-        item_name: oldRow.item_name,
-        brand: oldRow.brand,
-        category: oldRow.category,
-        price: oldRow.price,
-        stock: oldRow.stock,
-        item_image: oldRow.item_image,
-        user_id: user.id,
-        comment: "Updated",
+        item_name: editProductForm.item_name || oldRow.item_name,
+        brand: editProductForm.brand || oldRow.brand,
+        category: editProductForm.category || oldRow.category,
+        price: editProductForm.price || oldRow.price,
+        stock: editProductForm.stock || oldRow.stock,
+        item_image: imageUrl || oldRow.item_image,
+        user_id: user?.id || null,
+        comment: commentDetail,
       });
 
       if (historyError) throw historyError;
@@ -186,6 +200,7 @@ export default function AdminInventory() {
       showToast("Product Details Successfully Updated!", "success");
       setEditingProductId(null);
       fetchInventoryProduct();
+      getInventoryHistory();
     } catch (error) {
       showToast("Update failed: " + error.message);
     }
@@ -201,15 +216,15 @@ export default function AdminInventory() {
       if (!oldRow) throw new Error("Original product not found in local state");
 
       const { error: historyError } = await supabase.from("History").insert({
-        product_id: editingProductId,
+        product_id: itemToDelete.id,
         item_name: oldRow.item_name,
         brand: oldRow.brand,
         category: oldRow.category,
         price: oldRow.price,
         stock: oldRow.stock,
         item_image: oldRow.item_image,
-        user_id: user.id,
-        comment: "Deleted",
+        user_id: user?.id || null,
+        comment: `Removed product "${oldRow.item_name}" from inventory`,
       });
 
       if (historyError) throw historyError;
@@ -223,6 +238,7 @@ export default function AdminInventory() {
       setDeleteModalOpen(false);
       setItemToDelete(null);
       fetchInventoryProduct(); // reload the page to display updated products
+      getInventoryHistory();
     } catch (error) {
       showToast("Failed to remove product");
       console.error(error.message);
@@ -231,20 +247,98 @@ export default function AdminInventory() {
     }
   };
 
-  const getInventoryHistory = async () => {
-    const { data, error } = await supabase.from("History").select("*");
+  const getInventoryHistory = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("History")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setHistoryData(data || []);
-  };
+      setHistoryData(data || []);
+    } catch (err) {
+      console.error("Error fetching inventory history:", err);
+    }
+  }, []);
 
   useEffect(() => {
-    const intializeFunction1 = async () => {
-      getInventoryHistory();
-    };
-    intializeFunction1();
+    getInventoryHistory();
   }, [getInventoryHistory]);
+
+  const getLogInfo = (log) => {
+    const comment = log.comment || "Updated";
+    const itemName = log.item_name || "Unknown Product";
+    const brand = log.brand ? ` (${log.brand})` : "";
+    const stock = log.stock !== undefined && log.stock !== null ? log.stock : 0;
+
+    let description = "";
+    let tag = "STOCK UPDATE";
+    let tagColor = "text-[#d4af37] bg-[#d4af37]/10 border-[#d4af37]/20";
+
+    const lowerComment = comment.toLowerCase();
+
+    if (lowerComment.includes("added") || lowerComment.includes("new")) {
+      description = `Added product "${itemName}"${brand} to inventory with ${stock} unit${stock !== 1 ? "s" : ""}.`;
+      tag = "PRODUCT ADDED";
+      tagColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+    } else if (
+      lowerComment.includes("deleted") ||
+      lowerComment.includes("removed")
+    ) {
+      description = `Removed product "${itemName}"${brand} from inventory.`;
+      tag = "PRODUCT REMOVED";
+      tagColor = "text-red-400 bg-red-500/10 border-red-500/20";
+    } else if (lowerComment.includes("increased")) {
+      description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
+      tag = "STOCK INCREASE";
+      tagColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+    } else if (lowerComment.includes("decreased")) {
+      description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
+      tag = "STOCK DECREASE";
+      tagColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
+    } else if (lowerComment.includes("price")) {
+      description = `Updated price for "${itemName}"${brand}. ${comment}.`;
+      tag = "PRICE UPDATE";
+      tagColor = "text-blue-400 bg-blue-500/10 border-blue-500/20";
+    } else {
+      description = `Updated stock & inventory details for "${itemName}"${brand}. Current stock: ${stock} unit${stock !== 1 ? "s" : ""}.`;
+      tag = "STOCK UPDATE";
+      tagColor = "text-[#d4af37] bg-[#d4af37]/10 border-[#d4af37]/20";
+    }
+
+    return { description, tag, tagColor };
+  };
+
+  const groupedHistory = historyData
+    .filter((log) => {
+      if (!historySearchQuery) return true;
+      const query = historySearchQuery.toLowerCase();
+      const itemName = (log.item_name || "").toLowerCase();
+      const brand = (log.brand || "").toLowerCase();
+      const comment = (log.comment || "").toLowerCase();
+      return (
+        itemName.includes(query) ||
+        brand.includes(query) ||
+        comment.includes(query)
+      );
+    })
+    .reduce((acc, log) => {
+      const dateObj = log.created_at ? new Date(log.created_at) : new Date();
+      const dateKey = dateObj
+        .toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+        .toUpperCase();
+
+      if (!acc[dateKey]) {
+        acc[dateKey] = [];
+      }
+      acc[dateKey].push(log);
+      return acc;
+    }, {});
 
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-hidden select-none">
@@ -252,8 +346,8 @@ export default function AdminInventory() {
       <main className="pl-0 lg:pl-[var(--sidebar-width)] ml-5 pt-24 lg:pt-5 px-6 lg:px-8 pb-12 min-h-screen transition-all duration-300">
         <div className="px-4 sm:px-10 pb-40">
           {/* Section Header */}
-          <div className="mb-10 sm:mb-14 reveal-up">
-            <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-0">
+          <div className="mb-6 sm:mb-8 reveal-up">
+            <h3 className="text-4xl sm:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none mb-4 sm:mb-2">
               INVENTORY
             </h3>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -270,346 +364,498 @@ export default function AdminInventory() {
               </p>
             </div>
           </div>
-          {/* Search/Filter Bar */}
-          <div
-            className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up"
-            style={{ animationDelay: "0.1s" }}
-          >
-            <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
-              <span className="material-symbols-outlined text-xl font-light opacity-80">
-                search
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                }}
-                placeholder="FILTER BY BRAND, SCALE, OR SKU..."
-                className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
-              />
-            </div>
+
+          {/* Underline Tabs Navigation (Below Header) */}
+          <div className="mb-10 reveal-up border-b border-white/10 flex items-center gap-8 sm:gap-12">
             <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="w-full sm:w-auto h-14 px-8 bg-primary-container rounded-lg text-sm text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:scale-105 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20 flex items-center justify-center gap-3"
+              onClick={() => setActiveTab("inventory")}
+              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative ${
+                activeTab === "inventory"
+                  ? "text-[#d4af37] font-black"
+                  : "text-white/40 hover:text-white/80"
+              }`}
             >
-              <span className="material-symbols-outlined text-lg sm:hidden">
-                add
-              </span>
-              ADD PRODUCT
+              <span>INVENTORY ITEMS</span>
+              {activeTab === "inventory" && (
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
+                activeTab === "history"
+                  ? "text-[#d4af37] font-black"
+                  : "text-white/40 hover:text-white/80"
+              }`}
+            >
+              <span>STOCK HISTORY</span>
+              {historyData.length > 0 && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === "history"
+                      ? "bg-[#d4af37]/20 text-[#d4af37]"
+                      : "bg-white/10 text-white/50"
+                  }`}
+                >
+                  {historyData.length}
+                </span>
+              )}
+              {activeTab === "history" && (
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
+              )}
             </button>
           </div>
 
-          {/* Inventory Table */}
-          {loading ? (
-            <div className="mt-8">
-              <TableSkeleton columns={7} rows={5} />
-            </div>
-          ) : (
-            <div
-              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
-              style={{ animationDelay: "0.2s" }}
-            >
-              <table className="w-full text-left border-collapse min-w-[1000px]">
-                <thead className="border-b border-primary-container">
-                  <tr className=" bg-input-field">
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      PRODUCT IMAGE
-                    </th>
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      PRODUCT NAME
-                    </th>
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      BRAND
-                    </th>
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      CATEGORY/SERIES
-                    </th>
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      PRICE
-                    </th>
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      STOCK
-                    </th>
-                    <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
-                      ACTIONS
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.02]">
-                  {/* TO REVIEW */}
-                  {searchedInventory.length > 0 ? (
-                    searchedInventory
-                      .slice(
-                        (currentPage - 1) * itemsPerPage,
-                        currentPage * itemsPerPage,
-                      )
-                      .map((item) => (
-                        <tr
-                          key={item.id}
-                          className={`group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container ${
-                            editingProductId === item.id
-                              ? "bg-white/[0.03]"
-                              : ""
-                          }`}
-                        >
-                          {/* IMAGE */}
-                          <td className="px-8 py-5">
-                            <div
-                              onClick={() =>
-                                editingProductId === item.id &&
-                                document
-                                  .getElementById(`file-${item.id}`)
-                                  .click()
-                              }
-                              className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative ${
+          {/* INVENTORY TAB CONTENT */}
+          {activeTab === "inventory" && (
+            <>
+              {/* Search/Filter Bar */}
+              <div
+                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg mb-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-5 reveal-up"
+                style={{ animationDelay: "0.1s" }}
+              >
+                <div className="w-full sm:flex-1 flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
+                  <span className="material-symbols-outlined text-xl font-light opacity-80">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                    }}
+                    placeholder="FILTER BY BRAND, SCALE, OR SKU..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
+                  />
+                </div>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="w-full sm:w-auto h-14 px-8 bg-primary-container rounded-lg text-sm text-black font-black font-headline uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:scale-105 active:scale-95 transition-all shadow-lg hover:shadow-primary-container/20 flex items-center justify-center gap-3"
+                >
+                  <span className="material-symbols-outlined text-lg sm:hidden">
+                    add
+                  </span>
+                  ADD PRODUCT
+                </button>
+              </div>
+
+              {/* Inventory Table */}
+              {loading ? (
+                <div className="mt-8">
+                  <TableSkeleton columns={7} rows={5} />
+                </div>
+              ) : (
+                <div
+                  className="bg-secondary-container shadow-lg/30 rounded-lg overflow-x-auto reveal-up scrollbar-hide"
+                  style={{ animationDelay: "0.2s" }}
+                >
+                  <table className="w-full text-left border-collapse min-w-[1000px]">
+                    <thead className="border-b border-primary-container">
+                      <tr className=" bg-input-field">
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          PRODUCT IMAGE
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          PRODUCT NAME
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          BRAND
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          CATEGORY/SERIES
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          PRICE
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          STOCK
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          ACTIONS
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.02]">
+                      {/* TO REVIEW */}
+                      {searchedInventory.length > 0 ? (
+                        searchedInventory
+                          .slice(
+                            (currentPage - 1) * itemsPerPage,
+                            currentPage * itemsPerPage,
+                          )
+                          .map((item) => (
+                            <tr
+                              key={item.id}
+                              className={`group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container ${
                                 editingProductId === item.id
-                                  ? "cursor-pointer"
+                                  ? "bg-white/[0.03]"
                                   : ""
                               }`}
                             >
-                              {editingProductId === item.id && (
-                                <input
-                                  id={`file-${item.id}`}
-                                  type="file"
-                                  name="item_image"
-                                  className="hidden"
-                                  accept="image/*"
-                                  onChange={editProduct}
-                                />
-                              )}
-                              <Image
-                                fill
-                                src={
-                                  editingProductId === item.id &&
-                                  editProductForm.preview
-                                    ? editProductForm.preview
-                                    : item.item_image || "/placeholder-car.png"
-                                }
-                                alt={item.item_name}
-                                className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700   ${
-                                  editingProductId === item.id
-                                    ? "opacity-40"
-                                    : ""
-                                }`}
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                loading="lazy"
-                              />
-                              {editingProductId === item.id && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
-                                  <span className="material-symbols-outlined text-white text-2xl mb-2">
-                                    add_a_photo
-                                  </span>
-                                  <span className="text-[8px] font-headline font-bold uppercase tracking-widest text-white/60">
-                                    CHANGE
-                                  </span>
+                              {/* IMAGE */}
+                              <td className="px-8 py-5">
+                                <div
+                                  onClick={() =>
+                                    editingProductId === item.id &&
+                                    document
+                                      .getElementById(`file-${item.id}`)
+                                      .click()
+                                  }
+                                  className={`w-full h-40 bg-black/40 rounded-[1px] overflow-hidden border border-white/5 group-hover:border-primary-container/30 transition-all duration-500 relative ${
+                                    editingProductId === item.id
+                                      ? "cursor-pointer"
+                                      : ""
+                                  }`}
+                                >
+                                  {editingProductId === item.id && (
+                                    <input
+                                      id={`file-${item.id}`}
+                                      type="file"
+                                      name="item_image"
+                                      className="hidden"
+                                      accept="image/*"
+                                      onChange={editProduct}
+                                    />
+                                  )}
+                                  <Image
+                                    fill
+                                    src={
+                                      editingProductId === item.id &&
+                                      editProductForm.preview
+                                        ? editProductForm.preview
+                                        : item.item_image || "/placeholder-car.png"
+                                    }
+                                    alt={item.item_name}
+                                    className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700   ${
+                                      editingProductId === item.id
+                                        ? "opacity-40"
+                                        : ""
+                                    }`}
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    loading="lazy"
+                                  />
+                                  {editingProductId === item.id && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
+                                      <span className="material-symbols-outlined text-white text-2xl mb-2">
+                                        add_a_photo
+                                      </span>
+                                      <span className="text-[8px] font-headline font-bold uppercase tracking-widest text-white/60">
+                                        CHANGE
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          </td>
+                              </td>
 
-                          {/* Product Name */}
-                          <td className="px-8 py-5 text-center">
-                            {editingProductId === item.id ? (
-                              <input
-                                name="item_name"
-                                type="text"
-                                value={editProductForm.item_name}
-                                onChange={editProduct}
-                                className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                              />
-                            ) : (
-                              <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
-                                {item.item_name}
-                              </p>
-                            )}
-                          </td>
+                              {/* Product Name */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <input
+                                    name="item_name"
+                                    type="text"
+                                    value={editProductForm.item_name}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  />
+                                ) : (
+                                  <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                                    {item.item_name}
+                                  </p>
+                                )}
+                              </td>
 
-                          {/* Brand */}
-                          <td className="px-8 py-5 text-center">
-                            {editingProductId === item.id ? (
-                              <select
-                                name="brand"
-                                value={editProductForm.brand}
-                                onChange={editProduct}
-                                className="w-full bg-black/60 border border-primary-container rounded/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                              >
-                                <option value="Hot Wheels">Hot Wheels</option>
-                                <option value="Tomica">Tomica</option>
-                                <option value="Majorette">Majorette</option>
-                                <option value="Auto World">Auto World</option>
-                                <option value="Mini GT">Mini GT</option>
-                                <option value="Bburago">Bburago</option>
-                                <option value="Maisto">Maisto</option>
-                                <option value="Others">Others...</option>
-                              </select>
-                            ) : (
-                              <span className="text-center text-primary-color  text-md font-black">
-                                {item.brand}
+                              {/* Brand */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <select
+                                    name="brand"
+                                    value={editProductForm.brand}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container rounded/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  >
+                                    <option value="Hot Wheels">Hot Wheels</option>
+                                    <option value="Tomica">Tomica</option>
+                                    <option value="Majorette">Majorette</option>
+                                    <option value="Auto World">Auto World</option>
+                                    <option value="Mini GT">Mini GT</option>
+                                    <option value="Bburago">Bburago</option>
+                                    <option value="Maisto">Maisto</option>
+                                    <option value="Others">Others...</option>
+                                  </select>
+                                ) : (
+                                  <span className="text-center text-primary-color  text-md font-black">
+                                    {item.brand}
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Category */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <select
+                                    name="category"
+                                    value={editProductForm.category}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  >
+                                    <option value="Mainline">
+                                      Mainline Series
+                                    </option>
+                                    <option value="Special">Special Series</option>
+                                    <option value="Premium">Premium Series</option>
+                                    <option value="Chase">Chase Series</option>
+                                  </select>
+                                ) : (
+                                  <p className="text-md text-white  font-headline uppercase tracking-[0.2em]">
+                                    {item.category}
+                                  </p>
+                                )}
+                              </td>
+
+                              {/* Price */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <input
+                                    name="price"
+                                    type="number"
+                                    value={editProductForm.price}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  />
+                                ) : (
+                                  <p className="text-md font-headline font-bold text-primary-container">
+                                    ₱{item.price}
+                                  </p>
+                                )}
+                              </td>
+
+                              {/* Stock */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <input
+                                    name="stock"
+                                    type="number"
+                                    value={editProductForm.stock || 0}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  />
+                                ) : (
+                                  <p className="text-md text-white font-headline font-bold">
+                                    {item.stock}
+                                  </p>
+                                )}
+                              </td>
+
+                              {/* Actions */}
+                              <td className="px-8 py-5">
+                                <div className="flex items-center justify-center gap-3">
+                                  {editingProductId === item.id ? (
+                                    <>
+                                      <button
+                                        onClick={saveEditProduct}
+                                        className="w-8 h-8 flex items-center justify-center bg-green-600/20 text-green-500 hover:bg-green-600/40 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined text-sm">
+                                          check
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingProductId(null)}
+                                        className="w-8 h-8 flex items-center justify-center bg-white/5 text-white/40 hover:bg-white/10 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined text-sm">
+                                          close
+                                        </span>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => startEditProduct(item)}
+                                        className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined text-sm">
+                                          edit
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setItemToDelete(item);
+                                          setDeleteModalOpen(true);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined text-sm">
+                                          delete
+                                        </span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                      ) : (
+                        <tr>
+                          <td colSpan="7" className="px-8 py-20 text-center">
+                            <div className="flex flex-col items-center gap-4 opacity-80">
+                              <span className="material-symbols-outlined text-6xl">
+                                inventory_2
                               </span>
-                            )}
-                          </td>
-
-                          {/* Category */}
-                          <td className="px-8 py-5 text-center">
-                            {editingProductId === item.id ? (
-                              <select
-                                name="category"
-                                value={editProductForm.category}
-                                onChange={editProduct}
-                                className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                              >
-                                <option value="Mainline">
-                                  Mainline Series
-                                </option>
-                                <option value="Special">Special Series</option>
-                                <option value="Premium">Premium Series</option>
-                                <option value="Chase">Chase Series</option>
-                              </select>
-                            ) : (
-                              <p className="text-md text-white  font-headline uppercase tracking-[0.2em]">
-                                {item.category}
+                              <p className="text-xl text-white/90 font-headline font-black uppercase tracking-[0.2em]">
+                                Product not available
                               </p>
-                            )}
-                          </td>
-
-                          {/* Price */}
-                          <td className="px-8 py-5 text-center">
-                            {editingProductId === item.id ? (
-                              <input
-                                name="price"
-                                type="number"
-                                value={editProductForm.price}
-                                onChange={editProduct}
-                                className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                              />
-                            ) : (
-                              <p className="text-md font-headline font-bold text-primary-container">
-                                ₱{item.price}
-                              </p>
-                            )}
-                          </td>
-
-                          {/* Stock */}
-                          <td className="px-8 py-5 text-center">
-                            {editingProductId === item.id ? (
-                              <input
-                                name="stock"
-                                type="number"
-                                value={editProductForm.stock || 0}
-                                onChange={editProduct}
-                                className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
-                              />
-                            ) : (
-                              <p className="text-md text-white font-headline font-bold">
-                                {item.stock}
-                              </p>
-                            )}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-8 py-5">
-                            <div className="flex items-center justify-center gap-3">
-                              {editingProductId === item.id ? (
-                                <>
-                                  <button
-                                    onClick={saveEditProduct}
-                                    className="w-8 h-8 flex items-center justify-center bg-green-600/20 text-green-500 hover:bg-green-600/40 transition-all"
-                                  >
-                                    <span className="material-symbols-outlined text-sm">
-                                      check
-                                    </span>
-                                  </button>
-                                  <button
-                                    onClick={() => setEditingProductId(null)}
-                                    className="w-8 h-8 flex items-center justify-center bg-white/5 text-white/40 hover:bg-white/10 transition-all"
-                                  >
-                                    <span className="material-symbols-outlined text-sm">
-                                      close
-                                    </span>
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={() => startEditProduct(item)}
-                                    className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
-                                  >
-                                    <span className="material-symbols-outlined text-sm">
-                                      edit
-                                    </span>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setItemToDelete(item);
-                                      setDeleteModalOpen(true);
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
-                                  >
-                                    <span className="material-symbols-outlined text-sm">
-                                      delete
-                                    </span>
-                                  </button>
-                                </>
-                              )}
                             </div>
                           </td>
                         </tr>
-                      ))
+                      )}
+                    </tbody>
+                  </table>
+                  {/* Pagination */}
+                  <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
+                    <div className="flex items-center gap-3">
+                      {/* Previous */}
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
+                      >
+                        <span className="material-symbols-outlined text-md">
+                          chevron_left
+                        </span>
+                      </button>
+
+                      {/* Current Page Indicator */}
+                      <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
+                        {currentPage}
+                      </button>
+
+                      {/* Next */}
+                      <button
+                        onClick={() =>
+                          setCurrentPage((p) =>
+                            Math.min(
+                              p + 1,
+                              Math.ceil(inventory.length / itemsPerPage),
+                            ),
+                          )
+                        }
+                        disabled={
+                          currentPage >= Math.ceil(inventory.length / itemsPerPage)
+                        }
+                        className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-md">
+                          chevron_right
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* STOCK HISTORY TAB CONTENT */}
+          {activeTab === "history" && (
+            <div className="space-y-8 reveal-up">
+              {/* History Filter Bar */}
+              <div
+                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex items-center gap-4 sm:gap-5"
+                style={{ animationDelay: "0.1s" }}
+              >
+                <div className="w-full flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
+                  <span className="material-symbols-outlined text-xl font-light opacity-80">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    value={historySearchQuery}
+                    onChange={(e) => setHistorySearchQuery(e.target.value)}
+                    placeholder="SEARCH CHANGELOG BY PRODUCT NAME, BRAND, OR ACTION..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
+                  />
+                </div>
+              </div>
+
+              {/* Vertical Timeline Changelog */}
+              <div
+                className="bg-secondary-container shadow-lg/30 p-6 sm:p-10 rounded-lg"
+                style={{ animationDelay: "0.2s" }}
+              >
+                <div className="relative pl-6 sm:pl-10 py-4">
+                  {/* Continuous Vertical Stem Line */}
+                  <div className="absolute left-[11px] sm:left-[19px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#d4af37] via-[#d4af37]/40 to-white/5" />
+
+                  {Object.keys(groupedHistory).length === 0 ? (
+                    <div className="py-20 flex flex-col items-center justify-center text-center opacity-60">
+                      <span className="material-symbols-outlined text-5xl mb-3 text-white/60">
+                        history_toggle_off
+                      </span>
+                      <p className="text-lg font-headline font-black uppercase tracking-[0.2em] text-white">
+                        No history logs recorded
+                      </p>
+                      <p className="text-xs font-headline uppercase tracking-widest text-white/50 mt-1">
+                        Stock updates and inventory changes will appear here in timeline view
+                      </p>
+                    </div>
                   ) : (
-                    <tr>
-                      <td colSpan="7" className="px-8 py-20 text-center">
-                        <div className="flex flex-col items-center gap-4 opacity-80">
-                          <span className="material-symbols-outlined text-6xl">
-                            inventory_2
-                          </span>
-                          <p className="text-xl text-white/90 font-headline font-black uppercase tracking-[0.2em]">
-                            Product not available
+                    Object.entries(groupedHistory).map(([dateGroup, logs]) => (
+                      <div key={dateGroup} className="relative mb-12 sm:mb-16 last:mb-0">
+                        {/* Gold glowing circular node dot */}
+                        <div className="absolute -left-[20px] sm:-left-[28px] top-1 w-4 h-4 rounded-full bg-[#d4af37] border-2 border-[#121212] shadow-[0_0_12px_rgba(212,175,55,0.9)] z-10" />
+
+                        {/* Date Group Header */}
+                        <div className="mb-6">
+                          <h4 className="text-xl sm:text-2xl font-black font-headline tracking-wider text-white uppercase italic leading-none">
+                            {dateGroup}
+                          </h4>
+                          <p className="text-xs font-mono text-white/40 uppercase tracking-widest mt-1">
+                            {logs.length} update{logs.length > 1 ? "s" : ""} logged
                           </p>
                         </div>
-                      </td>
-                    </tr>
+
+                        {/* Indented Bullet Point List */}
+                        <ul className="space-y-6 pl-4 sm:pl-6 border-l border-white/10 ml-1">
+                          {logs.map((log) => {
+                            const { description, tag, tagColor } = getLogInfo(log);
+                            const timeStr = log.created_at
+                              ? new Date(log.created_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "";
+
+                            return (
+                              <li key={log.id || Math.random()} className="relative group">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-[#d4af37] text-lg leading-none select-none mt-0.5">•</span>
+                                  <div className="flex-1">
+                                    <p className="text-sm sm:text-base font-body text-white/90 font-medium leading-relaxed">
+                                      {description}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-2">
+                                      <span
+                                        className={`inline-block text-[10px] sm:text-xs font-headline font-bold uppercase tracking-[0.25em] px-2.5 py-0.5 rounded border ${tagColor}`}
+                                      >
+                                        {tag}
+                                      </span>
+                                      {timeStr && (
+                                        <span className="text-[11px] font-mono text-white/40">
+                                          {timeStr}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))
                   )}
-                </tbody>
-              </table>
-              {/* Pagination */}
-              <div className="flex items-center justify-center p-8 bg-[#131313]/50 border-t border-white/[0.03]">
-                <div className="flex items-center gap-3">
-                  {/* Previous */}
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
-                  >
-                    <span className="material-symbols-outlined text-md">
-                      chevron_left
-                    </span>
-                  </button>
-
-                  {/* Current Page Indicator */}
-                  <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-black  font-black text-md">
-                    {currentPage}
-                  </button>
-
-                  {/* Next */}
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) =>
-                        Math.min(
-                          p + 1,
-                          Math.ceil(inventory.length / itemsPerPage),
-                        ),
-                      )
-                    }
-                    disabled={
-                      currentPage >= Math.ceil(inventory.length / itemsPerPage)
-                    }
-                    className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-md">
-                      chevron_right
-                    </span>
-                  </button>
                 </div>
               </div>
             </div>

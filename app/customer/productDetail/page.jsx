@@ -26,7 +26,7 @@ const DynamicFooter = dynamic(() => import("../../components/CustomerFooter"), {
 
 const DynamicDeliveryAddressMapModal = dynamic(
   () => import("../../components/DeliveryAddressMapModal"),
-  { ssr: false }
+  { ssr: false },
 );
 
 function ProductDetail() {
@@ -47,6 +47,10 @@ function ProductDetail() {
   const [wishlistStatus, setWishlistStatus] = useState(false);
   const [orderType, setOrderType] = useState("Pickup");
   const [paymentType, setPaymentType] = useState("Cash");
+  const [customerDetails, setCustomerDetails] = useState({
+    fullName: "",
+    phoneNumber: "",
+  });
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -124,9 +128,34 @@ function ProductDetail() {
       } = await supabase.auth.getUser();
       console.log("Supabase Auth User:", user);
       setUser(user); // if user is authenticated
+
+      if (user) {
+        // Fetch Customer firstname & lastname
+        const { data: custData } = await supabase
+          .from("Customer")
+          .select("firstname, lastname")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        // Fetch Users phone_number
+        const { data: userData } = await supabase
+          .from("Users")
+          .select("phone_number")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const fullName = custData
+          ? `${custData.firstname || ""} ${custData.lastname || ""}`.trim()
+          : "";
+        const phoneNumber = userData?.phone_number
+          ? String(userData.phone_number)
+          : "";
+
+        setCustomerDetails({ fullName, phoneNumber });
+      }
     };
     checkUser(); // calls the checkUser function
-  }, []);
+  }, [supabase]);
 
   const getComments = useCallback(
     async (product_id) => {
@@ -250,7 +279,10 @@ function ProductDetail() {
   const getPaymentType = (event) => {
     const val = event.target.value;
     if (orderType === "Delivery" && val === "Cash") {
-      showToast("Cash on Pickup is not applicable for Delivery orders.", "error");
+      showToast(
+        "Cash on Pickup is not applicable for Delivery orders.",
+        "error",
+      );
       setPaymentType("Online");
       return;
     }
@@ -261,7 +293,10 @@ function ProductDetail() {
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
     if (paymentStatus === "success") {
-      showToast("Online Payment Successful! Your order has been placed and sent to Admin.", "success");
+      showToast(
+        "Online Payment Successful! Your order has been placed and sent to Admin.",
+        "success",
+      );
     } else if (paymentStatus === "cancelled") {
       showToast("Payment was cancelled. You can retry anytime.", "error");
     }
@@ -269,6 +304,12 @@ function ProductDetail() {
 
   // This will insert the reserve product to Reservation Table using the confirmation Modal
   const insertReservationToTable = async () => {
+    const { data, error } = await supabase
+      .from("Customer")
+      .select(`firstname, lastname,Users(phone_number)`);
+
+    if (error) throw error;
+
     const parsedQuantity = parseInt(quantity, 10);
     if (isNaN(parsedQuantity) || parsedQuantity < 1) {
       showToast("Please enter a valid quantity of at least 1.", "error");
@@ -307,7 +348,10 @@ function ProductDetail() {
 
       if (reserveError) throw reserveError;
 
-      showToast("Pickup Reservation Placed! Please pay in-store upon pickup.", "success");
+      showToast(
+        "Pickup Reservation Placed! Please pay in-store upon pickup.",
+        "success",
+      );
       setIsModalOpen(false);
       setTimeout(() => {
         window.location.reload();
@@ -333,19 +377,16 @@ function ProductDetail() {
             user_id: user.id,
             inventory_id: product.id,
             quantity: parsedQuantity,
-            status: "Pending Payment",
-            payment_status: "Pending",
+            status: "Pending",
+            payment_status: "Pending Payment",
+            fulfillment_status: "Pending Shipping",
             order_type: orderType || "Delivery",
             payment_mode: paymentType || "Online",
-            customer_name: addressData.customerName,
-            contact_number: addressData.contactNumber,
-            street_address: addressData.streetAddress,
+            shipping_address: addressData.shippingAddress,
             district: addressData.district,
-            zip_code: addressData.zipCode,
+            zip_code: parseInt(addressData.zipCode, 10) || null,
             latitude: addressData.latitude,
-            longitude: addressData.longitude,
-            product_name: product.item_name,
-            total_price: totalPrice,
+            longtitude: addressData.longtitude,
           },
         ])
         .select()
@@ -365,7 +406,7 @@ function ProductDetail() {
           customer_name: addressData.customerName,
           customer_email: user.email,
           contact_number: addressData.contactNumber,
-          street_address: addressData.streetAddress,
+          shipping_address: addressData.shippingAddress,
           district: addressData.district,
           zip_code: addressData.zipCode,
         }),
@@ -374,7 +415,9 @@ function ProductDetail() {
       const resData = await response.json();
 
       if (!response.ok || !resData.success) {
-        throw new Error(resData.error || "Failed to initiate PayMongo payment session.");
+        throw new Error(
+          resData.error || "Failed to initiate PayMongo payment session.",
+        );
       }
 
       // 3. Redirect customer to PayMongo GCash checkout URL
@@ -986,7 +1029,8 @@ function ProductDetail() {
         isOpen={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
         onConfirmAddress={handleConfirmDeliveryAddress}
-        defaultCustomerName={user?.email ? user.email.split("@")[0] : ""}
+        defaultCustomerName={customerDetails.fullName}
+        defaultPhoneNumber={customerDetails.phoneNumber}
         isSubmitting={isSubmittingAddress}
       />
 
