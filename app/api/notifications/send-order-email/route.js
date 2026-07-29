@@ -14,12 +14,18 @@ export async function POST(request) {
       totalPrice,
       orderType,
       paymentMode,
+      shippingAddress,
       streetAddress,
       district,
       zipCode,
       latitude,
+      longtitude,
       longitude,
     } = body;
+
+    const actualShippingAddress = shippingAddress || streetAddress || "";
+    const actualLat = latitude;
+    const actualLng = longtitude || longitude;
 
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_APP_PASSWORD;
@@ -40,8 +46,8 @@ export async function POST(request) {
       },
     });
 
-    const googleMapsUrl = latitude && longitude
-      ? `https://www.google.com/maps?q=${latitude},${longitude}`
+    const googleMapsUrl = actualLat && actualLng
+      ? `https://www.google.com/maps?q=${actualLat},${actualLng}`
       : null;
 
     const htmlContent = `
@@ -88,7 +94,7 @@ export async function POST(request) {
           ${orderType === 'Delivery' ? `
           <div class="section">
             <div class="section-title">📍 Shipping & Delivery Address</div>
-            <div class="row"><span class="label">Street Address:</span><span class="value">${streetAddress || 'N/A'}</span></div>
+            <div class="row"><span class="label">Shipping Address:</span><span class="value">${actualShippingAddress || 'N/A'}</span></div>
             <div class="row"><span class="label">District / Barangay:</span><span class="value">${district || 'N/A'}</span></div>
             <div class="row"><span class="label">Zip Code:</span><span class="value">${zipCode || 'N/A'}</span></div>
             ${googleMapsUrl ? `

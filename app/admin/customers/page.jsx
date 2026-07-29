@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../lib/supabase/client";
-import Link from "next/link";
+import dynamic from "next/dynamic";
 import RemoveAccountModal from "../../components/RemoveAccountModal";
 import { TableSkeleton } from "../../components/Skeleton";
+import Link from "next/link";
+
+const DynamicToast = dynamic(() => import("../../components/Toast"), {
+  ssr: false,
+});
 
 const supabase = createClient();
 
@@ -16,6 +21,12 @@ export default function AdminCustomers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [admins, setAdmin] = useState([]);
+
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "error",
+  });
 
   const itemsPerPage = 5;
 
@@ -118,10 +129,11 @@ export default function AdminCustomers() {
       setIsDrawerOpen(false);
       setIsRemoveOpen(false);
       setSelectedCustomer(null);
-      showToast("Account Deleted", "success");
+      showToast("Account Successfully Disabled", "success");
       getCustomer();
       getAdmin();
     } catch (error) {
+      showToast("Failed to disable account. Please try again later");
       console.log(error);
     }
   };
@@ -137,10 +149,11 @@ export default function AdminCustomers() {
       setIsDrawerOpen(false);
       setIsRemoveOpen(false);
       setSelectedCustomer(null);
-      showToast("Account Restored", "success");
+      showToast("Account Successfully Restored", "success");
       getCustomer();
       getAdmin();
     } catch (error) {
+      showToast("Failed to restore account. Please try again later");
       console.log(error);
     }
   };
@@ -596,14 +609,14 @@ export default function AdminCustomers() {
                       onClick={() => setIsRemoveOpen(true)}
                       className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
                     >
-                      REMOVE CUSTOMER ACCOUNT?
+                      DISABLE CUSTOMER ACCOUNT?
                     </button>
                   ) : (
                     <button
-                      onClick={() => setIsRemoveOpen(true)}
+                      onClick={() => restoreUser()}
                       className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
                     >
-                      RESTORE CUSTOMER ACCOUNT?
+                      RE-ENABLE CUSTOMER ACCOUNT?
                     </button>
                   )}
                 </div>
@@ -704,6 +717,12 @@ export default function AdminCustomers() {
             ? `${selectedCustomer.firstname} ${selectedCustomer.lastname}`
             : ""
         }
+      />
+
+      <DynamicToast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
       />
 
       <style jsx global>{`

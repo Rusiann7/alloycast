@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 // Dynamic import of Leaflet map component to prevent SSR errors in Next.js
@@ -8,8 +8,12 @@ const DynamicDeliveryMap = dynamic(() => import("./DeliveryMap"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-64 sm:h-72 rounded-xl bg-input-field/50 border border-white/10 animate-pulse flex flex-col items-center justify-center text-white/60">
-      <span className="material-symbols-outlined text-4xl mb-2 animate-bounce">location_on</span>
-      <p className="text-sm font-headline tracking-wider uppercase">Loading Interactive Map...</p>
+      <span className="material-symbols-outlined text-4xl mb-2 animate-bounce">
+        location_on
+      </span>
+      <p className="text-sm font-headline tracking-wider uppercase">
+        Loading Interactive Map...
+      </p>
     </div>
   ),
 });
@@ -19,38 +23,46 @@ export default function DeliveryAddressMapModal({
   onClose,
   onConfirmAddress,
   defaultCustomerName = "",
+  defaultPhoneNumber = "",
   isSubmitting = false,
 }) {
   const [customerName, setCustomerName] = useState(defaultCustomerName);
-  const [contactNumber, setContactNumber] = useState("");
-  const [streetAddress, setStreetAddress] = useState("");
+  const [contactNumber, setContactNumber] = useState(defaultPhoneNumber);
+  const [shippingAddress, setShippingAddress] = useState("");
   const [district, setDistrict] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [location, setLocation] = useState({ lat: 14.8386, lng: 120.2842 }); // Default: Olongapo City
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Sync props when modal opens or customerDetails load
+  useEffect(() => {
+    if (defaultCustomerName) setCustomerName(defaultCustomerName);
+    if (defaultPhoneNumber) setContactNumber(defaultPhoneNumber);
+  }, [defaultCustomerName, defaultPhoneNumber]);
+
   if (!isOpen) return null;
 
   // Handle location update from map click or drag
   const handleLocationSelect = async (newPos) => {
     setLocation(newPos);
-    
+
     // Optional reverse geocoding via OpenStreetMap Nominatim
     try {
       setIsGeocoding(true);
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${newPos.lat}&lon=${newPos.lng}`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${newPos.lat}&lon=${newPos.lng}`,
       );
       if (res.ok) {
         const data = await res.json();
         if (data && data.address) {
           const addr = data.address;
           const road = addr.road || addr.suburb || addr.neighbourhood || "";
-          const cityDist = addr.city_district || addr.suburb || addr.city || addr.town || "";
+          const cityDist =
+            addr.city_district || addr.suburb || addr.city || addr.town || "";
           const postcode = addr.postcode || "";
 
-          if (road && !streetAddress) setStreetAddress(road);
+          if (road && !shippingAddress) setShippingAddress(road);
           if (cityDist && !district) setDistrict(cityDist);
           if (postcode && !zipCode) setZipCode(postcode);
         }
@@ -67,22 +79,22 @@ export default function DeliveryAddressMapModal({
     setErrorMessage("");
 
     if (!customerName.trim()) {
-      setErrorMessage("Please enter your full customer name.");
+      setErrorMessage("Customer name is required.");
       return;
     }
-    if (!contactNumber.trim()) {
-      setErrorMessage("Please enter your contact number for delivery updates.");
+    if (!contactNumber.toString().trim()) {
+      setErrorMessage("Contact phone number is required.");
       return;
     }
-    if (!streetAddress.trim()) {
-      setErrorMessage("Please enter your street address.");
+    if (!shippingAddress.trim()) {
+      setErrorMessage("Please enter your shipping address.");
       return;
     }
     if (!district.trim()) {
       setErrorMessage("Please enter your district or barangay.");
       return;
     }
-    if (!zipCode.trim()) {
+    if (!zipCode.toString().trim()) {
       setErrorMessage("Please enter your postal/zip code.");
       return;
     }
@@ -90,11 +102,11 @@ export default function DeliveryAddressMapModal({
     onConfirmAddress({
       customerName,
       contactNumber,
-      streetAddress,
+      shippingAddress,
       district,
       zipCode,
       latitude: location.lat,
-      longitude: location.lng,
+      longtitude: location.lng,
     });
   };
 
@@ -171,8 +183,8 @@ export default function DeliveryAddressMapModal({
             <input
               type="text"
               required
-              value={streetAddress}
-              onChange={(e) => setStreetAddress(e.target.value)}
+              value={shippingAddress}
+              onChange={(e) => setShippingAddress(e.target.value)}
               placeholder="e.g. #12 Rizal Avenue, West Bajac-Bajac"
               className="w-full bg-input-field border border-white/10 rounded-lg p-3 text-white text-sm focus:border-primary-container outline-none transition-all"
             />
@@ -226,7 +238,8 @@ export default function DeliveryAddressMapModal({
               onLocationSelect={handleLocationSelect}
             />
             <p className="text-[11px] text-font-color/70 mt-1 italic">
-              💡 Tip: Click or drag the marker to your exact building or landmark location.
+              💡 Tip: Click or drag the marker to your exact building or
+              landmark location.
             </p>
           </div>
 
@@ -247,13 +260,17 @@ export default function DeliveryAddressMapModal({
             >
               {isSubmitting ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                  <span className="material-symbols-outlined animate-spin text-sm">
+                    progress_activity
+                  </span>
                   <span>Processing...</span>
                 </>
               ) : (
                 <>
                   <span>Confirm Address & Pay</span>
-                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  <span className="material-symbols-outlined text-sm">
+                    arrow_forward
+                  </span>
                 </>
               )}
             </button>

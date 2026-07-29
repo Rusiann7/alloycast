@@ -11,10 +11,13 @@ export async function POST(request) {
       customer_name,
       customer_email,
       contact_number,
+      shipping_address,
       street_address,
       district,
       zip_code,
     } = body;
+
+    const actualAddress = shipping_address || street_address || "";
 
     const secretKey = process.env.PAYMONGO_SECRET_KEY;
     if (!secretKey) {
@@ -29,19 +32,35 @@ export async function POST(request) {
     // Amount in PayMongo must be in centavos (e.g. PHP 500.00 = 50000)
     const amountInCentavos = Math.round(amount * 100);
 
+    // Clean phone number (remove non-digits, format to +63 or 09 format)
+    let formattedPhone = undefined;
+    if (contact_number) {
+      const digitsOnly = String(contact_number).replace(/\D/g, "");
+      if (digitsOnly.length >= 10) {
+        formattedPhone = digitsOnly.startsWith("63")
+          ? `+${digitsOnly}`
+          : digitsOnly.startsWith("0")
+          ? `+63${digitsOnly.slice(1)}`
+          : `+63${digitsOnly}`;
+      }
+    }
+
+    // Build clean address object for PayMongo billing
+    const billingAddress = {
+      country: "PH",
+    };
+    if (actualAddress && actualAddress.trim()) billingAddress.line1 = actualAddress.trim();
+    if (district && district.trim()) billingAddress.city = district.trim();
+    if (zip_code && String(zip_code).trim()) billingAddress.postal_code = String(zip_code).trim();
+
     const payload = {
       data: {
         attributes: {
           billing: {
             name: customer_name || "AlloyCast Customer",
             email: customer_email || undefined,
-            phone: contact_number || undefined,
-            address: {
-              line1: street_address || "",
-              city: district || "",
-              postal_code: zip_code || "",
-              country: "PH",
-            },
+            phone: formattedPhone || undefined,
+            address: billingAddress,
           },
           line_items: [
             {
@@ -52,7 +71,7 @@ export async function POST(request) {
               quantity: parseInt(quantity, 10) || 1,
             },
           ],
-          payment_method_types: ["gcash", "paymaya", "card"],
+          payment_method_types: ["card", "gcash", "paymaya", "qrph"],
           success_url: `${appUrl}/customer/productDetail?payment=success&reservation_id=${reservation_id}`,
           cancel_url: `${appUrl}/customer/productDetail?payment=cancelled&reservation_id=${reservation_id}`,
           description: `Order #${reservation_id} for ${customer_name}`,

@@ -33,6 +33,7 @@ function RegisterPageContent() {
     firstName: "",
     lastName: "",
     email: "",
+    phoneNumber: "",
     gender: "",
     dob: "",
     password: "",
@@ -99,6 +100,7 @@ function RegisterPageContent() {
       !accountForm.firstName ||
       !accountForm.lastName ||
       !accountForm.email ||
+      !accountForm.phoneNumber ||
       !accountForm.gender ||
       !accountForm.dob ||
       !accountForm.password ||
@@ -112,6 +114,7 @@ function RegisterPageContent() {
       firstName: accountForm.firstName.trim(),
       lastName: accountForm.lastName.trim(),
       email: accountForm.email.trim().toLowerCase(),
+      phoneNumber: accountForm.phoneNumber.trim(),
     };
 
     // pang check ng password length (min = 8)
@@ -169,14 +172,17 @@ function RegisterPageContent() {
 
     const newCode = Math.floor(10000 + Math.random() * 90000);
 
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       // supabase Auth sign up
       email: sanitizedData.email, // store sa supabase auth at Users Table
       password: sanitizedData.password, // store sa supabase auth at Users Table
+      phone: sanitizedData.phoneNumber, // store native phone in Supabase Auth
       options: {
         data: {
           first_name: sanitizedData.firstName, // store sa Customers Table
           last_name: sanitizedData.lastName, // store sa Customers Table
+          phone_number: sanitizedData.phoneNumber, // store sa Users Table via metadata / trigger
+          phone: sanitizedData.phoneNumber, // store phone in metadata
           gender: sanitizedData.gender, // store sa Customers Table
           dob: sanitizedData.dob, // store sa Customers Table
           is_admin: false, // matik false para Customers
@@ -190,6 +196,13 @@ function RegisterPageContent() {
       console.error("Supabase signUp error:", error);
       showToast(error.message);
     } else {
+      if (authData?.user) {
+        // Also update Users table phone_number column directly
+        await supabase
+          .from("Users")
+          .update({ phone_number: sanitizedData.phoneNumber })
+          .eq("id", authData.user.id);
+      }
       showToast(
         "Registration Success! Please check your email to verify your account.",
         "success",
@@ -313,6 +326,19 @@ function RegisterPageContent() {
                     className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
                     name="lastName"
                     value={accountForm.lastName}
+                    onChange={getInputValue}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-white/90 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="+639467790203"
+                    className="w-full bg-input-field border-b border-primary-container rounded-lg px-4 py-3 text-md text-white/90 focus:border-primary-container outline-none transition-colors  tracking-tight"
+                    name="phoneNumber"
+                    value={accountForm.phoneNumber}
                     onChange={getInputValue}
                   />
                 </div>

@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 );
 
 export async function POST(request) {
@@ -20,11 +20,24 @@ export async function POST(request) {
         // 1. Fetch Reservation details
         const { data: reservation, error: fetchErr } = await supabase
           .from("Reservation")
-          .select("*, Inventory(stock)")
+          .select(
+            "*, Inventory(item_name, price, stock), Users(email, phone_number)",
+          )
           .eq("id", reservationId)
           .single();
 
         if (!fetchErr && reservation) {
+          // Fetch Customer firstname & lastname
+          const { data: custData } = await supabase
+            .from("Customer")
+            .select("firstname, lastname")
+            .eq("user_id", reservation.user_id)
+            .maybeSingle();
+
+          const customerFullName = custData
+            ? `${custData.firstname || ""} ${custData.lastname || ""}`.trim()
+            : metadata?.customer_name || "Valued Customer";
+
           // 2. Update Reservation Status to Paid / Pending Shipping
           await supabase
             .from("Reservation")
@@ -32,6 +45,7 @@ export async function POST(request) {
               status: "Paid",
               payment_status: "Paid",
               fulfillment_status: "Pending Shipping",
+              paymongo_session_id: payload?.data?.id || null,
             })
             .eq("id", reservationId);
 
@@ -47,24 +61,31 @@ export async function POST(request) {
           }
 
           // 4. Trigger Nodemailer Email Notification to Admin
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+          const totalPrice =
+            (reservation.Inventory?.price || 0) * (reservation.quantity || 1);
+
           await fetch(`${appUrl}/api/notifications/send-order-email`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               reservationId,
-              customerName: metadata.customer_name || reservation.customer_name,
-              customerEmail: metadata.customer_email || reservation.customer_email,
-              productName: reservation.product_name,
+              customerName: customerFullName,
+              customerEmail:
+                reservation.Users?.email || metadata?.customer_email || "",
+              contactNumber: reservation.Users?.phone_number || "",
+              productName:
+                reservation.Inventory?.item_name || "Diecast Product",
               quantity: reservation.quantity,
-              totalPrice: reservation.total_price || 0,
+              totalPrice,
               orderType: reservation.order_type || "Delivery",
               paymentMode: "Online (PayMongo GCash)",
-              streetAddress: reservation.street_address,
+              shippingAddress: reservation.shipping_address,
               district: reservation.district,
               zipCode: reservation.zip_code,
               latitude: reservation.latitude,
-              longitude: reservation.longitude,
+              longtitude: reservation.longtitude,
             }),
           });
         }
@@ -74,6 +95,9 @@ export async function POST(request) {
     return NextResponse.json({ success: true, received: true });
   } catch (error) {
     console.error("PayMongo Webhook Error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }

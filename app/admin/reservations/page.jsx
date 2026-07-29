@@ -77,11 +77,11 @@ export default function AdminReservations() {
             status: reservation.status || "Pending",
             order_type: reservation.order_type || "Pickup",
             payment_mode: reservation.payment_mode || "Cash",
-            street_address: reservation.street_address || "",
+            shipping_address: reservation.shipping_address || "",
             district: reservation.district || "",
             zip_code: reservation.zip_code || "",
             latitude: reservation.latitude || null,
-            longitude: reservation.longitude || null,
+            longtitude: reservation.longtitude || null,
             contact_number: reservation.contact_number || "",
             statusColor:
               reservation.status === "Approved" || reservation.status === "Paid"
