@@ -513,11 +513,192 @@ function ProductDetail() {
     }
   };
 
-  // Handles Delivery & Online Payment via PayMongo
+  // Handles Delivery & Online Payment
   const handleConfirmDeliveryAddress = async (addressData) => {
     setIsSubmittingAddress(true);
     const parsedQuantity = parseInt(quantity, 10) || 1;
     const totalPrice = (product?.price || 0) * parsedQuantity;
+
+    // ── Door-to-Door + Online: Email admin, wait for manual payment ──────────
+    if (deliveryType === "DoorToDoor" && paymentType === "Online") {
+      try {
+        // Fetch customer profile for contact info
+        const { data: custData } = await supabase
+          .from("Customer")
+          .select("firstname, lastname")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const { data: userData } = await supabase
+          .from("Users")
+          .select("email, phone_number")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const customerFullName =
+          addressData.customerName ||
+          (custData
+            ? `${custData.firstname || ""} ${custData.lastname || ""}`.trim()
+            : "Valued Customer");
+        const customerEmail = userData?.email || user.email || "";
+        const contactNumber =
+          addressData.contactNumber ||
+          (userData?.phone_number ? String(userData.phone_number) : "");
+
+        // 1. Insert reservation — no stock decrement, no revenue yet
+        const { data: inserted, error: reserveError } = await supabase
+          .from("Reservation")
+          .insert([
+            {
+              user_id: user.id,
+              inventory_id: product.id,
+              quantity: parsedQuantity,
+              discount: 0,
+              status: "Pending",
+              order_type: "Delivery",
+              payment_mode: "Online",
+              payment_status: "Pending Payment",
+              fulfillment_status: "Pending Shipping",
+              shipping_address: addressData.shippingAddress,
+              district: addressData.district,
+              zip_code: parseInt(addressData.zipCode, 10) || null,
+              latitude: addressData.latitude,
+              longtitude: addressData.longtitude,
+            },
+          ])
+          .select()
+          .single();
+
+        if (reserveError) throw reserveError;
+
+        // 2. Notify all admins via email (admin will reply with PayMongo / GCash QR)
+        await fetch("/api/notifications/send-delivery-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservationId: inserted.id,
+            customerName: customerFullName,
+            customerEmail,
+            contactNumber,
+            productName: product.item_name,
+            quantity: parsedQuantity,
+            totalPrice,
+            shippingAddress: addressData.shippingAddress,
+            district: addressData.district,
+            zipCode: addressData.zipCode,
+            deliveryType: "Door-to-Door",
+            createdAt: inserted.created_at,
+          }),
+        });
+
+        showToast(
+          "Order placed! Our team will send you a payment link via email within 48 hours.",
+          "success",
+        );
+        setIsAddressModalOpen(false);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2500);
+        return;
+      } catch (err) {
+        console.error("Door-to-Door Delivery Error:", err);
+        showToast(err.message || "Failed to place delivery order.", "error");
+        setIsSubmittingAddress(false);
+        return;
+      }
+    }
+
+    // ── LBC Local Branch + Cash: Email admin, manual COD via LBC ────────────
+    if (deliveryType === "LbcBranch" && paymentType === "Cash") {
+      try {
+        // Fetch customer profile
+        const { data: custData } = await supabase
+          .from("Customer")
+          .select("firstname, lastname")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const { data: userData } = await supabase
+          .from("Users")
+          .select("email, phone_number")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        const customerFullName =
+          addressData.customerName ||
+          (custData
+            ? `${custData.firstname || ""} ${custData.lastname || ""}`.trim()
+            : "Valued Customer");
+        const customerEmail = userData?.email || user.email || "";
+        const contactNumber =
+          addressData.contactNumber ||
+          (userData?.phone_number ? String(userData.phone_number) : "");
+
+        // 1. Insert reservation — no stock decrement, no revenue yet
+        //    fulfillment_status starts as "Pending Shipping"; admin will update
+        //    through the stages: Pending Shipping → Shipped → Completed
+        const { data: inserted, error: reserveError } = await supabase
+          .from("Reservation")
+          .insert([
+            {
+              user_id: user.id,
+              inventory_id: product.id,
+              quantity: parsedQuantity,
+              discount: 0,
+              status: "Pending",
+              order_type: "Delivery",
+              payment_mode: "Cash",
+              payment_status: "Pending Payment",
+              fulfillment_status: "Pending Shipping",
+              shipping_address: addressData.shippingAddress,
+              district: addressData.district,
+              zip_code: parseInt(addressData.zipCode, 10) || null,
+              latitude: addressData.latitude,
+              longtitude: addressData.longtitude,
+            },
+          ])
+          .select()
+          .single();
+
+        if (reserveError) throw reserveError;
+
+        // 2. Notify all admins — they will ship via LBC and reply to the customer
+        await fetch("/api/notifications/send-lbc-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservationId: inserted.id,
+            customerName: customerFullName,
+            customerEmail,
+            contactNumber,
+            productName: product.item_name,
+            quantity: parsedQuantity,
+            totalPrice,
+            shippingAddress: addressData.shippingAddress,
+            district: addressData.district,
+            zipCode: addressData.zipCode,
+            createdAt: inserted.created_at,
+          }),
+        });
+
+        showToast(
+          "Order placed! Our team will process your LBC shipment and email you the total cost + tracking details.",
+          "success",
+        );
+        setIsAddressModalOpen(false);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2500);
+        return;
+      } catch (err) {
+        console.error("LBC Order Error:", err);
+        showToast(err.message || "Failed to place LBC order.", "error");
+        setIsSubmittingAddress(false);
+        return;
+      }
+    }
+
+    // ── All other Delivery types → PayMongo checkout (existing flow) ─────────
 
     try {
       // 1. Insert order into Reservation table with Pending Payment status
