@@ -157,7 +157,8 @@ export default function AdminInventory() {
       if (!oldRow) throw new Error("Original product not found in local state");
 
       const stockDiff = Number(editProductForm.stock) - Number(oldRow.stock);
-      const priceChanged = Number(oldRow.price) !== Number(editProductForm.price);
+      const priceChanged =
+        Number(oldRow.price) !== Number(editProductForm.price);
       let commentDetail = "Updated product details";
 
       if (stockDiff > 0) {
@@ -524,7 +525,8 @@ export default function AdminInventory() {
                                       editingProductId === item.id &&
                                       editProductForm.preview
                                         ? editProductForm.preview
-                                        : item.item_image || "/placeholder-car.png"
+                                        : item.item_image ||
+                                          "/placeholder-car.png"
                                     }
                                     alt={item.item_name}
                                     className={`w-full h-40 object-cover group-hover:scale-110 transition-all duration-700   ${
@@ -574,10 +576,14 @@ export default function AdminInventory() {
                                     onChange={editProduct}
                                     className="w-full bg-black/60 border border-primary-container rounded/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                                   >
-                                    <option value="Hot Wheels">Hot Wheels</option>
+                                    <option value="Hot Wheels">
+                                      Hot Wheels
+                                    </option>
                                     <option value="Tomica">Tomica</option>
                                     <option value="Majorette">Majorette</option>
-                                    <option value="Auto World">Auto World</option>
+                                    <option value="Auto World">
+                                      Auto World
+                                    </option>
                                     <option value="Mini GT">Mini GT</option>
                                     <option value="Bburago">Bburago</option>
                                     <option value="Maisto">Maisto</option>
@@ -602,8 +608,12 @@ export default function AdminInventory() {
                                     <option value="Mainline">
                                       Mainline Series
                                     </option>
-                                    <option value="Special">Special Series</option>
-                                    <option value="Premium">Premium Series</option>
+                                    <option value="Special">
+                                      Special Series
+                                    </option>
+                                    <option value="Premium">
+                                      Premium Series
+                                    </option>
                                     <option value="Chase">Chase Series</option>
                                   </select>
                                 ) : (
@@ -661,7 +671,9 @@ export default function AdminInventory() {
                                         </span>
                                       </button>
                                       <button
-                                        onClick={() => setEditingProductId(null)}
+                                        onClick={() =>
+                                          setEditingProductId(null)
+                                        }
                                         className="w-8 h-8 flex items-center justify-center bg-white/5 text-white/40 hover:bg-white/10 transition-all"
                                       >
                                         <span className="material-symbols-outlined text-sm">
@@ -677,6 +689,17 @@ export default function AdminInventory() {
                                       >
                                         <span className="material-symbols-outlined text-sm">
                                           edit
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setItemToDelete(item);
+                                          setDeleteModalOpen(true);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined text-sm">
+                                          delete
                                         </span>
                                       </button>
                                       <button
@@ -717,7 +740,9 @@ export default function AdminInventory() {
                     <div className="flex items-center gap-3">
                       {/* Previous */}
                       <button
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(p - 1, 1))
+                        }
                         disabled={currentPage === 1}
                         className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 transition-colors disabled:opacity-20"
                       >
@@ -742,7 +767,8 @@ export default function AdminInventory() {
                           )
                         }
                         disabled={
-                          currentPage >= Math.ceil(inventory.length / itemsPerPage)
+                          currentPage >=
+                          Math.ceil(inventory.length / itemsPerPage)
                         }
                         className="w-8 h-8 flex items-center justify-center border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
                       >
@@ -797,12 +823,16 @@ export default function AdminInventory() {
                         No history logs recorded
                       </p>
                       <p className="text-xs font-headline uppercase tracking-widest text-white/50 mt-1">
-                        Stock updates and inventory changes will appear here in timeline view
+                        Stock updates and inventory changes will appear here in
+                        timeline view
                       </p>
                     </div>
                   ) : (
                     Object.entries(groupedHistory).map(([dateGroup, logs]) => (
-                      <div key={dateGroup} className="relative mb-12 sm:mb-16 last:mb-0">
+                      <div
+                        key={dateGroup}
+                        className="relative mb-12 sm:mb-16 last:mb-0"
+                      >
                         {/* Gold glowing circular node dot */}
                         <div className="absolute -left-[20px] sm:-left-[28px] top-1 w-4 h-4 rounded-full bg-[#d4af37] border-2 border-[#121212] shadow-[0_0_12px_rgba(212,175,55,0.9)] z-10" />
 
@@ -812,25 +842,35 @@ export default function AdminInventory() {
                             {dateGroup}
                           </h4>
                           <p className="text-xs font-mono text-white/40 uppercase tracking-widest mt-1">
-                            {logs.length} update{logs.length > 1 ? "s" : ""} logged
+                            {logs.length} update{logs.length > 1 ? "s" : ""}{" "}
+                            logged
                           </p>
                         </div>
 
                         {/* Indented Bullet Point List */}
                         <ul className="space-y-6 pl-4 sm:pl-6 border-l border-white/10 ml-1">
                           {logs.map((log) => {
-                            const { description, tag, tagColor } = getLogInfo(log);
+                            const { description, tag, tagColor } =
+                              getLogInfo(log);
                             const timeStr = log.created_at
-                              ? new Date(log.created_at).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                              ? new Date(log.created_at).toLocaleTimeString(
+                                  [],
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )
                               : "";
 
                             return (
-                              <li key={log.id || Math.random()} className="relative group">
+                              <li
+                                key={log.id || Math.random()}
+                                className="relative group"
+                              >
                                 <div className="flex items-start gap-3">
-                                  <span className="text-[#d4af37] text-lg leading-none select-none mt-0.5">•</span>
+                                  <span className="text-[#d4af37] text-lg leading-none select-none mt-0.5">
+                                    •
+                                  </span>
                                   <div className="flex-1">
                                     <p className="text-sm sm:text-base font-body text-white/90 font-medium leading-relaxed">
                                       {description}
