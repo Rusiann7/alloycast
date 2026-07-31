@@ -489,6 +489,9 @@ export default function AdminReservations() {
                         Date Reserved
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
+                        Order Type
+                      </th>
+                      <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Status
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
@@ -554,6 +557,9 @@ export default function AdminReservations() {
                           <td className="p-6 text-md font-black text-white uppercase tracking-widest  transition-colors ">
                             {res.date}
                           </td>
+                          <td className="p-6 text-md font-black text-white uppercase tracking-widest  transition-colors ">
+                            {res.order_type}
+                          </td>
                           <td className="p-6">
                             <span
                               className={`inline-flex items-center gap-3 px-4 py-2 ${res.statusColor} text-md font-black uppercase tracking-widest rounded-lg border`}
@@ -617,6 +623,31 @@ export default function AdminReservations() {
                                 >
                                   <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
                                     close
+                                  </span>
+                                </button>
+
+                                {/* --- Confirm Button --- */}
+                                <button
+                                  className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                                  disabled={
+                                    res.order_type === "Pickup" ||
+                                    res.status === "Completed" ||
+                                    res.status === "Declined" ||
+                                    res.status === "Cancelled"
+                                  }
+                                  onClick={() =>
+                                    handleActionClick(
+                                      res.id,
+                                      "Confirm",
+                                      res.customer_email,
+                                      res.customer,
+                                      res.item_name,
+                                    )
+                                  }
+                                  title="Decline Reservation"
+                                >
+                                  <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
+                                    check
                                   </span>
                                 </button>
                               </div>

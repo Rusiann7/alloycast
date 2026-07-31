@@ -140,6 +140,10 @@ export default function LandingPage() {
           playsInline
         />
 
+        <div className="w-full bg-red-600 text-white text-center py-2 font-bold uppercase tracking-wider z-50 mt-16 lg:mt-20">
+          discount: Mazda RX 7
+        </div>
+
         {/* ── Hero Content — Upper Third ─────────────────────── */}
         <div className="relative z-20 flex flex-col items-start justify-start px-8 lg:px-16 pt-24 flex-1">
           {/* Eyebrow */}
