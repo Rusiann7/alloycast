@@ -884,7 +884,7 @@ function ProductDetail() {
     try {
       if (!user) {
         // is user is not logged in
-        showToast("You must login first to comment on this product", "error");
+        showToast("You must login first to add to wishlist", "error");
         const captureCurrentPath =
           window.location.pathname + window.location.search; // capture current page url with product id
         setTimeout(() => {
@@ -950,6 +950,7 @@ function ProductDetail() {
       checkWishlist();
     } catch (error) {
       console.log(error);
+      showToast("Could not add to wishlist. It may already be saved.", "error");
     }
   };
 
