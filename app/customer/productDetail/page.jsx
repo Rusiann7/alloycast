@@ -44,7 +44,7 @@ function ProductDetail() {
   const [commentDB, setCommentDB] = useState([]);
   const [submitBtn, setSubmitBtn] = useState(true);
   const [canReview, setCanReview] = useState(false);
-  const [wishlistStatus, setWishlistStatus] = useState(false);
+  const [wishlistStatus, setWishlistStatus] = useState(null);
   const [orderType, setOrderType] = useState("Pickup");
   const [paymentType, setPaymentType] = useState("Cash");
   const [deliveryType, setDeliveryType] = useState("DoorToDoor");
@@ -855,16 +855,18 @@ function ProductDetail() {
   };
 
   const checkWishlist = async () => {
+    if (!user || !productId) return; // guard
     try {
       const { data, error } = await supabase
         .from("Wishlist")
         .select("is_active")
         .eq("product_id", productId)
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (error) throw error;
 
-      setWishlistStatus(data || false);
+      setWishlistStatus(data !== null ? data.is_active : null);
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -876,7 +878,7 @@ function ProductDetail() {
       checkWishlist();
     };
     doWishlistCheck();
-  }, []);
+  }, [user, productId]); 
 
   const addWishlist = async () => {
     try {
@@ -894,13 +896,58 @@ function ProductDetail() {
         return;
       }
 
-      const { error } = await supabase.from("Wishlist").insert({
-        product_id: productId,
-        user_id: user.id,
-        is_active: true,
-      });
+      if (wishlistStatus === null) {
+        const { error } = await supabase.from("Wishlist").insert({
+          product_id: productId,
+          user_id: user.id,
+          is_active: true,
+        });
+
+        if (error) throw error;
+
+        console.log(wishlistStatus);
+        checkWishlist();
+      } else if (!wishlistStatus) {
+        const { error } = await supabase
+          .from("Wishlist")
+          .update({ is_active: true })
+          .eq("product_id", productId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+        console.log(wishlistStatus);
+        checkWishlist();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const removeWishlist = async () => {
+    try {
+      if (!user) {
+        // is user is not logged in
+        showToast("You must login first to comment on this product", "error");
+        const captureCurrentPath =
+          window.location.pathname + window.location.search; // capture current page url with product id
+        setTimeout(() => {
+          router.push(
+            // pass the captured current path url to login page
+            `/customer/auth/login?redirectTo=${encodeURIComponent(captureCurrentPath)}`,
+          );
+        }, 4000);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("Wishlist")
+        .update({ is_active: false })
+        .eq("product_id", productId)
+        .eq("user_id", user.id);
 
       if (error) throw error;
+
+      checkWishlist();
     } catch (error) {
       console.log(error);
     }
@@ -1055,14 +1102,26 @@ function ProductDetail() {
                 >
                   {product.stock === 0 ? "Out of Stock" : "Order Product"}
                 </button>
-                <button
-                  onClick={addWishlist}
-                  className="flex-shrink-0 w-16 h-16 rounded-lg bg-secondary-container border-2 border-primary-container text-primary-container transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
-                >
-                  <span className="material-symbols-outlined text-3xl">
-                    favorite
-                  </span>
-                </button>
+
+                {wishlistStatus ? (
+                  <button
+                    onClick={removeWishlist}
+                    className="flex-shrink-0 w-16 h-16 rounded-lg bg-red-600 border-2 border-red-700 text-white transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                  >
+                    <span className="material-symbols-outlined text-3xl">
+                      delete
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={addWishlist}
+                    className="flex-shrink-0 w-16 h-16 rounded-lg bg-secondary-container border-2 border-primary-container text-primary-container transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                  >
+                    <span className="material-symbols-outlined text-3xl">
+                      favorite
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
             {/* Customer Rating Section */}
