@@ -38,6 +38,9 @@ export default function AdminInventory() {
   const [historySearchQuery, setHistorySearchQuery] = useState("");
   const [user, setUser] = useState(null); // for checking auth users
   const [historyData, setHistoryData] = useState([]);
+  const [discountNumber, setDiscountNumber] = useState(0);
+  const [discountStartDate, setDiscountStartDate] = useState("");
+  const [discountEndDate, setDiscountEndDate] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -266,6 +269,40 @@ export default function AdminInventory() {
   useEffect(() => {
     getInventoryHistory();
   }, [getInventoryHistory]);
+
+  const insertDiscount = async () => {
+    try {
+      const { error } = await supabase.from("Inventory").update({
+        discount: true,
+        start_discount: true,
+        end_discount: true,
+      });
+
+      if (error) throw error;
+
+      let commentDetails = `Started discount on ${discountStartDate} and ending on ${discountEndDate}, for ₱${discountNumber}`;
+
+      const { error: historyError } = await supabase.from("History").insert({
+        product_id: editingProductId,
+        item_name: editProductForm.item_name || oldRow.item_name,
+        brand: editProductForm.brand || oldRow.brand,
+        category: editProductForm.category || oldRow.category,
+        price: editProductForm.price || oldRow.price,
+        stock: editProductForm.stock || oldRow.stock,
+        item_image: imageUrl || oldRow.item_image,
+        user_id: user?.id || null,
+        comment: commentDetails,
+      });
+
+      if (historyError) throw historyError;
+
+      showToast("Added Discount!", "success");
+      fetchInventoryProduct(); // reload the page to display updated products
+      getInventoryHistory();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getLogInfo = (log) => {
     const comment = log.comment || "Updated";
