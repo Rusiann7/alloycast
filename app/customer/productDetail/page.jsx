@@ -882,7 +882,7 @@ function ProductDetail() {
     try {
       if (!user) {
         // is user is not logged in
-        showToast("You must login first to comment on this product", "error");
+        showToast("You must login first to add to wishlist", "error");
         const captureCurrentPath =
           window.location.pathname + window.location.search; // capture current page url with product id
         setTimeout(() => {
@@ -895,14 +895,18 @@ function ProductDetail() {
       }
 
       const { error } = await supabase.from("Wishlist").insert({
-        product_id: productId,
+        product_id: parseInt(productId, 10), // must be int8 to match DB column
         user_id: user.id,
         is_active: true,
       });
 
       if (error) throw error;
+
+      showToast("Product added to wishlist!", "success");
+      checkWishlist();
     } catch (error) {
       console.log(error);
+      showToast("Could not add to wishlist. It may already be saved.", "error");
     }
   };
 

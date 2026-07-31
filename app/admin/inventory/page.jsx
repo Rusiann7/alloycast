@@ -21,14 +21,21 @@ const DynamicDeleteConfirmationModal = dynamic(
   { ssr: false },
 );
 
+const DynamicAddDiscountModal = dynamic(
+  () => import("../../components/AddDiscountModal"),
+  { ssr: false },
+);
+
 const supabase = createClient();
 
 export default function AdminInventory() {
-  const [activeTab, setActiveTab] = useState("inventory"); // "inventory" | "history"
+  const [activeTab, setActiveTab] = useState("inventory"); // "inventory" | "history" | "wishlist"
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [inventory, setInventory] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToDiscount, setItemToDiscount] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingProductId, setEditingProductId] = useState(null); // holds the id of EACH product
@@ -38,6 +45,8 @@ export default function AdminInventory() {
   const [historySearchQuery, setHistorySearchQuery] = useState("");
   const [user, setUser] = useState(null); // for checking auth users
   const [historyData, setHistoryData] = useState([]);
+  const [wishlistData, setWishlistData] = useState([]);
+  const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
   const [discountNumber, setDiscountNumber] = useState(0);
   const [discountStartDate, setDiscountStartDate] = useState("");
   const [discountEndDate, setDiscountEndDate] = useState("");
@@ -96,6 +105,20 @@ export default function AdminInventory() {
     intializeFunction();
   }, [fetchInventoryProduct]);
 
+  // fetch wishlist data joined with Inventory and Customer
+  useEffect(() => {
+    const fetchWishlists = async () => {
+      const { data, error } = await supabase
+        .from("Wishlist")
+        .select(
+          "id, created_at, is_active, product_id, user_id, Inventory(id, item_name, item_image, brand, price, category), Customer(firstname, lastname)",
+        )
+        .order("created_at", { ascending: false });
+      if (!error && data) setWishlistData(data);
+    };
+    fetchWishlists();
+  }, []);
+
   // // calculate total stock and inventory count and show in Header
   const totalProductStock = inventory.reduce(
     (sum, item) => sum + (Number(item.stock) || 0),
@@ -112,6 +135,41 @@ export default function AdminInventory() {
   const startEditProduct = (item) => {
     setEditingProductId(item.id); // sets the current row selected to edit
     setEditProductForm({ ...item }); // prefill the inputs with current data (original data)
+  };
+
+  const handleConfirmDiscount = async (discountDetails) => {
+    try {
+      if (!itemToDiscount) return;
+
+      const { amount, startDate, endDate } = discountDetails;
+      if (!amount || !startDate || !endDate) {
+        showToast("Please enter all discount details", "error");
+        return;
+      }
+
+      // Update discount in Supabase
+      const { error } = await supabase
+        .from("Inventory")
+        .update({
+          discount: parseFloat(amount),
+          start_discount: startDate,
+          end_discount: endDate,
+        })
+        .eq("id", itemToDiscount.id);
+
+      if (error) throw error;
+
+      showToast(
+        `Discount of ${amount}% successfully applied to ${itemToDiscount.item_name}!`,
+        "success",
+      );
+      setDiscountModalOpen(false);
+      setItemToDiscount(null);
+      fetchInventoryProduct();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to apply discount.", "error");
+    }
   };
 
   // edit function
@@ -443,6 +501,31 @@ export default function AdminInventory() {
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab("wishlist")}
+              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
+                activeTab === "wishlist"
+                  ? "text-[#d4af37] font-black"
+                  : "text-white/40 hover:text-white/80"
+              }`}
+            >
+              <span>WISHLIST</span>
+              {wishlistData.length > 0 && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeTab === "wishlist"
+                      ? "bg-[#d4af37]/20 text-[#d4af37]"
+                      : "bg-white/10 text-white/50"
+                  }`}
+                >
+                  {wishlistData.length}
+                </span>
+              )}
+              {activeTab === "wishlist" && (
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
+              )}
+            </button>
           </div>
 
           {/* INVENTORY TAB CONTENT */}
@@ -721,7 +804,20 @@ export default function AdminInventory() {
                                   ) : (
                                     <>
                                       <button
+                                        title="Add Discount"
+                                        onClick={() => {
+                                          setItemToDiscount(item);
+                                          setDiscountModalOpen(true);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center bg-amber-500 rounded-lg text-white hover:bg-amber-600 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined">
+                                          percent
+                                        </span>
+                                      </button>
+                                      <button
                                         onClick={() => startEditProduct(item)}
+                                        title="Edit Product"
                                         className="w-8 h-8 flex items-center justify-center bg-primary-container rounded-lg text-black hover:bg-secondary-container/80 hover:text-white/80 transition-all"
                                       >
                                         <span className="material-symbols-outlined text-sm">
@@ -729,17 +825,7 @@ export default function AdminInventory() {
                                         </span>
                                       </button>
                                       <button
-                                        onClick={() => {
-                                          setItemToDelete(item);
-                                          setDeleteModalOpen(true);
-                                        }}
-                                        className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
-                                      >
-                                        <span className="material-symbols-outlined text-sm">
-                                          delete
-                                        </span>
-                                      </button>
-                                      <button
+                                        title="Archive Product"
                                         onClick={() => {
                                           setItemToDelete(item);
                                           setDeleteModalOpen(true);
@@ -937,6 +1023,174 @@ export default function AdminInventory() {
               </div>
             </div>
           )}
+
+          {/* WISHLIST TAB CONTENT */}
+          {activeTab === "wishlist" && (
+            <div className="space-y-8 reveal-up">
+              {/* Wishlist Search Bar */}
+              <div
+                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex items-center gap-4 sm:gap-5"
+                style={{ animationDelay: "0.1s" }}
+              >
+                <div className="w-full flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
+                  <span className="material-symbols-outlined text-xl font-light opacity-80">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    value={wishlistSearchQuery}
+                    onChange={(e) => setWishlistSearchQuery(e.target.value)}
+                    placeholder="SEARCH BY PRODUCT NAME, BRAND, OR CUSTOMER..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
+                  />
+                </div>
+              </div>
+
+              {/* Wishlist Table */}
+              <div
+                className="bg-secondary-container shadow-lg/30 rounded-lg overflow-hidden"
+                style={{ animationDelay: "0.2s" }}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-input-field border-b border-primary-container">
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Product
+                        </th>
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Brand
+                        </th>
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Category
+                        </th>
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Price
+                        </th>
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Customer
+                        </th>
+
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Wishlisted At
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.03]">
+                      {wishlistData
+                        .filter((w) => {
+                          const q = wishlistSearchQuery.toLowerCase();
+                          return (
+                            w.Inventory?.item_name?.toLowerCase().includes(q) ||
+                            w.Inventory?.brand?.toLowerCase().includes(q) ||
+                            w.Customer?.firstname?.toLowerCase().includes(q) ||
+                            w.Customer?.lastname?.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((w) => (
+                          <tr
+                            key={w.id}
+                            className="group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container/30"
+                          >
+                            {/* Product */}
+                            <td className="p-5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-black/40 border border-white/5 shrink-0">
+                                  {w.Inventory?.item_image ? (
+                                    <Image
+                                      src={w.Inventory.item_image}
+                                      alt={w.Inventory.item_name || ""}
+                                      width={40}
+                                      height={40}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <span className="material-symbols-outlined text-white/20 text-sm">
+                                        image
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="font-black text-sm uppercase tracking-tight group-hover:text-[#d4af37] transition-colors">
+                                  {w.Inventory?.item_name || "—"}
+                                </p>
+                              </div>
+                            </td>
+                            {/* Brand */}
+                            <td className="p-5">
+                              <span className="inline-block px-2 py-0.5 bg-white/[0.03] border border-white/[0.05] text-xs font-black uppercase tracking-widest">
+                                {w.Inventory?.brand || "—"}
+                              </span>
+                            </td>
+                            {/* Category */}
+                            <td className="p-5 text-sm font-bold uppercase tracking-wider text-white/70">
+                              {w.Inventory?.category || "—"}
+                            </td>
+                            {/* Price */}
+                            <td className="p-5 text-sm font-black tabular-nums text-[#d4af37]">
+                              {w.Inventory?.price
+                                ? `₱${Number(w.Inventory.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+                                : "—"}
+                            </td>
+                            {/* Customer */}
+                            <td className="p-5">
+                              <p className="font-black text-sm uppercase tracking-tight">
+                                {w.Customer
+                                  ? `${w.Customer.firstname || ""} ${w.Customer.lastname || ""}`.trim()
+                                  : "Unknown"}
+                              </p>
+                            </td>
+                            {/* Gender */}
+                            <td className="p-5 text-sm font-bold uppercase tracking-wider text-white/60">
+                              {w.Customer?.gender || "—"}
+                            </td>
+                            {/* Wishlisted At */}
+                            <td className="p-5 text-sm font-black uppercase tracking-widest text-white/70">
+                              {w.created_at
+                                ? new Date(w.created_at).toLocaleDateString(
+                                    "en-PH",
+                                    {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    },
+                                  )
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      {wishlistData.filter((w) => {
+                        const q = wishlistSearchQuery.toLowerCase();
+                        return (
+                          w.Inventory?.item_name?.toLowerCase().includes(q) ||
+                          w.Inventory?.brand?.toLowerCase().includes(q) ||
+                          w.Customer?.firstname?.toLowerCase().includes(q) ||
+                          w.Customer?.lastname?.toLowerCase().includes(q)
+                        );
+                      }).length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="py-20 text-center">
+                            <div className="flex flex-col items-center justify-center opacity-60">
+                              <span className="material-symbols-outlined text-5xl mb-3 text-white/60">
+                                favorite
+                              </span>
+                              <p className="text-lg font-headline font-black uppercase tracking-[0.2em] text-white">
+                                No wishlist entries found
+                              </p>
+                              <p className="text-xs font-headline uppercase tracking-widest text-white/50 mt-1">
+                                Products saved to wishlists will appear here
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -958,6 +1212,16 @@ export default function AdminInventory() {
         itemName={itemToDelete?.item_name}
         itemType="Product"
         isDeleting={isDeleting}
+      />
+
+      <DynamicAddDiscountModal
+        isOpen={discountModalOpen}
+        onClose={() => {
+          setDiscountModalOpen(false);
+          setItemToDiscount(null);
+        }}
+        onConfirm={handleConfirmDiscount}
+        itemName={itemToDiscount?.item_name}
       />
 
       <DynamicToast

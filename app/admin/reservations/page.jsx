@@ -14,6 +14,10 @@ const DynamicOrderStatusConfirmationModal = dynamic(
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
+const DynamicShipmentConfirmationModal = dynamic(
+  () => import("../../components/ShipmentConfirmationModal"),
+);
+
 const supabase = createClient();
 
 export default function AdminReservations() {
@@ -36,6 +40,13 @@ export default function AdminReservations() {
     customerEmail: null,
     customerName: null,
     productName: null,
+  });
+  const [shipmentModal, setShipmentModal] = useState({
+    isOpen: false,
+    customerName: "",
+    orderType: "",
+    customerAddress: "",
+    paymentStatus: "",
   });
 
   const itemsPerPage = 5;
@@ -74,15 +85,17 @@ export default function AdminReservations() {
             brand: reservation.Inventory?.brand || "Unknown Brand",
             qty: (reservation.quantity || 0).toString().padStart(2, "0"),
             date: new Date(reservation.created_at).toLocaleDateString(),
-            status: reservation.status || "Pending",
             order_type: reservation.order_type || "Pickup",
             payment_mode: reservation.payment_mode || "Cash",
+            fulfillment_status:
+              reservation.fulfillment_status || "Pending Pickup",
             shipping_address: reservation.shipping_address || "",
             district: reservation.district || "",
             zip_code: reservation.zip_code || "",
             latitude: reservation.latitude || null,
             longtitude: reservation.longtitude || null,
             contact_number: reservation.contact_number || "",
+            payment_status: reservation.payment_status || "Pending Payment",
             statusColor:
               reservation.status === "Completed" ||
               reservation.status === "Paid"
@@ -136,7 +149,7 @@ export default function AdminReservations() {
       Brand: res.brand,
       Quantity: res.qty,
       "Date Reserved": res.date,
-      Status: res.status,
+      "Fulfillment Status": res.fulfillment_status,
     }));
 
     // craete a worksheet from data
@@ -381,6 +394,16 @@ export default function AdminReservations() {
         productName={confirmModal.productName}
       />
 
+      <DynamicShipmentConfirmationModal
+        isOpen={shipmentModal.isOpen}
+        onClose={() => setShipmentModal({ ...shipmentModal, isOpen: false })}
+        onConfirm={() => setShipmentModal({ ...shipmentModal, isOpen: false })}
+        customerName={shipmentModal.customerName}
+        orderType={shipmentModal.orderType}
+        customerAddress={shipmentModal.customerAddress}
+        paymentStatus={shipmentModal.paymentStatus}
+      />
+
       {/* --- Main Content --- */}
 
       <main className="pl-0 pt-24 lg:pt-5 lg:pl-[var(--sidebar-width)] ml-10 px-6 lg:px-8 pb-12 transition-all duration-500">
@@ -494,6 +517,7 @@ export default function AdminReservations() {
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Status
                       </th>
+
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Action
                       </th>
@@ -567,9 +591,10 @@ export default function AdminReservations() {
                               <span
                                 className={`w-2 h-2 rounded-full ${res.statusDot} animate-pulse`}
                               ></span>
-                              {res.status}
+                              {res.fulfillment_status}
                             </span>
                           </td>
+
                           {/* --- ACTION COLUMN --- */}
                           <td
                             className="p-6 text-right"
@@ -595,7 +620,7 @@ export default function AdminReservations() {
                                       res.item_name,
                                     )
                                   }
-                                  title="Approve Reservation"
+                                  title="Complete Order"
                                 >
                                   <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
                                     check
@@ -619,35 +644,36 @@ export default function AdminReservations() {
                                       res.item_name,
                                     )
                                   }
-                                  title="Decline Reservation"
+                                  title="Decline Order"
                                 >
                                   <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
                                     close
                                   </span>
                                 </button>
 
-                                {/* --- Confirm Button --- */}
+                                {/* --- Shipment Confirmation Button --- */}
                                 <button
-                                  className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
-                                  disabled={
-                                    res.order_type === "Pickup" ||
-                                    res.status === "Completed" ||
-                                    res.status === "Declined" ||
-                                    res.status === "Cancelled"
-                                  }
+                                  className="w-9 h-9 flex items-center justify-center bg-amber-500 transition-colors rounded-lg text-black/90 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                                  title="Shipment Confirmation"
                                   onClick={() =>
-                                    handleActionClick(
-                                      res.id,
-                                      "Confirm",
-                                      res.customer_email,
-                                      res.customer,
-                                      res.item_name,
-                                    )
+                                    setShipmentModal({
+                                      isOpen: true,
+                                      customerName: res.customer,
+                                      orderType: res.order_type,
+                                      customerAddress:
+                                        [
+                                          res.shipping_address,
+                                          res.district,
+                                          res.zip_code,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(", ") || "N/A",
+                                      paymentStatus: res.payment_status,
+                                    })
                                   }
-                                  title="Decline Reservation"
                                 >
-                                  <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
-                                    check
+                                  <span className="material-symbols-outlined text-lg group-hover/btn:opacity-100 transition-opacity">
+                                    local_shipping
                                   </span>
                                 </button>
                               </div>
