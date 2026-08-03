@@ -18,6 +18,10 @@ const DynamicShipmentConfirmationModal = dynamic(
   () => import("../../components/ShipmentConfirmationModal"),
 );
 
+const DynamicOrderCompleteConfirmationModal = dynamic(
+  () => import("../../components/OrderCompleteConfirmationModal"),
+);
+
 const supabase = createClient();
 
 export default function AdminReservations() {
@@ -211,9 +215,14 @@ export default function AdminReservations() {
     productName,
     reasonCancellation = "",
   ) => {
+    const updateFields = { status: newStatus };
+    if (newStatus === "Completed") {
+      updateFields.fulfillment_status = "Completed";
+    }
+
     const { error } = await supabase
       .from("Reservation")
-      .update({ status: newStatus })
+      .update(updateFields)
       .eq("id", reservationId);
 
     if (error) {
@@ -236,7 +245,15 @@ export default function AdminReservations() {
             statusColor = "bg-red-500/10 text-red-400 border-red-500/20";
             statusDot = "bg-red-500";
           }
-          return { ...res, status: newStatus, statusColor, statusDot };
+          return {
+            ...res,
+            status: newStatus,
+            fulfillment_status: isApproved
+              ? "Completed"
+              : res.fulfillment_status,
+            statusColor,
+            statusDot,
+          };
         }
         return res;
       }),
@@ -378,23 +395,38 @@ export default function AdminReservations() {
     reservationDataDB(dateRange);
   }, [dateRange]);
 
-  const insertData = async (id, shippingFee, trackingNumber) => {
+  const insertData = async (id, shippingFee, trackingNumber, customerEmail) => {
     try {
-      console.log(id, shippingFee, trackingNumber);
-      const { error } = await supabase
-        .from("Reservation")
-        .update({
-          shipping_fee: shippingFee,
-          tracking_number: trackingNumber,
-          fulfillment_status: "Shipped",
-        })
-        .eq("id", id);
+      showToast(
+        "Generating PayMongo payment link & sending email...",
+        "success",
+      );
 
-      if (error) throw error;
+      const response = await fetch("/api/notifications/send-shipment-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reservationId: id,
+          shippingFee: parseFloat(shippingFee) || 0,
+          trackingNumber: trackingNumber,
+          customerEmail: customerEmail,
+        }),
+      });
 
-      fetchTableData();
+      const resData = await response.json();
+
+      if (!response.ok || !resData.success) {
+        throw new Error(
+          resData.error || "Failed to process shipment and send email.",
+        );
+      }
+
+      showToast("Shipment confirmed & email sent to customer!", "success");
     } catch (error) {
-      console.log(error);
+      console.error("Shipment error:", error);
+      showToast(error.message || "Failed to confirm shipment.", "error");
     }
   };
 
@@ -405,20 +437,35 @@ export default function AdminReservations() {
         type={toast.type}
         visible={toast.visible}
       />
-      <DynamicOrderStatusConfirmationModal
-        isOpen={confirmModal.isOpen}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        status={confirmModal.newStatus}
-        customerName={confirmModal.customerName}
-        productName={confirmModal.productName}
-      />
+      {confirmModal.newStatus === "Completed" ? (
+        <DynamicOrderCompleteConfirmationModal
+          isOpen={confirmModal.isOpen}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          customerName={confirmModal.customerName}
+          productName={confirmModal.productName}
+        />
+      ) : (
+        <DynamicOrderStatusConfirmationModal
+          isOpen={confirmModal.isOpen}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          status={confirmModal.newStatus}
+          customerName={confirmModal.customerName}
+          productName={confirmModal.productName}
+        />
+      )}
 
       <DynamicShipmentConfirmationModal
         isOpen={shipmentModal.isOpen}
         onClose={() => setShipmentModal({ ...shipmentModal, isOpen: false })}
         onConfirm={(shippingFee, trackingNumber, id) => {
-          insertData(id, shippingFee, trackingNumber);
+          insertData(
+            id,
+            shippingFee,
+            trackingNumber,
+            shipmentModal?.customerEmail,
+          );
           setShipmentModal((prev) => ({ ...prev, isOpen: false }));
         }}
         customerName={shipmentModal?.customerName}
@@ -633,12 +680,14 @@ export default function AdminReservations() {
                                   title="Shipment Confirmation"
                                   disabled={
                                     res.order_type === "Pickup" ||
-                                    res.fulfillment_status === "Shipped"
+                                    res.fulfillment_status === "Shipped" ||
+                                    res.fulfillment_status === "Completed"
                                   }
                                   onClick={() =>
                                     setShipmentModal({
                                       isOpen: true,
                                       customerName: res.customer,
+                                      customerEmail: res.customer_email,
                                       id: res.id,
                                       orderType: res.order_type,
                                       customerAddress:
@@ -662,9 +711,9 @@ export default function AdminReservations() {
                                 <button
                                   className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
                                   disabled={
-                                    res.status === "Completed" ||
-                                    res.status === "Declined" ||
-                                    res.status === "Cancelled"
+                                    res.fulfillment_status === "Completed" ||
+                                    res.fulfillment_status ===
+                                      "Pending Shipping"
                                   }
                                   onClick={() =>
                                     handleActionClick(
@@ -686,9 +735,9 @@ export default function AdminReservations() {
                                 <button
                                   className="w-9 h-9 flex items-center justify-center bg-red-400 transition-colors rounded-lg text-red-700 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
                                   disabled={
-                                    res.status === "Completed" ||
-                                    res.status === "Declined" ||
-                                    res.status === "Cancelled"
+                                    res.fulfillment_status === "Completed" ||
+                                    res.fulfillment_status === "Declined" ||
+                                    res.fulfillment_status === "Cancelled"
                                   }
                                   onClick={() =>
                                     handleActionClick(

@@ -376,7 +376,9 @@ function ProductDetail() {
         const contactNumber = userData?.phone_number
           ? String(userData.phone_number)
           : "";
-        const totalPrice = (product?.price || 0) * parsedQuantity;
+        
+        const itemPrice = product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price);
+        const totalPrice = itemPrice * parsedQuantity;
 
         // 1. Insert reservation with Pending Payment status
         const { data: inserted, error: reserveError } = await supabase
@@ -459,7 +461,8 @@ function ProductDetail() {
         ? String(userData.phone_number)
         : "";
 
-      const parsedTotalPrice = (product?.price || 0) * parsedQuantity;
+      const itemPrice = product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price);
+      const parsedTotalPrice = itemPrice * parsedQuantity;
 
       const reservationDataInsert = {
         user_id: user.id,
@@ -513,11 +516,11 @@ function ProductDetail() {
     }
   };
 
-  // Handles Delivery & Online Payment
   const handleConfirmDeliveryAddress = async (addressData) => {
     setIsSubmittingAddress(true);
     const parsedQuantity = parseInt(quantity, 10) || 1;
-    const totalPrice = (product?.price || 0) * parsedQuantity;
+    const itemPrice = product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price);
+    const totalPrice = itemPrice * parsedQuantity;
 
     // ── Door-to-Door + Online: Email admin, wait for manual payment ──────────
     if (deliveryType === "DoorToDoor" && paymentType === "Online") {
@@ -1434,6 +1437,12 @@ function ProductDetail() {
                     Mode of Payment:
                   </span>
                   <span className="font-bold text-white/90">{paymentType}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-white/10 mt-2">
+                  <span className="text-primary-container">Total Price:</span>
+                  <span className="font-black text-[#d4af37]">
+                    ₱{((product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price)) * (parseInt(quantity, 10) || 1)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
               </div>
             </div>
