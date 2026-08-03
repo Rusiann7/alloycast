@@ -631,7 +631,10 @@ export default function AdminReservations() {
                                 <button
                                   className="w-9 h-9 flex items-center justify-center bg-amber-500 transition-colors rounded-lg text-black/90 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
                                   title="Shipment Confirmation"
-                                  disabled={res.order_type === "Pickup"}
+                                  disabled={
+                                    res.order_type === "Pickup" ||
+                                    res.fulfillment_status === "Shipped"
+                                  }
                                   onClick={() =>
                                     setShipmentModal({
                                       isOpen: true,
