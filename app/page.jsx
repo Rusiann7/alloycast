@@ -35,6 +35,7 @@ const DynamicFooter = dynamic(() => import("./components/CustomerFooter"), {
 export default function LandingPage() {
   const [inventory, setInventory] = useState([]);
   const [howItWorksModal, setHowItWorksModal] = useState(false);
+  const [discountItems, setDiscountItems] = useState(null);
   const supabase = createClient();
 
   const router = useRouter();
@@ -120,6 +121,26 @@ export default function LandingPage() {
     loadInventoryProduct();
   }, [supabase]);
 
+  const getDiscountItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Inventory")
+        .select("*")
+        .not("discount", "is", null);
+
+      if (error) throw error;
+
+      setDiscountItems(data && data.length > 0 ? data : null);
+    } catch (error) {
+      console.log(error);
+      setDiscountItems(null);
+    }
+  };
+
+  useEffect(() => {
+    getDiscountItems();
+  }, [supabase]);
+
   return (
     <div className=" font-body text-on-surface min-h-screen">
       {/* ── Hero Section ──────────────────────────────────────── */}
@@ -140,9 +161,11 @@ export default function LandingPage() {
           playsInline
         />
 
-        <div className="w-full bg-red-600 text-white text-center py-2 font-bold uppercase tracking-wider z-50 mt-16 lg:mt-20">
-          discount: Mazda RX 7
-        </div>
+        {!discountItems ? null : (
+          <div className="w-full bg-red-600 text-white text-center py-2 font-bold uppercase tracking-wider z-50 mt-16 lg:mt-20">
+            On Sale Products: {discountItems.length}
+          </div>
+        )}
 
         {/* ── Hero Content — Upper Third ─────────────────────── */}
         <div className="relative z-20 flex flex-col items-start justify-start px-8 lg:px-16 pt-24 flex-1">
@@ -211,6 +234,26 @@ export default function LandingPage() {
         isOpen={howItWorksModal}
         onClose={() => setHowItWorksModal(false)}
       />
+
+      {/* Discounted Products */}
+      {!discountItems || discountItems.length === 0 ? null : (
+        <section className="py-10">
+          <div className="container mx-auto px-6 lg:px-12">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
+              <div>
+                <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md drop-shadow-xl/30">
+                  On Sale Products
+                </h2>
+              </div>
+            </div>
+
+            <DynamicProductCarousel
+              products={discountItems.slice(0, 6)}
+              speed={50}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Top Products */}
       <section className="py-10">
