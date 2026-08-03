@@ -878,7 +878,7 @@ function ProductDetail() {
       checkWishlist();
     };
     doWishlistCheck();
-  }, [user, productId]); 
+  }, [user, productId]);
 
   const addWishlist = async () => {
     try {
@@ -1066,9 +1066,23 @@ function ProductDetail() {
                     <p className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
                       ITEM PRICE:
                     </p>
-                    <p className="text-6xl lg:text-6xl font-headline font-black text-font-color  tracking-tighter italic tabular-nums">
-                      ₱{Number(product.price).toLocaleString()}
-                    </p>
+                    {product.discount ? (
+                      <div className="flex items-baseline gap-3">
+                        <p className="text-6xl lg:text-6xl font-headline font-black text-font-color tracking-tighter italic tabular-nums">
+                          ₱
+                          {(
+                            Number(product.price) - Number(product.discount)
+                          ).toLocaleString()}
+                        </p>
+                        <p className="text-2xl font-headline font-bold text-font-color/50 line-through tracking-tighter italic tabular-nums">
+                          ₱{Number(product.price).toLocaleString()}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-6xl lg:text-6xl font-headline font-black text-font-color tracking-tighter italic tabular-nums">
+                        ₱{Number(product.price).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-headline font-black text-on-primary dark:text-red-500 uppercase tracking-tight animate-pulse">
