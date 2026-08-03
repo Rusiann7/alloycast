@@ -25,6 +25,11 @@ import { exportAnnualRevenueToCSV } from "../../../helpers/exportCSVAdminAnalyti
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
+const DynamicLowSellingInsights = dynamic(
+  () => import("../../components/LowSellingInsights"),
+  { ssr: false },
+);
+
 const supabase = createClient();
 
 // for market share by brands
@@ -58,6 +63,7 @@ export default function AdminAnalytics() {
     Declined: 0,
     Cancelled: 0,
   });
+  const [isInsightsModalOpen, setIsInsightsModalOpen] = useState(false);
 
   const showToast = useCallback((message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -366,9 +372,20 @@ export default function AdminAnalytics() {
                   className="bg-secondary-container shadow-lg/30 rounded-lg p-8 reveal-up"
                   style={{ animationDelay: "0.1s" }}
                 >
-                  <h3 className="font-headline font-black text-white/90 text-2xl uppercase tracking-tighter mb-10 italic">
-                    Low Selling Products
-                  </h3>
+                  <div className="flex justify-between items-center mb-5">
+                    <h3 className="font-headline font-black text-white/90 text-2xl uppercase tracking-tighter  italic">
+                      Low Selling Products
+                    </h3>
+                    <button
+                      onClick={() => setIsInsightsModalOpen(true)}
+                      className="bg-primary-container hover:scale-105 rounded-lg p-1 flex items-center cursor-pointer transition-all shadow-md active:scale-95"
+                      title="Generate AI Low Selling Insights"
+                    >
+                      <span className="material-symbols-outlined text-base text-black/90">
+                        search_insights
+                      </span>
+                    </button>
+                  </div>
                   <div className="space-y-6">
                     {lowProducts.map((lowProducts, index) => (
                       <div key={lowProducts.name} className="space-y-3 group">
@@ -537,6 +554,12 @@ export default function AdminAnalytics() {
           )}
         </div>
       </main>
+
+      <DynamicLowSellingInsights
+        isOpen={isInsightsModalOpen}
+        onClose={() => setIsInsightsModalOpen(false)}
+        lowProducts={lowProducts}
+      />
     </div>
   );
 }
