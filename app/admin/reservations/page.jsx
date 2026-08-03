@@ -347,7 +347,7 @@ export default function AdminReservations() {
                 : "Unknown Customer",
               customer_email: reservation.Users?.email,
               item_name: reservation.Inventory?.item_name,
-              brand: reservation.Inventory?.brand || "Unkownd Brand",
+              brand: reservation.Inventory?.brand || "Unknown Brand",
               qty: (reservation.quantity || 0).toString().padStart(2, "0"),
               date: new Date(reservation.created_at).toLocaleDateString(),
               status: reservation.status || "Pending",
@@ -378,6 +378,26 @@ export default function AdminReservations() {
     reservationDataDB(dateRange);
   }, [dateRange]);
 
+  const insertData = async (id, shippingFee, trackingNumber) => {
+    try {
+      console.log(id, shippingFee, trackingNumber);
+      const { error } = await supabase
+        .from("Reservation")
+        .update({
+          shipping_fee: shippingFee,
+          tracking_number: trackingNumber,
+          fulfillment_status: "Shipped",
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      fetchTableData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
@@ -397,11 +417,15 @@ export default function AdminReservations() {
       <DynamicShipmentConfirmationModal
         isOpen={shipmentModal.isOpen}
         onClose={() => setShipmentModal({ ...shipmentModal, isOpen: false })}
-        onConfirm={() => setShipmentModal({ ...shipmentModal, isOpen: false })}
-        customerName={shipmentModal.customerName}
-        orderType={shipmentModal.orderType}
-        customerAddress={shipmentModal.customerAddress}
-        paymentStatus={shipmentModal.paymentStatus}
+        onConfirm={(shippingFee, trackingNumber, id) => {
+          insertData(id, shippingFee, trackingNumber);
+          setShipmentModal((prev) => ({ ...prev, isOpen: false }));
+        }}
+        customerName={shipmentModal?.customerName}
+        orderType={shipmentModal?.orderType}
+        customerAddress={shipmentModal?.customerAddress}
+        paymentStatus={shipmentModal?.paymentStatus}
+        reservationId={shipmentModal?.id}
       />
 
       {/* --- Main Content --- */}
@@ -603,6 +627,34 @@ export default function AdminReservations() {
                             <div className="flex items-center justify-center gap-2">
                               {/* Status Update Action Dropdown */}
                               <div className="flex text-center gap-2">
+                                {/* --- Shipment Confirmation Button --- */}
+                                <button
+                                  className="w-9 h-9 flex items-center justify-center bg-amber-500 transition-colors rounded-lg text-black/90 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
+                                  title="Shipment Confirmation"
+                                  disabled={res.order_type === "Pickup"}
+                                  onClick={() =>
+                                    setShipmentModal({
+                                      isOpen: true,
+                                      customerName: res.customer,
+                                      id: res.id,
+                                      orderType: res.order_type,
+                                      customerAddress:
+                                        [
+                                          res.shipping_address,
+                                          res.district,
+                                          res.zip_code,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(", ") || "N/A",
+                                      paymentStatus: res.payment_status,
+                                    })
+                                  }
+                                >
+                                  <span className="material-symbols-outlined text-lg group-hover/btn:opacity-100 transition-opacity">
+                                    local_shipping
+                                  </span>
+                                </button>
+
                                 {/* --- Approve Button --- */}
                                 <button
                                   className="w-9 h-9 flex items-center justify-center bg-green-500 transition-colors rounded-lg text-black/90  group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:grayscale"
@@ -648,32 +700,6 @@ export default function AdminReservations() {
                                 >
                                   <span className="material-symbols-outlined text-lg  group-hover/btn:opacity-100 transition-opacity">
                                     close
-                                  </span>
-                                </button>
-
-                                {/* --- Shipment Confirmation Button --- */}
-                                <button
-                                  className="w-9 h-9 flex items-center justify-center bg-amber-500 transition-colors rounded-lg text-black/90 group/btn disabled:opacity-20 disabled:cursor-not-allowed disabled:grayscale"
-                                  title="Shipment Confirmation"
-                                  onClick={() =>
-                                    setShipmentModal({
-                                      isOpen: true,
-                                      customerName: res.customer,
-                                      orderType: res.order_type,
-                                      customerAddress:
-                                        [
-                                          res.shipping_address,
-                                          res.district,
-                                          res.zip_code,
-                                        ]
-                                          .filter(Boolean)
-                                          .join(", ") || "N/A",
-                                      paymentStatus: res.payment_status,
-                                    })
-                                  }
-                                >
-                                  <span className="material-symbols-outlined text-lg group-hover/btn:opacity-100 transition-opacity">
-                                    local_shipping
                                   </span>
                                 </button>
                               </div>

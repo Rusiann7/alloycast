@@ -307,7 +307,9 @@ export default function AdminCustomers() {
 
                           {/* Status */}
                           <td className="px-6 sm:px-8 py-5 text-center">
-                            <span className={`text-lg font-headline font-bold ${c.Users?.is_active ? "text-green-400" : "text-red-400"}`}>
+                            <span
+                              className={`text-lg font-headline font-bold ${c.Users?.is_active ? "text-green-400" : "text-red-400"}`}
+                            >
                               {c.Users?.is_active ? "Active" : "Suspended"}
                             </span>
                           </td>
@@ -461,7 +463,9 @@ export default function AdminCustomers() {
 
                           {/* Status */}
                           <td className="px-6 sm:px-8 py-5 text-center">
-                            <span className={`text-lg font-headline font-bold ${a.Users?.is_active ? "text-green-400" : "text-red-400"}`}>
+                            <span
+                              className={`text-lg font-headline font-bold ${a.Users?.is_active ? "text-green-400" : "text-red-400"}`}
+                            >
                               {a.Users?.is_active ? "Active" : "Suspended"}
                             </span>
                           </td>
@@ -614,7 +618,7 @@ export default function AdminCustomers() {
                   ) : (
                     <button
                       onClick={() => restoreUser()}
-                      className="w-full bg-error-container hover:brightness-110 text-white font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-error-container/20"
+                      className="w-full bg-green-500 hover:bg-green-600 text-black font-headline font-black uppercase italic tracking-[0.25em] text-xs py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-green-500/20"
                     >
                       RE-ENABLE CUSTOMER ACCOUNT?
                     </button>

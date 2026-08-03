@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export default function ShipmentConfirmationModal({
   isOpen,
   onClose,
@@ -8,10 +10,18 @@ export default function ShipmentConfirmationModal({
   orderType = "",
   customerAddress = "",
   paymentStatus = "",
+  reservationId,
 }) {
+  const [shippingFee, setShippingFee] = useState(0);
+  const [trackingNumber, setTrackingNumber] = useState(0);
+
   if (!isOpen) return null;
 
   const isPaid = paymentStatus === "Paid";
+
+  const handleConfirm = () => {
+    onConfirm(shippingFee, trackingNumber, reservationId);
+  };
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fade-in">
@@ -97,6 +107,7 @@ export default function ShipmentConfirmationModal({
               ₱
             </span>
             <input
+              onChange={(e) => setShippingFee(e.target.value)}
               type="number"
               min="0"
               step="0.01"
@@ -116,6 +127,7 @@ export default function ShipmentConfirmationModal({
           </label>
           <div className="relative">
             <input
+              onChange={(e) => setTrackingNumber(e.target.value)}
               type="text"
               placeholder="Enter"
               className="w-full bg-secondary-container border border-white/10 rounded-lg px-3 pr-10 py-3 text-white/90 text-sm placeholder:text-white/30 outline-none"
@@ -135,7 +147,7 @@ export default function ShipmentConfirmationModal({
             Close
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="flex-1 h-12 rounded-lg bg-secondary-container border border-white/10 hover:border-white/30 text-white/80 text-xs font-black uppercase tracking-[0.15em] transition-all cursor-pointer"
           >
             Confirm

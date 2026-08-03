@@ -6,6 +6,7 @@ export default function AddDiscountModal({
   onClose,
   onConfirm,
   itemName = "",
+  itemId,
 }) {
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -14,7 +15,7 @@ export default function AddDiscountModal({
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    onConfirm({ amount, startDate, endDate });
+    onConfirm(amount, startDate, endDate, itemId);
   };
 
   const handleClose = () => {

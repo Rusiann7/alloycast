@@ -47,9 +47,6 @@ export default function AdminInventory() {
   const [historyData, setHistoryData] = useState([]);
   const [wishlistData, setWishlistData] = useState([]);
   const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
-  const [discountNumber, setDiscountNumber] = useState(0);
-  const [discountStartDate, setDiscountStartDate] = useState("");
-  const [discountEndDate, setDiscountEndDate] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -111,10 +108,27 @@ export default function AdminInventory() {
       const { data, error } = await supabase
         .from("Wishlist")
         .select(
-          "id, created_at, is_active, product_id, user_id, Inventory(id, item_name, item_image, brand, price, category), Customer(firstname, lastname)",
+          `
+          id,
+          created_at,
+          is_active,
+          product_id,
+          user_id,
+          Inventory (id, item_name, item_image, brand, price, category),
+          Users (
+            id,
+            Customer (
+              firstname,
+              lastname,
+              gender
+            )
+          )
+          `,
         )
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
       if (!error && data) setWishlistData(data);
+      console.log("wishlist", data);
     };
     fetchWishlists();
   }, []);
@@ -135,41 +149,6 @@ export default function AdminInventory() {
   const startEditProduct = (item) => {
     setEditingProductId(item.id); // sets the current row selected to edit
     setEditProductForm({ ...item }); // prefill the inputs with current data (original data)
-  };
-
-  const handleConfirmDiscount = async (discountDetails) => {
-    try {
-      if (!itemToDiscount) return;
-
-      const { amount, startDate, endDate } = discountDetails;
-      if (!amount || !startDate || !endDate) {
-        showToast("Please enter all discount details", "error");
-        return;
-      }
-
-      // Update discount in Supabase
-      const { error } = await supabase
-        .from("Inventory")
-        .update({
-          discount: parseFloat(amount),
-          start_discount: startDate,
-          end_discount: endDate,
-        })
-        .eq("id", itemToDiscount.id);
-
-      if (error) throw error;
-
-      showToast(
-        `Discount of ${amount}% successfully applied to ${itemToDiscount.item_name}!`,
-        "success",
-      );
-      setDiscountModalOpen(false);
-      setItemToDiscount(null);
-      fetchInventoryProduct();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to apply discount.", "error");
-    }
   };
 
   // edit function
@@ -328,26 +307,32 @@ export default function AdminInventory() {
     getInventoryHistory();
   }, [getInventoryHistory]);
 
-  const insertDiscount = async () => {
+  const insertDiscount = async (amount, startDate, endDate, itemId) => {
     try {
-      const { error } = await supabase.from("Inventory").update({
-        discount: true,
-        start_discount: true,
-        end_discount: true,
-      });
+      const item = inventory.find((x) => x.id === itemId);
+      if (!item) throw new Error("Product not found in local state");
+
+      const { error } = await supabase
+        .from("Inventory")
+        .update({
+          discount: amount,
+          start_discount: startDate,
+          end_discount: endDate,
+        })
+        .eq("id", itemId);
 
       if (error) throw error;
 
-      let commentDetails = `Started discount on ${discountStartDate} and ending on ${discountEndDate}, for ₱${discountNumber}`;
+      let commentDetails = `Started discount on ${startDate} and ending on ${endDate}, for ₱${amount}`;
 
       const { error: historyError } = await supabase.from("History").insert({
-        product_id: editingProductId,
-        item_name: editProductForm.item_name || oldRow.item_name,
-        brand: editProductForm.brand || oldRow.brand,
-        category: editProductForm.category || oldRow.category,
-        price: editProductForm.price || oldRow.price,
-        stock: editProductForm.stock || oldRow.stock,
-        item_image: imageUrl || oldRow.item_image,
+        product_id: itemId,
+        item_name: item.item_name,
+        brand: item.brand,
+        category: item.category,
+        price: item.price,
+        stock: item.stock,
+        item_image: item.item_image,
         user_id: user?.id || null,
         comment: commentDetails,
       });
@@ -359,6 +344,7 @@ export default function AdminInventory() {
       getInventoryHistory();
     } catch (error) {
       console.log(error);
+      showToast("Failed to add discount to history log", "error");
     }
   };
 
@@ -1070,7 +1056,9 @@ export default function AdminInventory() {
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
                           Customer
                         </th>
-
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Gender
+                        </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
                           Wishlisted At
                         </th>
@@ -1170,7 +1158,7 @@ export default function AdminInventory() {
                         );
                       }).length === 0 && (
                         <tr>
-                          <td colSpan={8} className="py-20 text-center">
+                          <td colSpan={7} className="py-20 text-center">
                             <div className="flex flex-col items-center justify-center opacity-60">
                               <span className="material-symbols-outlined text-5xl mb-3 text-white/60">
                                 favorite
@@ -1220,8 +1208,11 @@ export default function AdminInventory() {
           setDiscountModalOpen(false);
           setItemToDiscount(null);
         }}
-        onConfirm={handleConfirmDiscount}
+        onConfirm={(amount, startDate, endDate, itemId) => {
+          insertDiscount(amount, startDate, endDate, itemId);
+        }}
         itemName={itemToDiscount?.item_name}
+        itemId={itemToDiscount?.id}
       />
 
       <DynamicToast
