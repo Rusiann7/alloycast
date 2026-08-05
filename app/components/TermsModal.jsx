@@ -32,7 +32,7 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
             1. Acceptance of Terms
           </p>
           <p>
-            By joining Alloycast, you agree to follow the rules of the hunt.
+            By joining AlloyDash, you agree to follow the rules of the hunt.
             This includes respecting fellow collectors and maintaining the
             integrity of our elite diecast community.
           </p>
@@ -46,13 +46,25 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
           </p>
 
           <p className="font-bold text-primary-container uppercase italic">
-            3. Reservation Policy
+            3. Order Policy
           </p>
-          <p>
-            Elite reservations are subject to availability. Abuse of our
-            reservation system may result in account suspension established by
-            the Diecast Vault authorities.
-          </p>
+          <ul className="list-disc list-inside ">
+            <li>
+              For Pickup Orders with Cash/Online Payment. Orders must be paid
+              and pickup within 48hrs. Failure to follow withing 48hrs will
+              result to Order Failure status.
+            </li>
+            <li>
+              For Door-to-Door Delivery with Online Payment. Orders must be paid
+              within 48hrs. Failure to follow withing 48hrs will result to Order
+              Failure status and your payment will be refunded by the Admin
+            </li>
+            <li>
+              For Local LBC branch pickup with Cash Payment . Orders must be
+              paid within 48hrs. Failure to follow withing 48hrs will result to
+              Order Failure status.
+            </li>
+          </ul>
 
           <p className="font-bold  text-primary-container uppercase italic">
             4. Code of Conduct

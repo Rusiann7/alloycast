@@ -13,7 +13,7 @@ import {
   Cell,
 } from "recharts";
 import dynamic from "next/dynamic";
-import { getDateBounds } from "../../../utils/dateBounds";
+
 import {
   calculateChannelRevenues,
   aggregateRevenueChartData,
@@ -22,6 +22,7 @@ import {
   aggregatePipelineCounts,
 } from "../../../helpers/analyticsHelpers";
 import { exportAnnualRevenueToCSV } from "../../../helpers/exportCSVAdminAnalytics";
+import { DateRangePicker } from "../../../components/DateRangePicker";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 
@@ -43,7 +44,10 @@ const BRAND_COLORS = [
 
 export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [dateRange, setDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date()
+  });
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [topProducts, setTopProducts] = useState([]);
@@ -73,8 +77,14 @@ export default function AdminAnalytics() {
   // Refactored fetchAllANALytics
   const fetchAllAnalytics = useCallback(async () => {
     try {
-      // Reuse utility to get date boundaries
-      const { startDate, endDate } = getDateBounds(dateRange);
+      if (!dateRange || !dateRange.from) return;
+      const startDate = dateRange.from;
+      // If 'to' is not selected, use 'from' as endDate to avoid fetching everything
+      const endDate = dateRange.to || dateRange.from;
+
+      // Adjust endDate to end of day to include all transactions on that day
+      const adjustedEndDate = new Date(endDate);
+      adjustedEndDate.setHours(23, 59, 59, 999);
 
       // Fetch Reservation Data
       const { data: reservationData, error: reservationError } = await supabase
@@ -83,7 +93,7 @@ export default function AdminAnalytics() {
           "quantity, created_at, status, Inventory(item_name, brand, price)",
         )
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .lte("created_at", adjustedEndDate.toISOString());
 
       if (reservationError) throw reservationError;
 
@@ -92,7 +102,7 @@ export default function AdminAnalytics() {
         .from("POS")
         .select("quantity, created_at, Inventory(item_name, price)")
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .lte("created_at", adjustedEndDate.toISOString());
 
       if (posError) throw posError;
 
@@ -211,22 +221,8 @@ export default function AdminAnalytics() {
         </div>
         {/* Sticky Date Range Control */}
         <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up rounded-lg shadow-lg/30">
-          <div className="grid grid-cols-2 gap-1 2xl:flex items-center p-1 rounded-lg border border-primary-container">
-            {["Last 7 Days", "This Month", "Last Month", "Annual"].map(
-              (label) => (
-                <button
-                  key={label}
-                  onClick={() => setDateRange(label)}
-                  className={`w-full 2xl:w-auto px-4 py-2 text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
-                    dateRange === label
-                      ? "bg-primary-container text-black/90 shadow-lg"
-                      : "text-white/90 opacity-80 hover:opacity-100"
-                  }`}
-                >
-                  {label}
-                </button>
-              ),
-            )}
+          <div className="flex items-center justify-center w-full">
+             <DateRangePicker date={dateRange} setDate={setDateRange} className="flex justify-center" />
           </div>
         </div>
         <div className="pt-5 space-y-8 max-w-[1600px] mx-auto">
@@ -269,7 +265,7 @@ export default function AdminAnalytics() {
                   {revenueData.length === 0 ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <p className="text-white/50 text-xl font-headline font-black uppercase tracking-widest italic">
-                        No data for {dateRange.toLowerCase()}
+                        No data for selected date range
                       </p>
                     </div>
                   ) : (

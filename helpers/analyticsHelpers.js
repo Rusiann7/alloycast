@@ -180,12 +180,11 @@ export const computeProductStats = (
     .sort((a, b) => b.units - a.units);
 
   // Simultaneously derives your high and low performance brackets from the same pre-sorted dataset.
-  // Top Selling Products must have at least 5 orders and never 0 orders.
-  const topProducts = sortedProducts.filter((p) => p.units >= 5).slice(0, limit);
-  // Low Selling Products must have 0 or 1 orders.
+  // Top Selling Products must have at least 1 order to be considered "selling".
+  const topProducts = sortedProducts.filter((p) => p.units > 0).slice(0, limit);
+  // Low Selling Products must have 0 or few orders.
   const lowProducts = [...sortedProducts]
     .reverse()
-    .filter((p) => p.units <= 1)
     .slice(0, limit);
 
   return { topProducts, lowProducts };

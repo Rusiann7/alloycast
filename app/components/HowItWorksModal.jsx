@@ -5,15 +5,15 @@ export default function HowItWorksModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const steps = [
-    { id: 1, text: "Select the product you want." },
-    { id: 2, text: "Click the 'RESERVE PRODUCT' button." },
+    { id: 1, text: "Choose the product you want to buy." },
+    { id: 2, text: "Click the 'ORDER PRODUCT' button." },
     {
       id: 3,
-      text: "The System verifies if you are logged in or not.",
+      text: "The System verifies first if you are logged in or not.",
     },
     {
       id: 4,
-      text: "If not logged in. The system will redirects you to login page",
+      text: "If you're not logged in. The system will automatically redirect you to login page",
     },
     {
       id: 5,
@@ -25,14 +25,33 @@ export default function HowItWorksModal({ isOpen, onClose }) {
     },
     {
       id: 7,
-      text: "Click again the 'RESERVE PRODUCT' button to order reservation.",
+      text: "Click again the 'ORDER PRODUCT' button to order reservation.",
     },
-
     {
       id: 8,
-      text: "The system will send you an email about the confirmation status of your reservation",
+      text: "Click again the 'ORDER PRODUCT' button to order reservation.",
     },
-    { id: 9, text: "Direct communication with the system admin via email." },
+    {
+      id: 9,
+      text: "Choose Order Type and Mode of Payment",
+    },
+    {
+      id: 10,
+      text: "The system will guide you regarding the type of order and payment that you chosen",
+    },
+    {
+      id: 11,
+      text: "The system will send an email both to you and Admin about the order you've made",
+    },
+    {
+      id: 12,
+      text: "Once an order has been made. You only have 48hrs to pickup or pay your order",
+    },
+    {
+      id: 13,
+      text: "Failure to pickup or pay your order within the time frame will lead to cancellation of your reservation ",
+    },
+    { id: 14, text: "Direct communication with the system admin via email." },
   ];
 
   return (
@@ -50,7 +69,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                 HOW IT WORKS
               </h2>
               <p className="text-[12px] uppercase tracking-[0.4em] text-font-color font-bold mt-2">
-                7-Steps to Order Product Reservation
+                -Steps to Order Product Reservation
               </p>
             </div>
             <button

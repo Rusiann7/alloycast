@@ -4,65 +4,33 @@
  * Aggregates POS revenue into chart data points based on date range.
  */
 export const aggregateRevenue = (posData, dateRange, currentYear) => {
-  // Checks if the target matches "Annual".
-  // It loops through the data entries,
-  // calculates revenue based on product price and quantity,
-  // updates the running total,
-  // and groups the revenue into keys like "2026-03"
   let sumRev = 0;
-  if (dateRange === "Annual") {
-    const monthlyRevenue = {};
-    posData.forEach((res) => {
-      if (res.Inventory?.price) {
-        const rev = res.quantity * res.Inventory.price;
-        sumRev += rev;
-        const d = new Date(res.created_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        monthlyRevenue[key] = (monthlyRevenue[key] || 0) + rev;
-      }
-    });
-
-    // Loops exactly 12 times to build a complete calendar timeline data structures.
-    // If a month has no recorded sales, it defaults to 0 instead of breaking.
-    // It returns both the total revenue and the complete chart dataset.
-    const chartData = [];
-    for (let m = 0; m < 12; m++) {
-      const key = `${currentYear}-${String(m + 1).padStart(2, "0")}`;
-      const monthName = new Date(currentYear, m, 1).toLocaleDateString(
-        "en-US",
-        { month: "short" },
-      );
-      chartData.push({ name: monthName, revenue: monthlyRevenue[key] || 0 });
+  
+  // For daily views, it groups items by date strings ("YYYY-MM-DD")
+  // and aggregates the total revenue for each day.
+  const dailyRevenue = {};
+  posData.forEach((res) => {
+    if (res.Inventory?.price) {
+      const rev = res.quantity * res.Inventory.price;
+      sumRev += rev;
+      const dateStr = res.created_at.split("T")[0];
+      dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
     }
-    return { totalRevenue: sumRev, chartData };
-  } else {
-    // For daily views (e.g., last 7 days),
-    // it groups items by date strings ("YYYY-MM-DD")
-    // and aggregates the total revenue for each day.
-    const dailyRevenue = {};
-    posData.forEach((res) => {
-      if (res.Inventory?.price) {
-        const rev = res.quantity * res.Inventory.price;
-        sumRev += rev;
-        const dateStr = res.created_at.split("T")[0];
-        dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + rev;
-      }
-    });
+  });
 
-    // Sorts the accumulated daily revenue data chronologically,
-    // formats the date labels nicely (like "Mar 14"),
-    // and outputs the complete structured dataset.
-    const chartData = Object.keys(dailyRevenue)
-      .sort((a, b) => new Date(a) - new Date(b))
-      .map((dateStr) => ({
-        name: new Date(dateStr).toLocaleDateString("en-US", {
-          month: "short",
-          day: "2-digit",
-        }),
-        revenue: dailyRevenue[dateStr],
-      }));
-    return { totalRevenue: sumRev, chartData };
-  }
+  // Sorts the accumulated daily revenue data chronologically,
+  // formats the date labels nicely (like "Mar 14"),
+  // and outputs the complete structured dataset.
+  const chartData = Object.keys(dailyRevenue)
+    .sort((a, b) => new Date(a) - new Date(b))
+    .map((dateStr) => ({
+      name: new Date(dateStr).toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+      }),
+      revenue: dailyRevenue[dateStr],
+    }));
+  return { totalRevenue: sumRev, chartData };
 };
 
 /**
