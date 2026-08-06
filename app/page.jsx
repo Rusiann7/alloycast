@@ -161,9 +161,33 @@ export default function LandingPage() {
           playsInline
         />
 
+        <div className="w-full bg-red-600 text-white py-2 font-bold uppercase tracking-wider z-50 mt-20 lg:mt-20 overflow-hidden whitespace-nowrap flex ">
+          <h2 className="mx-auto">On Sale Diecasts</h2>
+        </div>
+
         {!discountItems ? null : (
-          <div className="w-full bg-red-600 text-white text-center py-2 font-bold uppercase tracking-wider z-50 mt-16 lg:mt-20">
-            On Sale Products: {discountItems.length}
+          <div className="w-full bg-red-600 text-white py-2 font-bold uppercase tracking-wider z-50 mt-2 overflow-hidden whitespace-nowrap flex">
+            <div className="marquee flex-shrink-0">
+              {/* Duplicate the content to create a seamless looping effect */}
+              {[1, 2].map((loopId) => (
+                <span key={loopId}>
+                  <span className="mx-4 text-yellow-300">
+                    🔥 ON SALE PRODUCTS:
+                  </span>
+                  {discountItems.map((item, index) => (
+                    <span key={`${loopId}-${item.id}`} className="mx-4">
+                      {item.item_name}{" "}
+                      {index < discountItems.length - 1 ? (
+                        <span className="mx-4">•</span>
+                      ) : (
+                        ""
+                      )}
+                    </span>
+                  ))}
+                  <span className="mx-4">•</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

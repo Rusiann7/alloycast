@@ -16,13 +16,13 @@ import Image from "next/image";
 import { KPICardSkeleton, TableSkeleton } from "../../components/Skeleton";
 
 // Import  new helper & utility functions
-import { getDateBounds } from "../../../utils/dateBounds";
 import {
   aggregateRevenue,
   computeTopProducts,
   mergeCustomerDetails,
 } from "../../../helpers/dashboardHelpers";
 import { exportToExcelFile } from "../../../utils/exportExcelAdminDashboard";
+import { DateRangePicker } from "../../../components/DateRangePicker";
 
 const DynamicCriticalStockModal = dynamic(
   () => import("../../components/CriticalStockModal"),
@@ -75,7 +75,10 @@ export default function AdminDashboard() {
   });
 
   // Revenue Graph States
-  const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [dateRange, setDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
 
@@ -89,12 +92,17 @@ export default function AdminDashboard() {
 
   // 4. Stable useCallback for fetching Analytics
   const fetchAllAnalytics = useCallback(async () => {
-    const { startDate, endDate } = getDateBounds(dateRange);
+    if (!dateRange || !dateRange.from) return;
+    const startDate = dateRange.from;
+    const endDate = dateRange.to || dateRange.from;
+    const adjustedEndDate = new Date(endDate);
+    adjustedEndDate.setHours(23, 59, 59, 999);
+
     const { data: posData, error: posError } = await supabase
       .from("POS")
       .select("quantity, created_at, Inventory(price, item_name)")
       .gte("created_at", startDate.toISOString())
-      .lte("created_at", endDate.toISOString());
+      .lte("created_at", adjustedEndDate.toISOString());
     if (posError || !posData) {
       console.error("Error fetching POS analytics:", posError);
       showToast("Failed to fetch POS analytics data", "error");
@@ -166,13 +174,17 @@ export default function AdminDashboard() {
   // 7. Decoupled Excel export handler
   const exportToExcel = async () => {
     try {
-      const { startDate, endDate } = getDateBounds(dateRange);
+      if (!dateRange || !dateRange.from) return;
+      const startDate = dateRange.from;
+      const endDate = dateRange.to || dateRange.from;
+      const adjustedEndDate = new Date(endDate);
+      adjustedEndDate.setHours(23, 59, 59, 999);
 
       const { data: posData, error: posErr } = await supabase
         .from("POS")
         .select("quantity, created_at, Inventory(price, item_name)")
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .lte("created_at", adjustedEndDate.toISOString());
 
       if (posErr) throw posErr;
 
@@ -182,14 +194,14 @@ export default function AdminDashboard() {
           "id, created_at, status, quantity, user_id, Inventory(item_name, item_image), Users(email)",
         )
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
+        .lte("created_at", adjustedEndDate.toISOString())
         .order("created_at", { ascending: false });
 
       const { data: arrivals } = await supabase
         .from("Inventory")
         .select("id, item_name, price, created_at")
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
+        .lte("created_at", adjustedEndDate.toISOString())
         .order("created_at", { ascending: false });
 
       exportToExcelFile({
@@ -409,22 +421,12 @@ export default function AdminDashboard() {
 
               {/* 2. Filter Buttons - Grid 2x2 on mobile, flex on desktop */}
               <div className="w-full xl:w-auto">
-                <div className="grid grid-cols-2 2xl:flex items-center bg-secondary-container p-1 rounded-lg  gap-1">
-                  {["Last 7 Days", "This Month", "Last Month", "Annual"].map(
-                    (label) => (
-                      <button
-                        key={label}
-                        onClick={() => setDateRange(label)}
-                        className={`w-full xl:w-auto px-4 py-2 text-sm sm:text-xs font-headline font-black uppercase tracking-widest transition-all rounded-lg whitespace-nowrap ${
-                          dateRange === label
-                            ? "bg-primary-container text-black/90 shadow-lg"
-                            : "text-white/90 opacity-80 hover:opacity-100 hover:bg-secondary-container/10"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ),
-                  )}
+                <div className="flex items-center justify-center">
+                  <DateRangePicker
+                    date={dateRange}
+                    setDate={setDateRange}
+                    className="flex justify-center"
+                  />
                 </div>
               </div>
 
@@ -584,10 +586,10 @@ export default function AdminDashboard() {
                         Action
                       </th>
                       <th className="px-6 py-5 border-primary-container border-b-2 border-r-2 text-sm text-center font-headline font-bold uppercase tracking-widest ">
-                        Status
+                        Fulfillment Status
                       </th>
                       <th className="px-6 py-5 border-primary-container border-b-2  text-sm text-center font-headline font-bold uppercase tracking-widest">
-                        Reference
+                        Tracking Number
                       </th>
                     </tr>
                   </thead>
@@ -613,17 +615,21 @@ export default function AdminDashboard() {
                           })}
                           item={activity.Inventory?.item_name || "Unknown Item"}
                           action="Reservation Order"
-                          status={activity.status}
+                          status={activity.fulfillment_status}
                           statusColor={
-                            activity.status === "Approved"
+                            activity.fulfillment_status === "Completed"
                               ? "bg-green-400 text-black/90"
-                              : activity.status === "Pending"
-                                ? "bg-primary-container/10 text-primary-container"
-                                : activity.status === "Cancelled"
-                                  ? "bg-on-primary text-white/90 "
-                                  : "bg-on-primary text-white/90 "
+                              : activity.fulfillment_status ===
+                                  "Pending Shipping"
+                                ? "bg-amber-500 text-black/90 "
+                                : activity.fulfillment_status ===
+                                    "Pending Pickup"
+                                  ? "bg-amber-500 text-black/90 "
+                                  : activity.fulfillment_status === "Shipped"
+                                    ? "bg-green-400/50 text-black/90"
+                                    : "bg-on-primary text-white/90 "
                           }
-                          refId={`#RES-${String(activity.id).slice(0, 4).toUpperCase()}`}
+                          refId={activity.tracking_number}
                           img={activity.Inventory?.item_image}
                         />
                       ))
@@ -784,11 +790,11 @@ export default function AdminDashboard() {
               <div className="w-full sm:w-auto flex justify-center sm:justify-start">
                 <span
                   className={`px-6 py-2 rounded-full border text-sm font-black uppercase tracking-[0.2em] ${
-                    activeReservation.status === "Approved"
+                    activeReservation.status === "Completed"
                       ? "text-green-500 border-green-500/20 bg-green-500/5"
                       : activeReservation.status === "Pending"
                         ? "text-font-color border-primary-container/20 bg-primary-container"
-                        : activeReservation.status === "Cancelled"
+                        : activeReservation.status === "Declined"
                           ? "bg-on-primary  border-white/10 "
                           : "text-red-500 border-red-500/20 bg-red-500/5"
                   }`}
@@ -819,7 +825,7 @@ export default function AdminDashboard() {
                   <span className="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">
                     check
                   </span>
-                  <span>Approve Order</span>
+                  <span>Complete Order</span>
                 </button>
               </div>
             </div>
