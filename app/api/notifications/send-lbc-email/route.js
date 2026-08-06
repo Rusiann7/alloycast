@@ -114,7 +114,7 @@ export async function POST(request) {
       <body>
         <div class="card">
           <div class="header">
-            <h1>AlloyCast — New LBC Delivery Order 📦</h1>
+            <h1>AlloyDash — New LBC Delivery Order 📦</h1>
             <p style="color:#aaaaaa; margin-top:6px; font-size:13px;">
               Order #${reservationId} &nbsp;|&nbsp;
               <span class="badge">LBC Local Branch · Cash</span>
@@ -200,7 +200,7 @@ export async function POST(request) {
           </div>
 
           <div class="footer">
-            <p>AlloyCast Automated Inventory &amp; Fulfillment System &nbsp;|&nbsp; Order #${reservationId}</p>
+            <p>AlloyDash Automated Inventory &amp; Fulfillment System &nbsp;|&nbsp; Order #${reservationId}</p>
           </div>
         </div>
       </body>
@@ -209,7 +209,7 @@ export async function POST(request) {
 
     // Send to all admins
     await adminTransporter.sendMail({
-      from: `"AlloyCast Store" <${adminEmailUser}>`,
+      from: `"AlloyDash Store" <${adminEmailUser}>`,
       to: adminEmailList.join(","),
       subject: `📦 [New LBC Order #${reservationId}] ${customerName} — LBC Local Branch · Cash`,
       html: adminHtml,

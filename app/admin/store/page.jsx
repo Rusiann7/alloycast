@@ -5,6 +5,7 @@ import { createClient } from "../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { TableSkeleton } from "../../components/Skeleton";
+import { DateRangePicker } from "../../../components/DateRangePicker";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 const DynamicPOSModal = dynamic(() => import("../../components/POSModal"));
@@ -18,7 +19,11 @@ export default function StorePage() {
   const [posDB, setPos] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [dateRange, setDateRange] = useState("Annual");
+  // Reports tab date range (object form for DateRangePicker, defaults to last 30 days)
+  const [reportDateRange, setReportDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
   const [loadingInventory, setLoadingInventory] = useState(true);
   const [loadingPos, setLoadingPos] = useState(true);
   const [toast, setToast] = useState({
@@ -64,46 +69,28 @@ export default function StorePage() {
     initializeFunction();
   }, [fetchInventoryProduct]);
 
-  // Fetch Filtered POS Data
-  const fetchPOSData = useCallback(
-    async (selectedRange) => {
-      try {
-        const now = new Date();
-        let startDate = new Date();
-        let endDate = new Date();
+  // Helper: build a local-timezone-aware ISO string (avoids UTC shift)
+  const toLocalISO = (date) => {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  };
 
-        switch (selectedRange) {
-          case "Today":
-            startDate.setHours(0, 0, 0, 0);
-            break;
-          case "Yesterday":
-            startDate.setDate(now.getDate() - 1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(startDate);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-          case "This Week":
-            startDate.setDate(now.getDate() - 7);
-            break;
-          case "This Month":
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          case "Annual":
-            startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = new Date();
-            break;
-          default:
-            startDate.setDate(now.getDate() - 30);
-        }
+  // Fetch Filtered POS Data based on DateRangePicker selection
+  const fetchPOSData = useCallback(async () => {
+    if (!reportDateRange?.from) return;
+    try {
+      const startDate = new Date(reportDateRange.from);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(reportDateRange.to || reportDateRange.from);
+      endDate.setHours(23, 59, 59, 999);
 
-        const { data, error } = await supabase
-          .from("POS")
-          .select(
-            `
-          id,
+      const { data, error } = await supabase
+        .from("POS")
+        .select(
+          `id,
           product_id,
           quantity,
-          created_at, 
+          created_at,
           name,
           email,
           Inventory!product_id (
@@ -114,29 +101,24 @@ export default function StorePage() {
             price,
             category
           )`,
-          )
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString())
-          .order("created_at", { ascending: false });
+        )
+        .gte("created_at", toLocalISO(startDate))
+        .lte("created_at", toLocalISO(endDate))
+        .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        setPos(data || []);
-      } catch (error) {
-        console.error("Error fetching POS records:", error);
-      } finally {
-        setLoadingPos(false);
-      }
-    },
-    [supabase],
-  );
+      if (error) throw error;
+      setPos(data || []);
+    } catch (error) {
+      console.error("Error fetching POS records:", error);
+    } finally {
+      setLoadingPos(false);
+    }
+  }, [supabase, reportDateRange]);
 
-  // Triggers whenever dateRange state changes, plus on initial component mount
+  // Triggers whenever reportDateRange changes
   useEffect(() => {
-    const initializeFunction = async () => {
-      fetchPOSData(dateRange);
-    };
-    initializeFunction();
-  }, [dateRange, fetchPOSData]);
+    fetchPOSData();
+  }, [fetchPOSData]);
 
   // Derived Values calculated instantly on every render update
   const totalProductStock = inventory.reduce(
@@ -157,22 +139,23 @@ export default function StorePage() {
     return sum + itemPrice * quantityCount;
   }, 0);
 
-  // Maps state strings to explicit KPI section headings
-  const getDynamicSalesLabel = () => {
-    switch (dateRange) {
-      case "Today":
-        return "Today's Sales";
-      case "Yesterday":
-        return "Yesterday Sales";
-      case "This Week":
-        return "Weekly Sales";
-      case "This Month":
-        return "Monthly Sales";
-      case "Annual":
-        return "Annual Sales";
-      default:
-        return "Total Sales";
-    }
+  // Inline sales label derived from DateRangePicker selection
+  const getSalesLabel = () => {
+    if (!reportDateRange?.from) return "Sales";
+    const fromStr = new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const toStr = reportDateRange.to
+      ? new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : fromStr;
+    return `Sales (${fromStr} – ${toStr})`;
+  };
+
+  const getDateBadge = () => {
+    if (!reportDateRange?.from) return "—";
+    const from = new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const to = reportDateRange.to
+      ? new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return `${from} – ${to}`;
   };
 
   const exportSalesData = () => {
@@ -211,7 +194,7 @@ export default function StorePage() {
       link.setAttribute("href", url);
       link.setAttribute(
         "download",
-        `Sales_Report_${dateRange.replace(/ /g, "_")}.csv`,
+        `Sales_Report_${new Date(reportDateRange?.from || new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}_to_${new Date(reportDateRange?.to || new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.csv`,
       );
       document.body.appendChild(link);
       link.click();
@@ -278,7 +261,7 @@ export default function StorePage() {
 
       showToast("Purchased Successfully", "success");
       fetchInventoryProduct();
-      fetchPOSData(dateRange); // Refresh POS data view after adding items
+      fetchPOSData(); // Refresh POS data view after adding items
     } catch (error) {
       console.log(error);
     }
@@ -344,7 +327,7 @@ export default function StorePage() {
                   <span className="material-symbols-outlined text-lg">
                     download
                   </span>
-                  <span>Export {dateRange} Sales</span>
+                  <span>Export Sales</span>
                 </button>
               </div>
             )}
@@ -561,31 +544,23 @@ export default function StorePage() {
             </>
           ) : (
             <div className="space-y-10 reveal-up">
-              {/* Dynamic Filter Row Controls */}
-              <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 shadow-lg/30">
-                <div className="grid grid-cols-2 md:flex items-center p-1 rounded-lg border border-primary-container bg-input-field gap-1 md:gap-0 w-full md:w-auto">
-                  {[
-                    "Today",
-                    "Yesterday",
-                    "This Week",
-                    "This Month",
-                    "Annual",
-                  ].map((label, index) => (
-                    <button
-                      key={label}
-                      onClick={() => setDateRange(label)} // Modifying state cleanly kicks off fetch useEffect
-                      className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-md ${
-                        index === 4 ? "col-span-2 md:col-span-1" : ""
-                      } ${
-                        dateRange === label
-                          ? "bg-primary-container text-black/90 shadow-lg"
-                          : "text-white/90 opacity-80 hover:opacity-100"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+              {/* DateRangePicker Filter Row */}
+              <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-between gap-6 shadow-lg/30">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary-container text-xl">
+                    date_range
+                  </span>
+                  <p className="text-xs font-headline font-black uppercase tracking-[0.2em] text-white/60">
+                    Filter by Date Range
+                  </p>
                 </div>
+                <DateRangePicker
+                  date={reportDateRange}
+                  setDate={(val) => {
+                    setReportDateRange(val);
+                    setCurrentPage(1);
+                  }}
+                />
               </div>
 
               {/* Dynamic KPI Dashboard View metrics */}
@@ -595,9 +570,12 @@ export default function StorePage() {
                     <span className="material-symbols-outlined text-green-400 text-4xl">
                       payments
                     </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/30 bg-white/5 px-2 py-1 rounded-md">
+                      {getDateBadge()}
+                    </span>
                   </div>
                   <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">
-                    {getDynamicSalesLabel()}
+                    Sales
                   </p>
                   <p className="text-4xl font-headline font-black text-primary-container italic tracking-tighter">
                     ₱{dynamicSalesTotal.toLocaleString()}
@@ -608,6 +586,9 @@ export default function StorePage() {
                   <div className="flex items-center justify-between mb-4">
                     <span className="material-symbols-outlined text-blue-400 text-4xl">
                       receipt_long
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/30 bg-white/5 px-2 py-1 rounded-md">
+                      {getDateBadge()}
                     </span>
                   </div>
                   <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">

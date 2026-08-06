@@ -34,7 +34,7 @@ export async function POST(request) {
     if (!emailUser || !emailPass) {
       return NextResponse.json(
         { success: false, error: "Nodemailer credentials not configured." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -46,9 +46,10 @@ export async function POST(request) {
       },
     });
 
-    const googleMapsUrl = actualLat && actualLng
-      ? `https://www.google.com/maps?q=${actualLat},${actualLng}`
-      : null;
+    const googleMapsUrl =
+      actualLat && actualLng
+        ? `https://www.google.com/maps?q=${actualLat},${actualLng}`
+        : null;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -73,7 +74,7 @@ export async function POST(request) {
       <body>
         <div class="card">
           <div class="header">
-            <h1>AlloyCast - New Order Alert</h1>
+            <h1>AlloyDash - New Order Alert</h1>
             <p style="color: #aaaaaa; margin-top: 6px; font-size: 13px;">Order #${reservationId} - <span class="badge">${orderType} (${paymentMode})</span></p>
           </div>
 
@@ -87,26 +88,34 @@ export async function POST(request) {
           <div class="section">
             <div class="section-title">👤 Customer Information</div>
             <div class="row"><span class="label">Name:</span><span class="value">${customerName}</span></div>
-            <div class="row"><span class="label">Contact Phone:</span><span class="value">${contactNumber || 'N/A'}</span></div>
-            <div class="row"><span class="label">Email:</span><span class="value">${customerEmail || 'N/A'}</span></div>
+            <div class="row"><span class="label">Contact Phone:</span><span class="value">${contactNumber || "N/A"}</span></div>
+            <div class="row"><span class="label">Email:</span><span class="value">${customerEmail || "N/A"}</span></div>
           </div>
 
-          ${orderType === 'Delivery' ? `
+          ${
+            orderType === "Delivery"
+              ? `
           <div class="section">
             <div class="section-title">📍 Shipping & Delivery Address</div>
-            <div class="row"><span class="label">Shipping Address:</span><span class="value">${actualShippingAddress || 'N/A'}</span></div>
-            <div class="row"><span class="label">District / Barangay:</span><span class="value">${district || 'N/A'}</span></div>
-            <div class="row"><span class="label">Zip Code:</span><span class="value">${zipCode || 'N/A'}</span></div>
-            ${googleMapsUrl ? `
+            <div class="row"><span class="label">Shipping Address:</span><span class="value">${actualShippingAddress || "N/A"}</span></div>
+            <div class="row"><span class="label">District / Barangay:</span><span class="value">${district || "N/A"}</span></div>
+            <div class="row"><span class="label">Zip Code:</span><span class="value">${zipCode || "N/A"}</span></div>
+            ${
+              googleMapsUrl
+                ? `
               <div style="text-align: center; margin-top: 12px;">
                 <a href="${googleMapsUrl}" target="_blank" class="btn-maps">📍 Open Pinned Location on Google Maps</a>
               </div>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
-          ` : ''}
+          `
+              : ""
+          }
 
           <div class="footer">
-            <p>AlloyCast Automated Inventory & Fulfillment System</p>
+            <p>AlloyDash Automated Inventory & Fulfillment System</p>
           </div>
         </div>
       </body>
@@ -114,15 +123,21 @@ export async function POST(request) {
     `;
 
     await transporter.sendMail({
-      from: `"AlloyCast Store" <${emailUser}>`,
+      from: `"AlloyDash Store" <${emailUser}>`,
       to: adminEmail,
       subject: `🚨 [New Order #${reservationId}] ${orderType} - ${customerName}`,
       html: htmlContent,
     });
 
-    return NextResponse.json({ success: true, message: "Order notification email sent successfully." });
+    return NextResponse.json({
+      success: true,
+      message: "Order notification email sent successfully.",
+    });
   } catch (error) {
     console.error("Nodemailer Email Error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }

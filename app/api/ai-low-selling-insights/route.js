@@ -8,7 +8,11 @@ export async function POST(request) {
     const body = await request.json();
     const { lowProducts } = body;
 
-    if (!lowProducts || !Array.isArray(lowProducts) || lowProducts.length === 0) {
+    if (
+      !lowProducts ||
+      !Array.isArray(lowProducts) ||
+      lowProducts.length === 0
+    ) {
       return NextResponse.json(
         { success: false, error: "No low selling products provided." },
         { status: 400 },
@@ -16,10 +20,13 @@ export async function POST(request) {
     }
 
     const productListFormatted = lowProducts
-      .map((p) => `- ${p.name || p.item_name}: ${p.units ?? p.orders ?? 0} order(s)`)
+      .map(
+        (p) =>
+          `- ${p.name || p.item_name}: ${p.units ?? p.orders ?? 0} order(s)`,
+      )
       .join("\n");
 
-    const prompt = `You are an expert e-commerce and retail marketing strategist for AlloyCast, a store specializing in collectible diecast model cars and diecast items.
+    const prompt = `You are an expert e-commerce and retail marketing strategist for AlloyDash, a store specializing in collectible diecast model cars and diecast items.
 
 Here is the list of current low-selling products in our store:
 ${productListFormatted}
@@ -48,7 +55,10 @@ Keep the formatting clean, professional, and readable (use bullet points and cle
   } catch (error) {
     console.error("Gemini AI Low Selling Insights Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to generate AI insights." },
+      {
+        success: false,
+        error: error.message || "Failed to generate AI insights.",
+      },
       { status: 500 },
     );
   }
