@@ -22,8 +22,11 @@ export async function POST(request) {
     const secretKey = process.env.PAYMONGO_SECRET_KEY;
     if (!secretKey) {
       return NextResponse.json(
-        { success: false, error: "PayMongo secret key is not configured in server environment." },
-        { status: 500 }
+        {
+          success: false,
+          error: "PayMongo secret key is not configured in server environment.",
+        },
+        { status: 500 },
       );
     }
 
@@ -40,8 +43,8 @@ export async function POST(request) {
         formattedPhone = digitsOnly.startsWith("63")
           ? `+${digitsOnly}`
           : digitsOnly.startsWith("0")
-          ? `+63${digitsOnly.slice(1)}`
-          : `+63${digitsOnly}`;
+            ? `+63${digitsOnly.slice(1)}`
+            : `+63${digitsOnly}`;
       }
     }
 
@@ -49,9 +52,11 @@ export async function POST(request) {
     const billingAddress = {
       country: "PH",
     };
-    if (actualAddress && actualAddress.trim()) billingAddress.line1 = actualAddress.trim();
+    if (actualAddress && actualAddress.trim())
+      billingAddress.line1 = actualAddress.trim();
     if (district && district.trim()) billingAddress.city = district.trim();
-    if (zip_code && String(zip_code).trim()) billingAddress.postal_code = String(zip_code).trim();
+    if (zip_code && String(zip_code).trim())
+      billingAddress.postal_code = String(zip_code).trim();
 
     const payload = {
       data: {
@@ -66,7 +71,7 @@ export async function POST(request) {
             {
               currency: "PHP",
               amount: amountInCentavos,
-              description: `AlloyCast - ${item_name}`,
+              description: `AlloyDash - ${item_name}`,
               name: item_name,
               quantity: parseInt(quantity, 10) || 1,
             },
@@ -86,22 +91,29 @@ export async function POST(request) {
 
     const authHeader = `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
 
-    const paymongoRes = await fetch("https://api.paymongo.com/v1/checkout_sessions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
+    const paymongoRes = await fetch(
+      "https://api.paymongo.com/v1/checkout_sessions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    });
+    );
 
     const data = await paymongoRes.json();
 
     if (!paymongoRes.ok) {
       console.error("PayMongo Error:", data);
       return NextResponse.json(
-        { success: false, error: data.errors?.[0]?.detail || "PayMongo session creation failed." },
-        { status: paymongoRes.status }
+        {
+          success: false,
+          error:
+            data.errors?.[0]?.detail || "PayMongo session creation failed.",
+        },
+        { status: paymongoRes.status },
       );
     }
 
@@ -115,6 +127,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("PayMongo API Route Error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }

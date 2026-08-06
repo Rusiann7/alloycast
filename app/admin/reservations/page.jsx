@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { TableSkeleton } from "../../components/Skeleton";
+import { DateRangePicker } from "../../../components/DateRangePicker";
 
 const DynamicOrderStatusConfirmationModal = dynamic(
   () => import("../../components/OrderStatusConfirmationModal"),
@@ -31,7 +32,11 @@ export default function AdminReservations() {
   const [todayCount, setTodayCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState("Last 30 Days");
+  // Reports tab date range (object form for DateRangePicker)
+  const [reportDateRange, setReportDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -55,6 +60,7 @@ export default function AdminReservations() {
 
   const itemsPerPage = 5;
 
+  // Total orders within the selected date range (for Transactions card)
   const transaction = reservationDB.length;
 
   const showToast = (message, type = "error") => {
@@ -127,20 +133,17 @@ export default function AdminReservations() {
     fetchTableData();
   }, []);
 
+  // todayCount kept for non-Reports tabs (legacy)
   useEffect(() => {
     let startDate = new Date();
-
     startDate.setHours(0, 0, 0, 0);
-
     const todayCountGetter = async () => {
       const { count } = await supabase
         .from("Reservation")
         .select("*", { count: "exact", head: true })
         .gte("created_at", startDate.toISOString());
-
       setTodayCount(count || 0);
     };
-
     todayCountGetter();
   }, []);
 
@@ -309,91 +312,75 @@ export default function AdminReservations() {
     }
   };
 
-  useEffect(() => {
-    const reservationDataDB = async (dateRange) => {
-      try {
-        const now = new Date();
-        let startDate = new Date();
-        let endDate = new Date();
+  // Helper: build a local-timezone-aware ISO string (avoids UTC shift)
+  const toLocalISO = (date) => {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  };
 
-        switch (dateRange) {
-          case "Today":
-            startDate.setHours(0, 0, 0, 0);
-            break;
-          case "Yesterday":
-            startDate.setDate(now.getDate() - 1);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(startDate);
-            endDate.setHours(23, 59, 59, 999);
-            break;
-          case "This Week":
-            startDate.setDate(now.getDate() - 7);
-            break;
-          case "This Month":
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          case "All Time":
-            startDate = new Date(0); // Year 1970
-            endDate = new Date();
-            break;
-          default:
-            startDate.setDate(now.getDate() - 30);
-        }
-        const { data: reservationData } = await supabase
-          .from("Reservation")
-          .select(
-            "*, Users(id, email), Inventory(item_name, item_image, brand)",
-          )
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
+  // Fetch report table data based on the DateRangePicker selection
+  const fetchReportData = useCallback(async () => {
+    if (!reportDateRange?.from) return;
+    try {
+      const startDate = new Date(reportDateRange.from);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(reportDateRange.to || reportDateRange.from);
+      endDate.setHours(23, 59, 59, 999);
 
-        const { data: customerData } = await supabase
-          .from("Customer")
-          .select("user_id, firstname, lastname");
+      const { data: reservationData } = await supabase
+        .from("Reservation")
+        .select("*, Users(id, email), Inventory(item_name, item_image, brand)")
+        .gte("created_at", toLocalISO(startDate))
+        .lte("created_at", toLocalISO(endDate))
+        .order("created_at", { ascending: false });
 
-        if (reservationData && customerData) {
-          const mergedTables = reservationData.map((reservation) => {
-            const matchCustomer = customerData.find(
-              (customer) => customer.user_id === reservation.user_id,
-            );
+      const { data: customerData } = await supabase
+        .from("Customer")
+        .select("user_id, firstname, lastname");
 
-            return {
-              id: reservation.id,
-              customer: matchCustomer
-                ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
-                : "Unknown Customer",
-              customer_email: reservation.Users?.email,
-              item_name: reservation.Inventory?.item_name,
-              brand: reservation.Inventory?.brand || "Unknown Brand",
-              qty: (reservation.quantity || 0).toString().padStart(2, "0"),
-              date: new Date(reservation.created_at).toLocaleDateString(),
-              status: reservation.status || "Pending",
-              statusColor:
-                reservation.status === "Completed"
-                  ? "bg-green-700 text-white/90 border-green-500/20"
-                  : reservation.status === "Declined" ||
-                      reservation.status === "Cancelled"
-                    ? "bg-red-400/50 text-red-300 border-red-500/20"
-                    : "bg-primary-container text-secondary-container border-white/10",
-              statusDot:
-                reservation.status === "Completed"
-                  ? "bg-green-500"
-                  : reservation.status === "Declined" ||
-                      reservation.status === "Cancelled"
-                    ? "bg-red-500"
-                    : "bg-secondary-container",
-
-              img: reservation.Inventory?.item_image || "/logo.jpg",
-            };
-          });
-          setReservationDB(mergedTables);
-        }
-      } catch (error) {
-        console.log(error);
+      if (reservationData && customerData) {
+        const mergedTables = reservationData.map((reservation) => {
+          const matchCustomer = customerData.find(
+            (customer) => customer.user_id === reservation.user_id,
+          );
+          return {
+            id: reservation.id,
+            customer: matchCustomer
+              ? `${matchCustomer.firstname} ${matchCustomer.lastname}`
+              : reservation.customer_name || "Unknown Customer",
+            customer_email: reservation.Users?.email,
+            item_name: reservation.Inventory?.item_name,
+            brand: reservation.Inventory?.brand || "Unknown Brand",
+            qty: (reservation.quantity || 0).toString().padStart(2, "0"),
+            date: new Date(reservation.created_at).toLocaleDateString(),
+            status: reservation.status || "Pending",
+            statusColor:
+              reservation.status === "Completed"
+                ? "bg-green-700 text-white/90 border-green-500/20"
+                : reservation.status === "Declined" ||
+                    reservation.status === "Cancelled"
+                  ? "bg-red-400/50 text-red-300 border-red-500/20"
+                  : "bg-primary-container text-secondary-container border-white/10",
+            statusDot:
+              reservation.status === "Completed"
+                ? "bg-green-500"
+                : reservation.status === "Declined" ||
+                    reservation.status === "Cancelled"
+                  ? "bg-red-500"
+                  : "bg-secondary-container",
+            img: reservation.Inventory?.item_image || "/logo.jpg",
+          };
+        });
+        setReservationDB(mergedTables);
       }
-    };
-    reservationDataDB(dateRange);
-  }, [dateRange]);
+    } catch (error) {
+      console.log(error);
+    }
+  }, [reportDateRange]);
+
+  useEffect(() => {
+    fetchReportData();
+  }, [fetchReportData]);
 
   const insertData = async (id, shippingFee, trackingNumber, customerEmail) => {
     try {
@@ -798,46 +785,44 @@ export default function AdminReservations() {
           </div>
         ) : (
           <div className="space-y-10 reveal-up">
-            {/* Sticky Date Range Control */}
-            <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up shadow-lg/30">
-              <div className="grid grid-cols-2 md:flex items-center p-1 rounded-lg border border-primary-container bg-input-field gap-1 md:gap-0 w-full md:w-auto">
-                {[
-                  "Today",
-                  "Yesterday",
-                  "This Week",
-                  "This Month",
-                  "All Time",
-                ].map((label) => (
-                  <button
-                    key={label}
-                    onClick={() => {
-                      setDateRange(label);
-                    }}
-                    className={`px-4 py-3 md:py-2 text-xs sm:text-sm font-headline font-black uppercase tracking-widest transition-all rounded-lg ${
-                      dateRange === label
-                        ? "bg-primary-container text-black/90 shadow-lg"
-                        : "text-white/90 opacity-80 hover:opacity-100"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+            {/* Date Range Picker Control */}
+            <div className="sticky mt-5 z-30 rounded-lg bg-secondary-container backdrop-blur-xl border-b border-white/5 px-4 sm:px-10 py-5 flex flex-wrap items-center justify-between gap-6 reveal-up shadow-lg/30">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary-container text-xl">
+                  date_range
+                </span>
+                <p className="text-xs font-headline font-black uppercase tracking-[0.2em] text-white/60">
+                  Filter by Date Range
+                </p>
               </div>
+              <DateRangePicker
+                date={reportDateRange}
+                setDate={setReportDateRange}
+              />
             </div>
             {/* KPI Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2  gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {[
                 {
-                  label: "Today's Reservations",
+                  label: "Today's Orders",
                   value: todayCount,
                   icon: "book_online",
                   color: "text-green-400",
+                  sub: new Date().toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }),
                 },
                 {
                   label: "Transactions",
                   value: transaction,
                   icon: "receipt_long",
                   color: "text-blue-400",
+                  sub:
+                    reportDateRange?.from && reportDateRange?.to
+                      ? `${new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                      : "—",
                 },
               ].map((kpi, i) => (
                 <div
@@ -849,6 +834,9 @@ export default function AdminReservations() {
                       className={`material-symbols-outlined ${kpi.color} text-4xl`}
                     >
                       {kpi.icon}
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/30 bg-white/5 px-2 py-1 rounded-md">
+                      {kpi.sub}
                     </span>
                   </div>
                   <p className="text-white/60 text-[12px] font-black uppercase tracking-[0.2em] mb-1">

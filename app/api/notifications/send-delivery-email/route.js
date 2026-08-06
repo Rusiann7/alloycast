@@ -26,7 +26,8 @@ export async function POST(request) {
     } = body;
 
     // --- Admin email sender credentials ---
-    const adminEmailUser = process.env.ADMIN_EMAIL_USER || process.env.EMAIL_USER;
+    const adminEmailUser =
+      process.env.ADMIN_EMAIL_USER || process.env.EMAIL_USER;
     const adminEmailPass =
       process.env.ADMIN_EMAIL_APP_PASSWORD || process.env.EMAIL_APP_PASSWORD;
 
@@ -114,7 +115,7 @@ export async function POST(request) {
       <body>
         <div class="card">
           <div class="header">
-            <h1>AlloyCast — New Delivery Order 🚚</h1>
+            <h1>AlloyDash — New Delivery Order 🚚</h1>
             <p style="color:#aaaaaa; margin-top:6px; font-size:13px;">
               Order #${reservationId} &nbsp;|&nbsp;
               <span class="badge">Delivery · ${deliveryType} · Online</span>
@@ -158,7 +159,7 @@ export async function POST(request) {
           </div>
 
           <div class="footer">
-            <p>AlloyCast Automated Inventory &amp; Fulfillment System</p>
+            <p>AlloyDash Automated Inventory &amp; Fulfillment System</p>
           </div>
         </div>
       </body>

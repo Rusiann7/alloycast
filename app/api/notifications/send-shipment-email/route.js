@@ -12,9 +12,19 @@ const supabase = createClient(
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { reservationId, shippingFee, trackingNumber, customerEmail: bodyEmail } = body;
+    const {
+      reservationId,
+      shippingFee,
+      trackingNumber,
+      customerEmail: bodyEmail,
+    } = body;
 
-    console.log("[send-shipment-email] Processing reservationId:", reservationId, "shippingFee:", shippingFee);
+    console.log(
+      "[send-shipment-email] Processing reservationId:",
+      reservationId,
+      "shippingFee:",
+      shippingFee,
+    );
 
     if (!reservationId) {
       return NextResponse.json(
@@ -71,29 +81,41 @@ export async function POST(request) {
       : "Valued Customer";
 
     if (!customerEmail) {
-      console.error("[send-shipment-email] Customer email missing for user_id:", reservation.user_id);
+      console.error(
+        "[send-shipment-email] Customer email missing for user_id:",
+        reservation.user_id,
+      );
       return NextResponse.json(
-        { success: false, error: "Customer email not found for this reservation." },
+        {
+          success: false,
+          error: "Customer email not found for this reservation.",
+        },
         { status: 400 },
       );
     }
 
     // Calculate product price, quantity, and total
     const itemPrice = reservation.Inventory?.discount
-      ? Number(reservation.Inventory.price) - Number(reservation.Inventory.discount)
+      ? Number(reservation.Inventory.price) -
+        Number(reservation.Inventory.discount)
       : Number(reservation.Inventory?.price || 0);
     const quantity = parseInt(reservation.quantity, 10) || 1;
     const productsCost = itemPrice * quantity;
     const finalTotal = productsCost + (parseFloat(shippingFee) || 0);
 
-    console.log(`[send-shipment-email] Email: ${customerEmail}, Total: ₱${finalTotal} (Products: ₱${productsCost}, Shipping: ₱${shippingFee})`);
+    console.log(
+      `[send-shipment-email] Email: ${customerEmail}, Total: ₱${finalTotal} (Products: ₱${productsCost}, Shipping: ₱${shippingFee})`,
+    );
 
     // 4. Call PayMongo to generate checkout session URL
     const secretKey = process.env.PAYMONGO_SECRET_KEY;
     if (!secretKey) {
       console.error("[send-shipment-email] PAYMONGO_SECRET_KEY missing!");
       return NextResponse.json(
-        { success: false, error: "PayMongo secret key is not configured in server environment." },
+        {
+          success: false,
+          error: "PayMongo secret key is not configured in server environment.",
+        },
         { status: 500 },
       );
     }
@@ -102,49 +124,57 @@ export async function POST(request) {
     const amountInCentavos = Math.round(finalTotal * 100);
     const authHeader = `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
 
-    const paymongoRes = await fetch("https://api.paymongo.com/v1/checkout_sessions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-      },
-      body: JSON.stringify({
-        data: {
-          attributes: {
-            billing: {
-              name: customerName,
-              email: customerEmail,
-              phone: phoneNumber || undefined,
-            },
-            line_items: [
-              {
-                currency: "PHP",
-                amount: amountInCentavos,
-                description: `AlloyCast - Order #${reservationId} (Products + Shipping)`,
-                name: `${reservation.Inventory?.item_name || "Product"} x${quantity} + Shipping`,
-                quantity: 1,
+    const paymongoRes = await fetch(
+      "https://api.paymongo.com/v1/checkout_sessions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({
+          data: {
+            attributes: {
+              billing: {
+                name: customerName,
+                email: customerEmail,
+                phone: phoneNumber || undefined,
               },
-            ],
-            payment_method_types: ["card", "gcash", "paymaya", "qrph"],
-            success_url: `${appUrl}/customer/productDetail?payment=success&reservation_id=${reservationId}`,
-            cancel_url: `${appUrl}/customer/productDetail?payment=cancelled&reservation_id=${reservationId}`,
-            description: `Order #${reservationId} payment for ${customerName}`,
-            metadata: {
-              reservation_id: String(reservationId),
-              customer_name: customerName,
-              customer_email: customerEmail,
+              line_items: [
+                {
+                  currency: "PHP",
+                  amount: amountInCentavos,
+                  description: `AlloyDash - Order #${reservationId} (Products + Shipping)`,
+                  name: `${reservation.Inventory?.item_name || "Product"} x${quantity} + Shipping`,
+                  quantity: 1,
+                },
+              ],
+              payment_method_types: ["card", "gcash", "paymaya", "qrph"],
+              success_url: `${appUrl}/customer/productDetail?payment=success&reservation_id=${reservationId}`,
+              cancel_url: `${appUrl}/customer/productDetail?payment=cancelled&reservation_id=${reservationId}`,
+              description: `Order #${reservationId} payment for ${customerName}`,
+              metadata: {
+                reservation_id: String(reservationId),
+                customer_name: customerName,
+                customer_email: customerEmail,
+              },
             },
           },
-        },
-      }),
-    });
+        }),
+      },
+    );
 
     const sessionData = await paymongoRes.json();
 
     if (!paymongoRes.ok) {
       console.error("[send-shipment-email] PayMongo Error:", sessionData);
       return NextResponse.json(
-        { success: false, error: sessionData.errors?.[0]?.detail || "PayMongo session creation failed." },
+        {
+          success: false,
+          error:
+            sessionData.errors?.[0]?.detail ||
+            "PayMongo session creation failed.",
+        },
         { status: paymongoRes.status },
       );
     }
@@ -152,7 +182,10 @@ export async function POST(request) {
     const checkoutUrl = sessionData.data.attributes.checkout_url;
     const checkoutSessionId = sessionData.data.id;
 
-    console.log("[send-shipment-email] PayMongo checkout URL created:", checkoutUrl);
+    console.log(
+      "[send-shipment-email] PayMongo checkout URL created:",
+      checkoutUrl,
+    );
 
     // 5. Update the Reservation record
     const { error: updateError } = await supabase
@@ -166,7 +199,10 @@ export async function POST(request) {
       .eq("id", reservationId);
 
     if (updateError) {
-      console.error("[send-shipment-email] Reservation update error:", updateError);
+      console.error(
+        "[send-shipment-email] Reservation update error:",
+        updateError,
+      );
       throw updateError;
     }
 
@@ -175,9 +211,14 @@ export async function POST(request) {
     const emailPass = process.env.EMAIL_APP_PASSWORD;
 
     if (!emailUser || !emailPass) {
-      console.error("[send-shipment-email] EMAIL_USER or EMAIL_APP_PASSWORD missing!");
+      console.error(
+        "[send-shipment-email] EMAIL_USER or EMAIL_APP_PASSWORD missing!",
+      );
       return NextResponse.json(
-        { success: false, error: "Nodemailer credentials not configured on server." },
+        {
+          success: false,
+          error: "Nodemailer credentials not configured on server.",
+        },
         { status: 500 },
       );
     }
@@ -233,23 +274,28 @@ export async function POST(request) {
           </div>
 
           <div class="footer">
-            <p>Thank you for shopping at AlloyCast! — AlloyCast Automated Inventory &amp; Fulfillment System</p>
+            <p>Thank you for shopping at AlloyDash! — AlloyDash Automated Inventory &amp; Fulfillment System</p>
           </div>
         </div>
       </body>
       </html>
     `;
 
-    console.log(`[send-shipment-email] Sending email from ${emailUser} to ${customerEmail}...`);
+    console.log(
+      `[send-shipment-email] Sending email from ${emailUser} to ${customerEmail}...`,
+    );
 
     const mailResult = await transporter.sendMail({
-      from: `"AlloyCast Store" <${emailUser}>`,
+      from: `"AlloyDash Store" <${emailUser}>`,
       to: customerEmail,
-      subject: `🚚 Pay for Shipment - Order #${reservationId} at AlloyCast`,
+      subject: `🚚 Pay for Shipment - Order #${reservationId} at AlloyDash`,
       html: customerHtml,
     });
 
-    console.log("[send-shipment-email] Email sent successfully! MessageId:", mailResult.messageId);
+    console.log(
+      "[send-shipment-email] Email sent successfully! MessageId:",
+      mailResult.messageId,
+    );
 
     return NextResponse.json({
       success: true,

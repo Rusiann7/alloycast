@@ -107,7 +107,7 @@ export async function POST(request) {
       <body>
         <div class="card">
           <div class="header">
-            <h1>AlloyCast — New Pickup Order</h1>
+            <h1>AlloyDash — New Pickup Order</h1>
             <p style="color: #aaaaaa; margin-top: 6px; font-size: 13px;">
               Order #${reservationId} &nbsp;|&nbsp; <span class="badge">${orderType} · ${paymentMode}</span>
             </p>
@@ -134,7 +134,7 @@ export async function POST(request) {
           </div>
 
           <div class="footer">
-            <p>AlloyCast Automated Inventory &amp; Fulfillment System</p>
+            <p>AlloyDash Automated Inventory &amp; Fulfillment System</p>
           </div>
         </div>
       </body>
@@ -191,11 +191,11 @@ export async function POST(request) {
           </div>
 
           <div class="info-box">
-            📍 Please visit the <strong>AlloyCast Store</strong> and present your Order Reference Number <strong>#${reservationId}</strong> to our staff to complete your purchase.
+            📍 Please visit the <strong>AlloyDash Store</strong> and present your Order Reference Number <strong>#${reservationId}</strong> to our staff to complete your purchase.
           </div>
 
           <div class="footer">
-            <p>Thank you for shopping at AlloyCast! — AlloyCast Automated Inventory &amp; Fulfillment System</p>
+            <p>Thank you for shopping at AlloyDash! — AlloyDash Automated Inventory &amp; Fulfillment System</p>
           </div>
         </div>
       </body>
@@ -204,7 +204,7 @@ export async function POST(request) {
 
     // Send to Admin (to all admins)
     await adminTransporter.sendMail({
-      from: `"AlloyCast Store" <${adminEmailUser}>`,
+      from: `"AlloyDash Store" <${adminEmailUser}>`,
       to: adminEmailList.join(","),
       subject: `🛒 [New Pickup Order #${reservationId}] ${customerName} — Cash Payment`,
       html: adminHtml,
@@ -213,9 +213,9 @@ export async function POST(request) {
     // Send to Customer (only if email is available)
     if (customerEmail) {
       await transporter.sendMail({
-        from: `"AlloyCast Store" <${emailUser}>`,
+        from: `"AlloyDash Store" <${emailUser}>`,
         to: customerEmail,
-        subject: `✅ Your AlloyCast Pickup Order #${reservationId} is Reserved — Pick Up Within 48 Hours`,
+        subject: `✅ Your AlloyDash Pickup Order #${reservationId} is Reserved — Pick Up Within 48 Hours`,
         html: customerHtml,
       });
     }
