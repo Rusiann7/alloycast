@@ -98,6 +98,7 @@ export default function Account() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState(null);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [wishlistData, setWishlistData] = useState(null);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -164,6 +165,26 @@ export default function Account() {
 
     fetchAccountData();
   }, [router, supabase]);
+
+  const getWishlist = async () => {
+    try {
+      const { data: wishlistData, error: wishlistError } = await supabase
+        .from("Wishlist")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false });
+
+      if (wishlistError) throw wishlistError;
+
+      setWishlistData(wishlistData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getWishlist();
+  });
 
   const showLogoutModal = async () => {
     setShowSessionModal(true);
