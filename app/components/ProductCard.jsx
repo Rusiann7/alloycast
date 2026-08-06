@@ -5,7 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import styled from "styled-components";
 
-export default function ProductCard({ product, tag, tagColor }) {
+export default function ProductCard({
+  product,
+  tag,
+  tagColor,
+  showPrice = true,
+}) {
   if (!product) return null;
 
   const reservationAnalytics = () => {
@@ -55,17 +60,23 @@ export default function ProductCard({ product, tag, tagColor }) {
             <h3 className="card__title font-extrabold text-sm uppercase mb-2 text-black/90">
               {product.item_name}
             </h3>
-          </div>
-
-          {/* Pricing & Call-To-Action Footer Area */}
-          <div className="card__footer mt-auto flex items-center justify-between">
             {product.stock > 0 && product.stock <= 3 ? (
-              <span className="text-sm font-black uppercase text-red-600 bg-red-100 px-2 py-0.5 rounded-full animate-pulse">
+              <span className="text-sm text-center font-black uppercase text-red-600 bg-red-100 px-2 py-0.5 rounded-full animate-pulse">
                 Only {product.stock} left!
               </span>
             ) : (
               <div />
             )}
+          </div>
+
+          {/* Pricing & Call-To-Action Footer Area */}
+          <div className="card__footer mt-2 flex items-center justify-between">
+            {showPrice && product.price ? (
+              <p className="card__price font-black text-base mb-2 text-black/90">
+                ₱{product.price}
+              </p>
+            ) : null}
+
             <Link
               href={`/customer/productDetail?id=${product.id}`}
               onClick={reservationAnalytics}

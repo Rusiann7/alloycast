@@ -376,8 +376,10 @@ function ProductDetail() {
         const contactNumber = userData?.phone_number
           ? String(userData.phone_number)
           : "";
-        
-        const itemPrice = product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price);
+
+        const itemPrice = product.discount
+          ? Number(product.price) - Number(product.discount)
+          : Number(product.price);
         const totalPrice = itemPrice * parsedQuantity;
 
         // 1. Insert reservation with Pending Payment status
@@ -406,7 +408,7 @@ function ProductDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: totalPrice,
+            amount: itemPrice, // per-unit price; PayMongo multiplies by quantity
             item_name: product.item_name,
             quantity: parsedQuantity,
             reservation_id: inserted.id,
@@ -461,7 +463,9 @@ function ProductDetail() {
         ? String(userData.phone_number)
         : "";
 
-      const itemPrice = product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price);
+      const itemPrice = product.discount
+        ? Number(product.price) - Number(product.discount)
+        : Number(product.price);
       const parsedTotalPrice = itemPrice * parsedQuantity;
 
       const reservationDataInsert = {
@@ -519,7 +523,9 @@ function ProductDetail() {
   const handleConfirmDeliveryAddress = async (addressData) => {
     setIsSubmittingAddress(true);
     const parsedQuantity = parseInt(quantity, 10) || 1;
-    const itemPrice = product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price);
+    const itemPrice = product.discount
+      ? Number(product.price) - Number(product.discount)
+      : Number(product.price);
     const totalPrice = itemPrice * parsedQuantity;
 
     // ── Door-to-Door + Online: Email admin, wait for manual payment ──────────
@@ -734,7 +740,7 @@ function ProductDetail() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: totalPrice,
+          amount: itemPrice, // per-unit price; PayMongo multiplies by quantity
           item_name: product.item_name,
           quantity: parsedQuantity,
           reservation_id: inserted.id,
@@ -1108,7 +1114,7 @@ function ProductDetail() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4 mt-10">
+              <div className="flex items-end gap-4 mt-10">
                 <button
                   onClick={productReservation}
                   disabled={product.stock === 0} // disables the button if the stock is 0
@@ -1124,16 +1130,18 @@ function ProductDetail() {
                 {wishlistStatus ? (
                   <button
                     onClick={removeWishlist}
-                    className="flex-shrink-0 w-16 h-16 rounded-lg bg-red-600 border-2 border-red-700 text-white transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-amber-600  text-white transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    title="Reset wishlist"
                   >
-                    <span className="material-symbols-outlined text-3xl">
-                      delete
+                    <span className="material-symbols-outlined">
+                      restart_alt
                     </span>
                   </button>
                 ) : (
                   <button
                     onClick={addWishlist}
                     className="flex-shrink-0 w-16 h-16 rounded-lg bg-secondary-container border-2 border-primary-container text-primary-container transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    title="Add to Wishlist"
                   >
                     <span className="material-symbols-outlined text-3xl">
                       favorite
@@ -1441,7 +1449,12 @@ function ProductDetail() {
                 <div className="flex justify-between items-center pt-2 border-t border-white/10 mt-2">
                   <span className="text-primary-container">Total Price:</span>
                   <span className="font-black text-[#d4af37]">
-                    ₱{((product.discount ? (Number(product.price) - Number(product.discount)) : Number(product.price)) * (parseInt(quantity, 10) || 1)).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                    ₱
+                    {(
+                      (product.discount
+                        ? Number(product.price) - Number(product.discount)
+                        : Number(product.price)) * (parseInt(quantity, 10) || 1)
+                    ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>

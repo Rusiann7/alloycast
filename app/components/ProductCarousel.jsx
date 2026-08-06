@@ -3,15 +3,16 @@ import React from "react";
 import styled from "styled-components";
 import ProductCard from "./ProductCard";
 
+// ProductCarousel.jsx
 export default function ProductCarousel({
   products = [],
   tag,
   tagColor,
   speed = 30,
+  showPrice = true, // Received prop
 }) {
   if (!products.length) return null;
 
-  // Duplicate the array to create a seamless infinite loop
   const duplicatedProducts = [...products, ...products];
 
   return (
@@ -23,6 +24,7 @@ export default function ProductCarousel({
               product={product}
               tag={tag}
               tagColor={tagColor}
+              showPrice={showPrice} // Pass it down here
               featured
             />
           </CardWrapper>

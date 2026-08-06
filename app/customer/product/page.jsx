@@ -27,6 +27,7 @@ export default function Product() {
   const [searchQuery, setSearchQuery] = useState(""); // for searching products
   const [selectedCategory, setSelectedCategory] = useState("All"); // for category filters
   const [selectedBrands, setSelectedBrands] = useState([]); // for selecting brand filters
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]); // for price range filters
   const [sortBy, setSortBy] = useState("latest"); // for sorting
   const [loading, setLoading] = useState(true);
 
@@ -81,6 +82,23 @@ export default function Product() {
     setCurrentPage(1);
   };
 
+  // Price range definitions: each entry has a label, min, and max (null = no upper bound)
+  const PRICE_RANGES = [
+    { label: "₱100 – ₱300",  min: 100, max: 300  },
+    { label: "₱300 – ₱600",  min: 300, max: 600  },
+    { label: "₱600 – ₱800",  min: 600, max: 800  },
+    { label: "₱800 & Above", min: 800, max: null  },
+  ];
+
+  const filterPriceRange = (label) => {
+    setSelectedPriceRanges((prev) =>
+      prev.includes(label)
+        ? prev.filter((r) => r !== label)
+        : [...prev, label],
+    );
+    setCurrentPage(1);
+  };
+
   const filteredProducts = inventory
     .filter((item) => {
       // finds the product name in the search bar
@@ -94,7 +112,20 @@ export default function Product() {
 
       const matchesBrand =
         selectedBrands.length === 0 || selectedBrands.includes(item.brand);
-      return matchesSearch && matchesCategory && matchesBrand;
+
+      // price range filtering – passes if no range selected, or item.price falls in ANY selected range
+      const matchesPrice =
+        selectedPriceRanges.length === 0 ||
+        selectedPriceRanges.some((label) => {
+          const range = PRICE_RANGES.find((r) => r.label === label);
+          if (!range) return false;
+          const price = Number(item.price);
+          return range.max === null
+            ? price >= range.min
+            : price >= range.min && price <= range.max;
+        });
+
+      return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
     })
     .sort((a, b) => {
       // sorts price in ascending order
@@ -142,57 +173,77 @@ export default function Product() {
 
       {/* Main Catalog View */}
       <main className="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto p-6 lg:p-12 gap-10 pt-28 lg:pt-32 ">
-        {/* Sidebar Filters */}
-        <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit sticky top-[100px] reveal-up drop-shadow-lg/50">
-          <h2 className="font-headline text-2xl text-white/90 font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
-            Filter by Brand
-          </h2>
+        <div className="flex flex-col">
+          {/* Sidebar Filters */}
+          <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit  reveal-up drop-shadow-lg/50">
+            <h2 className="font-headline text-2xl text-white/90 font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
+              Filter by Brand
+            </h2>
 
-          <div className="space-y-12">
-            <FilterSection title="Manufacturer">
-              <FilterCheckbox
-                label="Hot Wheels"
-                checked={selectedBrands.includes("Hot Wheels")}
-                onChange={() => filterBrand("Hot Wheels")}
-              />
-              <FilterCheckbox
-                label="Tomica"
-                checked={selectedBrands.includes("Tomica")}
-                onChange={() => filterBrand("Tomica")}
-              />
-              <FilterCheckbox
-                label="Majorette"
-                checked={selectedBrands.includes("Majorette")}
-                onChange={() => filterBrand("Majorette")}
-              />
-              <FilterCheckbox
-                label="Auto World"
-                checked={selectedBrands.includes("Auto World")}
-                onChange={() => filterBrand("Auto World")}
-              />
-              <FilterCheckbox
-                label="Mini GT"
-                checked={selectedBrands.includes("Mini GT")}
-                onChange={() => filterBrand("Mini GT")}
-              />
-              <FilterCheckbox
-                label="Bburago"
-                checked={selectedBrands.includes("Bburago")}
-                onChange={() => filterBrand("Bburago")}
-              />
-              <FilterCheckbox
-                label="Maisto"
-                checked={selectedBrands.includes("Maisto")}
-                onChange={() => filterBrand("Maisto")}
-              />
-              <FilterCheckbox
-                label="Others"
-                checked={selectedBrands.includes("Others")}
-                onChange={() => filterBrand("Others")}
-              />
-            </FilterSection>
-          </div>
-        </aside>
+            <div className="space-y-12">
+              <FilterSection title="Manufacturer">
+                <FilterCheckbox
+                  label="Hot Wheels"
+                  checked={selectedBrands.includes("Hot Wheels")}
+                  onChange={() => filterBrand("Hot Wheels")}
+                />
+                <FilterCheckbox
+                  label="Tomica"
+                  checked={selectedBrands.includes("Tomica")}
+                  onChange={() => filterBrand("Tomica")}
+                />
+                <FilterCheckbox
+                  label="Majorette"
+                  checked={selectedBrands.includes("Majorette")}
+                  onChange={() => filterBrand("Majorette")}
+                />
+                <FilterCheckbox
+                  label="Auto World"
+                  checked={selectedBrands.includes("Auto World")}
+                  onChange={() => filterBrand("Auto World")}
+                />
+                <FilterCheckbox
+                  label="Mini GT"
+                  checked={selectedBrands.includes("Mini GT")}
+                  onChange={() => filterBrand("Mini GT")}
+                />
+                <FilterCheckbox
+                  label="Bburago"
+                  checked={selectedBrands.includes("Bburago")}
+                  onChange={() => filterBrand("Bburago")}
+                />
+                <FilterCheckbox
+                  label="Maisto"
+                  checked={selectedBrands.includes("Maisto")}
+                  onChange={() => filterBrand("Maisto")}
+                />
+                <FilterCheckbox
+                  label="Others"
+                  checked={selectedBrands.includes("Others")}
+                  onChange={() => filterBrand("Others")}
+                />
+              </FilterSection>
+            </div>
+          </aside>
+          <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit mt-10 reveal-up drop-shadow-lg/50">
+            <h2 className="font-headline text-2xl text-white/90 font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
+              Filter by Price
+            </h2>
+
+            <div className="space-y-12">
+              <FilterSection title="Price Range">
+                {PRICE_RANGES.map((range) => (
+                  <FilterCheckbox
+                    key={range.label}
+                    label={range.label}
+                    checked={selectedPriceRanges.includes(range.label)}
+                    onChange={() => filterPriceRange(range.label)}
+                  />
+                ))}
+              </FilterSection>
+            </div>
+          </aside>
+        </div>
 
         {/* Content Section */}
         <div className="flex-1 flex flex-col min-w-0">

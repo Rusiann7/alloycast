@@ -161,12 +161,8 @@ export default function LandingPage() {
           playsInline
         />
 
-        <div className="w-full bg-red-600 text-white py-2 font-bold uppercase tracking-wider z-50 mt-20 lg:mt-20 overflow-hidden whitespace-nowrap flex ">
-          <h2 className="mx-auto">On Sale Diecasts</h2>
-        </div>
-
         {!discountItems ? null : (
-          <div className="w-full bg-red-600 text-white py-2 font-bold uppercase tracking-wider z-50 mt-2 overflow-hidden whitespace-nowrap flex">
+          <div className="w-full bg-red-600 text-white py-2 font-bold uppercase tracking-wider z-50  mt-20 overflow-hidden whitespace-nowrap flex">
             <div className="marquee flex-shrink-0">
               {/* Duplicate the content to create a seamless looping effect */}
               {[1, 2].map((loopId) => (
@@ -274,6 +270,7 @@ export default function LandingPage() {
             <DynamicProductCarousel
               products={discountItems.slice(0, 6)}
               speed={50}
+              showPrice={false}
             />
           </div>
         </section>
@@ -299,7 +296,11 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <DynamicProductCarousel products={inventory.slice(0, 6)} speed={50} />
+          <DynamicProductCarousel
+            products={inventory.slice(0, 6)}
+            speed={50}
+            showPrice={false}
+          />
         </div>
       </section>
 
