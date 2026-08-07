@@ -5,6 +5,7 @@ import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { AuthFormSkeleton } from "../../../components/Skeleton";
+import Script from "next/script";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
 const DynamicForgotPasswordModal = dynamic(
@@ -33,11 +34,21 @@ export default function AdminLoginPage() {
   const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState(null);
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast({ ...toast, visible: false }), 4000);
   };
+
+  useEffect(() => {
+    window.onSuccess = (token) => {
+      setTurnstileToken(token);
+    };
+    return () => {
+      delete window.onSuccess;
+    };
+  }, []);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -200,6 +211,9 @@ export default function AdminLoginPage() {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: sanitizedData.email, // kunin email sa Auth
       password: sanitizedData.password, // kunin password sa Auth
+      options: {
+        captchaToken: turnstileToken || undefined,
+      },
     });
 
     const { data: accountCheckData, error: accountCheckError } = await supabase
@@ -402,6 +416,18 @@ export default function AdminLoginPage() {
                     Forgot Password?
                   </button>
                 </div>
+                <div
+                  className="cf-turnstile"
+                  data-sitekey="0x4AAAAAADe_yb3kRA9gF-Xy"
+                  data-theme="light"
+                  data-size="normal"
+                  data-callback="onSuccess"
+                ></div>
+                <Script
+                  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                  async
+                  defer
+                />
                 <button
                   type="button"
                   className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors mb-2 border border-gray-300"

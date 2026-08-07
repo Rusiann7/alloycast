@@ -7,6 +7,7 @@ import Image from "next/image";
 import { createClient } from "../../../../lib/supabase/client";
 import dynamic from "next/dynamic";
 import { AuthFormSkeleton } from "../../../components/Skeleton";
+import Script from "next/script";
 
 const DynamicToast = dynamic(() => import("../../../components/Toast"));
 const DynamicForgotPasswordModal = dynamic(
@@ -34,8 +35,18 @@ function LoginContent() {
   const [loading, setLoading] = useState(true);
   const timeoutRef = useRef(null);
   const [email, setEmail] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    window.onSuccess = (token) => {
+      setTurnstileToken(token);
+    };
+    return () => {
+      delete window.onSuccess;
+    };
+  }, []);
   const searchParams = useSearchParams(); // for capturing clicked product url and id
   const supabase = createClient();
 
@@ -106,6 +117,9 @@ function LoginContent() {
     const { error } = await supabase.auth.signInWithPassword({
       email: sanitizedData.email, // kukunin email sa supabase Auth
       password: sanitizedData.password, // kukunin password sa supabase Auth
+      options: {
+        captchaToken: turnstileToken || undefined,
+      },
     });
 
     // pang check kung naverify na email o hindi
@@ -402,6 +416,18 @@ function LoginContent() {
                   Forgot Password?
                 </button>
               </div>
+              <div
+                className="cf-turnstile"
+                data-sitekey="0x4AAAAAADe_yb3kRA9gF-Xy"
+                data-theme="light"
+                data-size="normal"
+                data-callback="onSuccess"
+              ></div>
+              <Script
+                src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+                async
+                defer
+              />
               <button
                 type="button"
                 className="w-full flex items-center justify-center gap-3 shadow-lg/30  bg-white hover:scale-105 transition-all text-black font-bold py-3 px-4 rounded-lg  mb-6 border border-gray-300"
