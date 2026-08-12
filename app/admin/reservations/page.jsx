@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
+import { styleWorksheet } from "../../../utils/excelFormatter";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { TableSkeleton } from "../../components/Skeleton";
@@ -159,8 +160,9 @@ export default function AdminReservations() {
       "Fulfillment Status": res.fulfillment_status,
     }));
 
-    // craete a worksheet from data
+    // create a worksheet from data and apply layout styling
     const worksheet = XLSX.utils.json_to_sheet(exportData);
+    styleWorksheet(worksheet, exportData);
 
     // create workbook and worksheet
     const workbook = XLSX.utils.book_new();

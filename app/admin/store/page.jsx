@@ -6,6 +6,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { TableSkeleton } from "../../components/Skeleton";
 import { DateRangePicker } from "../../../components/DateRangePicker";
+import * as XLSX from "xlsx";
+import { styleWorksheet } from "../../../utils/excelFormatter";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
 const DynamicPOSModal = dynamic(() => import("../../components/POSModal"));
@@ -165,41 +167,55 @@ export default function StorePage() {
         return;
       }
 
-      let csvContent =
-        "Transaction ID,Date Purchased,Product Name,Brand,Category,Price (PHP),Quantity,Total Revenue (PHP),Customer Name,Customer Email\n";
-
       let grandTotal = 0;
 
-      posDB.forEach((pos) => {
-        const date = new Date(pos.created_at).toLocaleDateString();
-        const productName = `"${pos.Inventory?.item_name || "N/A"}"`;
-        const brand = `"${pos.Inventory?.brand || "N/A"}"`;
-        const category = `"${pos.Inventory?.category || "N/A"}"`;
+      const salesExport = posDB.map((pos) => {
         const price = pos.Inventory?.price || 0;
         const quantity = pos.quantity || 0;
         const revenue = price * quantity;
-        const custName = `"${pos.name || "N/A"}"`;
-        const custEmail = `"${pos.email || "N/A"}"`;
-
         grandTotal += revenue;
 
-        csvContent += `${pos.id},${date},${productName},${brand},${category},${price},${quantity},${revenue},${custName},${custEmail}\n`;
+        return {
+          "Transaction ID": pos.id,
+          "Date Purchased": new Date(pos.created_at).toLocaleDateString(),
+          "Product Name": pos.Inventory?.item_name || "N/A",
+          Brand: pos.Inventory?.brand || "N/A",
+          Category: pos.Inventory?.category || "N/A",
+          "Price (PHP)": price,
+          Quantity: quantity,
+          "Total Revenue (PHP)": revenue,
+          "Customer Name": pos.name || "N/A",
+          "Customer Email": pos.email || "N/A",
+        };
       });
 
-      csvContent += `\n,,,,,,,GRAND TOTAL,${grandTotal}\n`;
+      salesExport.push({
+        "Transaction ID": "Grand Total",
+        "Date Purchased": "",
+        "Product Name": "",
+        Brand: "",
+        Category: "",
+        "Price (PHP)": "",
+        Quantity: "",
+        "Total Revenue (PHP)": grandTotal,
+        "Customer Name": "",
+        "Customer Email": "",
+      });
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `Sales_Report_${new Date(reportDateRange?.from || new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}_to_${new Date(reportDateRange?.to || new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.csv`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const worksheet = XLSX.utils.json_to_sheet(salesExport);
+      styleWorksheet(worksheet, salesExport);
 
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
+
+      const fromStr = new Date(reportDateRange?.from || new Date())
+        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        .replace(/\s+/g, "_");
+      const toStr = new Date(reportDateRange?.to || new Date())
+        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        .replace(/\s+/g, "_");
+
+      XLSX.writeFile(workbook, `Sales_Report_${fromStr}_to_${toStr}.xlsx`);
       showToast("Sales report exported successfully!", "success");
     } catch (err) {
       showToast("Failed to export sales data.", "error");
