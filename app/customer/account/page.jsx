@@ -98,7 +98,8 @@ export default function Account() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState(null);
   const [isCanceling, setIsCanceling] = useState(false);
-  const [wishlistData, setWishlistData] = useState(null);
+  const [wishlistData, setWishlistData] = useState([]);
+  const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -170,12 +171,21 @@ export default function Account() {
     try {
       const { data: wishlistData, error: wishlistError } = await supabase
         .from("Wishlist")
-        .select("*")
-        .eq("user_id", authUser.id)
+        .select(
+          `
+          id,
+          created_at,
+          is_active,
+          product_id,
+          user_id,
+          Inventory (id, item_name, item_image, brand, price, category)`,
+        )
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (wishlistError) throw wishlistError;
 
+      console.log("i Ran");
       setWishlistData(wishlistData);
     } catch (error) {
       console.log(error);
@@ -183,8 +193,8 @@ export default function Account() {
   };
 
   useEffect(() => {
-    getWishlist();
-  });
+    if (user) getWishlist();
+  }, [user]);
 
   const showLogoutModal = async () => {
     setShowSessionModal(true);
@@ -290,6 +300,18 @@ export default function Account() {
     return res.status === filter;
   });
 
+  const visibleWishlistItems = Array.isArray(wishlistData)
+    ? wishlistData.filter((w) => {
+        const q = wishlistSearchQuery.toLowerCase();
+        return (
+          w.Inventory?.item_name?.toLowerCase().includes(q) ||
+          w.Inventory?.brand?.toLowerCase().includes(q) ||
+          w.Customer?.firstname?.toLowerCase().includes(q) ||
+          w.Customer?.lastname?.toLowerCase().includes(q)
+        );
+      })
+    : [];
+
   return (
     <div className="font-body text-on-surface min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-6 lg:px-12 flex flex-col gap-12 lg:gap-20">
@@ -374,25 +396,30 @@ export default function Account() {
 
               {/* Filter Buttons */}
               <div className="grid grid-cols-2 lg:flex items-center gap-2 p-1 bg-secondary-container rounded-lg border border-white/5">
-                {["All", "Pending", "Approved", "Declined", "Cancelled"].map(
-                  (f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFilter(f)}
-                      className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded ${
-                        filter === f
-                          ? "bg-primary-container text-black/90 shadow-lg"
-                          : "text-white/60 hover:text-white"
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ),
-                )}
+                {[
+                  "All",
+                  "Pending",
+                  "Approved",
+                  "Declined",
+                  "Cancelled",
+                  "Wishlist",
+                ].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded ${
+                      filter === f
+                        ? "bg-primary-container text-black/90 shadow-lg"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filter !== "Wishlist" && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredReservations.length === 0 ? (
                 <div className="lg:col-span-2 py-20 text-center border border-dashed border-secondary-container rounded-lg">
                   <p className="font-headline text-font-color  uppercase tracking-widest text-md px-6">
@@ -491,9 +518,145 @@ export default function Account() {
                   </div>
                 ))
               )}
-            </div>
+            </div>}
           </div>
         </div>
+        {filter === "Wishlist" ? (
+          <div className="space-y-8 reveal-up">
+            {/* Wishlist Search Bar */}
+            <div
+              className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex items-center gap-4 sm:gap-5"
+              style={{ animationDelay: "0.1s" }}
+            >
+              <div className="w-full flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
+                <span className="material-symbols-outlined text-xl font-light opacity-80">
+                  search
+                </span>
+                <input
+                  type="text"
+                  value={wishlistSearchQuery}
+                  onChange={(e) => setWishlistSearchQuery(e.target.value)}
+                  placeholder="SEARCH BY PRODUCT NAME, BRAND, OR CUSTOMER..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
+                />
+              </div>
+            </div>
+
+            {/* Wishlist Table */}
+            <div
+              className="bg-secondary-container shadow-lg/30 rounded-lg overflow-hidden"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-input-field border-b border-primary-container">
+                      <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                        Product
+                      </th>
+                      <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                        Brand
+                      </th>
+                      <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                        Category
+                      </th>
+                      <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                        Price
+                      </th>
+
+                      <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                        Wishlisted At
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.03]">
+                    {visibleWishlistItems.map((w) => (
+                      <tr
+                        key={w.id}
+                        className="group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container/30"
+                      >
+                        {/* Product */}
+                        <td className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-black/40 border border-white/5 shrink-0">
+                              {w.Inventory?.item_image ? (
+                                <Image
+                                  src={w.Inventory.item_image}
+                                  alt={w.Inventory.item_name || ""}
+                                  width={40}
+                                  height={40}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-white/20 text-sm">
+                                    image
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="font-black text-sm uppercase tracking-tight group-hover:text-[#d4af37] transition-colors">
+                              {w.Inventory?.item_name || "—"}
+                            </p>
+                          </div>
+                        </td>
+                        {/* Brand */}
+                        <td className="p-5">
+                          <span className="inline-block px-2 py-0.5 bg-white/[0.03] border border-white/[0.05] text-xs font-black uppercase tracking-widest">
+                            {w.Inventory?.brand || "—"}
+                          </span>
+                        </td>
+                        {/* Category */}
+                        <td className="p-5 text-sm font-bold uppercase tracking-wider text-white/70">
+                          {w.Inventory?.category || "—"}
+                        </td>
+                        {/* Price */}
+                        <td className="p-5 text-sm font-black tabular-nums text-[#d4af37]">
+                          {w.Inventory?.price
+                            ? `₱${Number(w.Inventory.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
+                            : "—"}
+                        </td>
+
+                        {/* Wishlisted At */}
+                        <td className="p-5 text-sm font-black uppercase tracking-widest text-white/70">
+                          {w.created_at
+                            ? new Date(w.created_at).toLocaleDateString(
+                                "en-PH",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                    {visibleWishlistItems.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="py-20 text-center">
+                          <div className="flex flex-col items-center justify-center opacity-60">
+                            <span className="material-symbols-outlined text-5xl mb-3 text-white/60">
+                              favorite
+                            </span>
+                            <p className="text-lg font-headline font-black uppercase tracking-[0.2em] text-white">
+                              No wishlist entries found
+                            </p>
+                            <p className="text-xs font-headline uppercase tracking-widest text-white/50 mt-1">
+                              Products saved to wishlists will appear here
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div></div>
+        )}
       </div>
       <DynamicToast
         message={toast.message}
