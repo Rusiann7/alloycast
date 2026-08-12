@@ -1,5 +1,6 @@
 // app/utils/exportExcel.js
 import * as XLSX from "xlsx";
+import { styleWorksheet } from "./excelFormatter";
 
 /**
  * Generates and downloads a multi-sheet spreadsheet.
@@ -47,13 +48,18 @@ export const exportToExcelFile = ({
 
   // Injects a final summary footer row onto the bottom of the data table,
   // converts the raw JSON array into a standard binary spreadsheet grid,
-  // and attaches it as the first worksheet tab.
+  // formats worksheet column widths and cell styling, and attaches it as the first worksheet tab.
   revenueExport.push({
     Total: "Grand Total",
     "Total Revenue (PHP)": Number(grandTotal.toFixed(2)),
   });
   const revSheet = XLSX.utils.json_to_sheet(revenueExport);
-  XLSX.utils.book_append_sheet(workbook, revSheet, `${dateRangeStr} Revenue`);
+  styleWorksheet(revSheet, revenueExport);
+  XLSX.utils.book_append_sheet(
+    workbook,
+    revSheet,
+    `${dateRangeStr} Revenue`.slice(0, 31),
+  );
 
   // --- SHEET 2: TOP PRODUCTS ---
   // Starts processing Sheet 2 (Top Products).
@@ -82,7 +88,12 @@ export const exportToExcelFile = ({
     .sort((a, b) => b["Units Sold"] - a["Units Sold"]);
 
   const topSheet = XLSX.utils.json_to_sheet(topProductsExport);
-  XLSX.utils.book_append_sheet(workbook, topSheet, `${dateRangeStr} Top Products`);
+  styleWorksheet(topSheet, topProductsExport);
+  XLSX.utils.book_append_sheet(
+    workbook,
+    topSheet,
+    `${dateRangeStr} Top Products`.slice(0, 31),
+  );
 
   // --- SHEET 3: ACTIVITY LEDGER RESERVATIONS---
   // Starts processing Sheet 3 (Activity Ledger Reservations).
@@ -99,10 +110,11 @@ export const exportToExcelFile = ({
   }));
 
   const actSheet = XLSX.utils.json_to_sheet(activityExport);
+  styleWorksheet(actSheet, activityExport);
   XLSX.utils.book_append_sheet(
     workbook,
     actSheet,
-    `${dateRangeStr} Activity Ledger`,
+    `${dateRangeStr} Activity Ledger`.slice(0, 31),
   );
 
   // --- SHEET 4: NEW INVENTORY ---
@@ -111,15 +123,16 @@ export const exportToExcelFile = ({
   // along with their pricing metrics.
   const inventoryExport = (arrivals || []).map((i) => ({
     "Item Name": i.item_name,
-    Price: Number(i.price).toFixed(2),
+    Price: Number(i.price),
     "Date Added": new Date(i.created_at).toLocaleDateString(),
   }));
 
   const invSheet = XLSX.utils.json_to_sheet(inventoryExport);
+  styleWorksheet(invSheet, inventoryExport);
   XLSX.utils.book_append_sheet(
     workbook,
     invSheet,
-    `${dateRangeStr} New Inventory`,
+    `${dateRangeStr} New Inventory`.slice(0, 31),
   );
 
   // --- GENERATE FILE ---
