@@ -1,9 +1,10 @@
 "use client"; // Required for styled-components and event hooks in Next.js App Router
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styled from "styled-components";
+import AddToCartModal from "./AddToCartModal";
 
 export default function ProductCard({
   product,
@@ -11,6 +12,8 @@ export default function ProductCard({
   tagColor,
   showPrice = true,
 }) {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
   if (!product) return null;
 
   const reservationAnalytics = () => {
@@ -77,19 +80,35 @@ export default function ProductCard({
               </p>
             ) : null}
 
-            <Link
-              href={`/customer/productDetail?id=${product.id}`}
-              onClick={reservationAnalytics}
-            >
-              <button className="card__button size-10 flex items-center justify-center shadow-md bg-secondary-container  rounded-full p-3 text-black/90  transition-colors">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="card__button size-10 flex items-center justify-center shadow-md bg-secondary-container rounded-full p-3 text-black/90 transition-colors cursor-pointer"
+              >
                 <span className="material-symbols-outlined text-white">
-                  shopping_cart
+                  add_shopping_cart
                 </span>
               </button>
-            </Link>
+
+              <Link
+                href={`/customer/productDetail?id=${product.id}`}
+                onClick={reservationAnalytics}
+              >
+                <button className="card__button size-10 flex items-center justify-center shadow-md bg-secondary-container rounded-full p-3 text-black/90 transition-colors">
+                  <span className="material-symbols-outlined text-white">
+                    shopping_cart
+                  </span>
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
+      <AddToCartModal
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        product={product}
+      />
     </StyledWrapper>
   );
 }
