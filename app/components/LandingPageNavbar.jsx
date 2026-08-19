@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -10,6 +10,7 @@ import Image from "next/image";
 const DynamicToast = dynamic(() => import("./Toast"));
 const DynamicSessionModal = dynamic(() => import("./SessionModal"));
 const DynamicThemeToggle = dynamic(() => import("./ThemeToggle"));
+const DynamicCartViewModal = dynamic(() => import("./CartViewModal"));
 
 export default function LandingPageNavbar() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function LandingPageNavbar() {
   const [navbarOpen, setNavbarOpen] = useState(false);
   const [user, setUser] = useState(null); // user state to track user logged in
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -24,15 +27,40 @@ export default function LandingPageNavbar() {
   });
   const supabase = createClient();
 
+  // Fetch cart item count for logged-in user
+  const fetchCartCount = useCallback(
+    async (userId) => {
+      if (!userId) {
+        setCartCount(0);
+        return;
+      }
+      try {
+        const { count, error } = await supabase
+          .from("Cart")
+          .select("*", { count: "exact", head: true })
+          .eq("customer_id", userId);
+
+        if (!error) {
+          setCartCount(count || 0);
+        }
+      } catch (err) {
+        console.error("Error fetching cart count:", err);
+      }
+    },
+    [supabase],
+  );
+
   // Auth user listener
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      fetchCartCount(currentUser?.id);
     });
     return () => subscription.unsubscribe(); // cleanup
-  }, []);
+  }, [fetchCartCount]);
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -125,7 +153,28 @@ export default function LandingPageNavbar() {
             ) : (
               <div className="flex items-center gap-6">
                 {/* Link to the user's profile/dashboard */}
-                <DynamicThemeToggle />
+
+                {/* Cart Icon with Badge */}
+                <button
+                  onClick={() => {
+                    fetchCartCount(user?.id);
+                    setShowCartModal(true);
+                  }}
+                  className="hidden lg:flex items-center relative text-input-field hover:text-secondary-container cursor-pointer transition-colors"
+                  title="My Cart"
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    shopping_cart
+                  </span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-on-primary text-white text-[9px] font-black rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
+                </button>
+                <div className="hidden lg:block">
+                  <DynamicThemeToggle />
+                </div>
                 <Link
                   href="/customer/account"
                   className="hidden lg:flex items-center gap-2 text-sm font-black uppercase tracking-widest text-input-field hover:cursor-pointer transition-colors"
@@ -191,7 +240,23 @@ export default function LandingPageNavbar() {
               </button>
             ) : (
               <>
-                <DynamicThemeToggle />
+                {/* Mobile Cart Link */}
+                <button
+                  onClick={() => {
+                    fetchCartCount(user?.id);
+                    setShowCartModal(true);
+                    setNavbarOpen(false);
+                  }}
+                  className="text-left text-2xl font-headline font-black uppercase italic text-white/90 transition-colors tracking-tighter flex items-center gap-3"
+                >
+                  My Cart
+                  {cartCount > 0 && (
+                    <span className="bg-on-primary text-white text-xs font-black rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5 leading-none">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
+                </button>
+
                 <Link
                   href="/customer/account"
                   className="text-2xl font-headline font-black uppercase italic text-white/90"
@@ -210,6 +275,7 @@ export default function LandingPageNavbar() {
                 >
                   Log Out
                 </button>
+                <DynamicThemeToggle />
               </>
             )}
           </nav>
@@ -219,6 +285,14 @@ export default function LandingPageNavbar() {
         isOpen={showSessionModal}
         onClose={() => setShowSessionModal(false)}
         onConfirm={logoutAccount}
+      />
+      <DynamicCartViewModal
+        isOpen={showCartModal}
+        onClose={() => {
+          setShowCartModal(false);
+          fetchCartCount(user?.id);
+        }}
+        user={user}
       />
     </>
   );
