@@ -29,6 +29,10 @@ const DynamicDeliveryAddressMapModal = dynamic(
   { ssr: false },
 );
 
+const DynamicCartModal = dynamic(
+  () => import("../../components/AddToCartModal"),
+);
+
 function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -48,6 +52,7 @@ function ProductDetail() {
   const [orderType, setOrderType] = useState("Pickup");
   const [paymentType, setPaymentType] = useState("Cash");
   const [deliveryType, setDeliveryType] = useState("DoorToDoor");
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [customerDetails, setCustomerDetails] = useState({
     fullName: "",
     phoneNumber: "",
@@ -1127,23 +1132,38 @@ function ProductDetail() {
                   {product.stock === 0 ? "Out of Stock" : "Order Product"}
                 </button>
 
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  disabled={product.stock === 0}
+                  aria-label="Add to Cart"
+                  className={`flex-shrink-0 w-12 h-12 rounded-lg transition-all drop-shadow-lg/50 flex items-center justify-center ${
+                    product.stock === 0
+                      ? "bg-gray-600 text-gray-400 cursor-not-allowed grayscale"
+                      : "bg-primary-container text-black/90 hover:scale-105 active:scale-[0.98]"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    add_shopping_cart
+                  </span>
+                </button>
+
                 {wishlistStatus ? (
                   <button
                     onClick={removeWishlist}
-                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-amber-600  text-white transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-amber-600 text-white transition-all hover:scale-105 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
                     title="Reset wishlist"
                   >
-                    <span className="material-symbols-outlined">
+                    <span className="material-symbols-outlined text-xl">
                       restart_alt
                     </span>
                   </button>
                 ) : (
                   <button
                     onClick={addWishlist}
-                    className="flex-shrink-0 w-16 h-16 rounded-lg bg-secondary-container border-2 border-primary-container text-primary-container transition-all hover:scale-110 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-secondary-container border-2 border-primary-container text-primary-container transition-all hover:scale-105 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
                     title="Add to Wishlist"
                   >
-                    <span className="material-symbols-outlined text-3xl">
+                    <span className="material-symbols-outlined text-xl">
                       favorite
                     </span>
                   </button>
@@ -1280,8 +1300,7 @@ function ProductDetail() {
                     lock
                   </span>
                   <p className="font-headline font-bold uppercase tracking-widest text-sm text-white/70">
-                    Only customers with an approved reservation can leave a
-                    review.
+                    Only customers with a completed order can leave a review.
                   </p>
                 </div>
               )}
@@ -1493,11 +1512,17 @@ function ProductDetail() {
         type={toast.type}
         visible={toast.visible}
       />
+
+      <DynamicCartModal
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        product={product}
+      />
     </div>
   );
 }
 
-export default function ProductPage() {
+export default function ProductPage({ product }) {
   return (
     <Suspense fallback={null}>
       <ProductDetail />
