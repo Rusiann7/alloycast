@@ -1280,8 +1280,7 @@ function ProductDetail() {
                     lock
                   </span>
                   <p className="font-headline font-bold uppercase tracking-widest text-sm text-white/70">
-                    Only customers with an approved reservation can leave a
-                    review.
+                    Only customers with a completed order can leave a review.
                   </p>
                 </div>
               )}
