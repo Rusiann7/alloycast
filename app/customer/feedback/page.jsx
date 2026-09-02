@@ -45,7 +45,7 @@ export default function Feedback() {
     try {
       if (!user) {
         // is user is not logged in
-        showToast("You must login first to comment on this product", "error");
+        showToast("You must login first to give feedback", "error");
         const captureCurrentPath =
           window.location.pathname + window.location.search; // capture current page url with product id
         setTimeout(() => {

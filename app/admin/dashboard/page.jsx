@@ -933,7 +933,7 @@ const TableRow = ({
           <Image
             className="object-cover w-full h-full transition-all"
             src={img}
-            alt=""
+            alt="{img}"
             width={80}
             height={40}
             loading="lazy"
