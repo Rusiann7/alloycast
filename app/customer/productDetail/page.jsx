@@ -53,6 +53,7 @@ function ProductDetail() {
   const [paymentType, setPaymentType] = useState("Cash");
   const [deliveryType, setDeliveryType] = useState("DoorToDoor");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
   const [customerDetails, setCustomerDetails] = useState({
     fullName: "",
     phoneNumber: "",
@@ -66,6 +67,11 @@ function ProductDetail() {
   const router = useRouter();
   const productId = searchParams.get("id"); // get the id of the product clicked url
   const supabase = createClient();
+
+  const isDiscountActive =
+    product.discount &&
+    product.start_discount <= today &&
+    product.end_discount >= today;
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -382,10 +388,16 @@ function ProductDetail() {
           ? String(userData.phone_number)
           : "";
 
-        const itemPrice = product.discount
-          ? Number(product.price) - Number(product.discount)
-          : Number(product.price);
-        const totalPrice = itemPrice * parsedQuantity;
+        let itemPrice;
+        if (
+          product.discount &&
+          product.start_discount <= today &&
+          product.end_discount >= today
+        ) {
+          itemPrice = Number(product.price) - Number(product.discount);
+        } else {
+          itemPrice = Number(product.price);
+        }
 
         // 1. Insert reservation with Pending Payment status
         const { data: inserted, error: reserveError } = await supabase
@@ -528,9 +540,16 @@ function ProductDetail() {
   const handleConfirmDeliveryAddress = async (addressData) => {
     setIsSubmittingAddress(true);
     const parsedQuantity = parseInt(quantity, 10) || 1;
-    const itemPrice = product.discount
-      ? Number(product.price) - Number(product.discount)
-      : Number(product.price);
+    let itemPrice;
+    if (
+      product.discount &&
+      product.start_discount <= today &&
+      product.end_discount === today
+    ) {
+      itemPrice = Number(product.price) - Number(product.discount);
+    } else {
+      itemPrice = Number(product.price);
+    }
     const totalPrice = itemPrice * parsedQuantity;
 
     // ── Door-to-Door + Online: Email admin, wait for manual payment ──────────
@@ -1080,7 +1099,7 @@ function ProductDetail() {
                     <p className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
                       ITEM PRICE:
                     </p>
-                    {product.discount ? (
+                    {isDiscountActive ? (
                       <div className="flex items-baseline gap-3">
                         <p className="text-6xl lg:text-6xl font-headline font-black text-font-color tracking-tighter italic tabular-nums">
                           ₱
@@ -1470,7 +1489,7 @@ function ProductDetail() {
                   <span className="font-black text-[#d4af37]">
                     ₱
                     {(
-                      (product.discount
+                      (isDiscountActive
                         ? Number(product.price) - Number(product.discount)
                         : Number(product.price)) * (parseInt(quantity, 10) || 1)
                     ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
