@@ -36,6 +36,7 @@ export default function LandingPage() {
   const [inventory, setInventory] = useState([]);
   const [howItWorksModal, setHowItWorksModal] = useState(false);
   const [discountItems, setDiscountItems] = useState(null);
+  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
   const supabase = createClient();
 
   const router = useRouter();
@@ -126,7 +127,9 @@ export default function LandingPage() {
       const { data, error } = await supabase
         .from("Inventory")
         .select("*")
-        .not("discount", "is", null);
+        .not("discount", "is", null)
+        .lte("start_discount", today)
+        .gte("end_discount", today);
 
       if (error) throw error;
 
