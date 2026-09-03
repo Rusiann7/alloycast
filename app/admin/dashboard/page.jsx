@@ -239,7 +239,7 @@ export default function AdminDashboard() {
     // 1. Update Supabase
     const { error } = await supabase
       .from("Reservation")
-      .update({ status: newStatus })
+      .update({ fulfillment_status: newStatus })
       .eq("id", reservationId);
 
     if (error) {
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
 
     // 2. Send Email via EmailJS
     try {
-      if (newStatus === "Approved") {
+      if (newStatus === "Completed") {
         await emailjs.send(
           "service_mu3qrbd",
           "template_uhrasxf",
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
             productName: productName,
             status: newStatus,
             message:
-              newStatus === "Approved"
+              newStatus === "Completed"
                 ? "Great news! Your order is approved. Please visit the store for pickup."
                 : "Unfortunately, your reservation could not be accommodated.",
           },
@@ -790,21 +790,33 @@ export default function AdminDashboard() {
               <div className="w-full sm:w-auto flex justify-center sm:justify-start">
                 <span
                   className={`px-6 py-2 rounded-full border text-sm font-black uppercase tracking-[0.2em] ${
-                    activeReservation.status === "Completed"
+                    activeReservation.fulfillment_status === "Completed"
                       ? "text-green-500 border-green-500/20 bg-green-500/5"
-                      : activeReservation.status === "Pending"
-                        ? "text-font-color border-primary-container/20 bg-primary-container"
-                        : activeReservation.status === "Declined"
-                          ? "bg-on-primary  border-white/10 "
-                          : "text-red-500 border-red-500/20 bg-red-500/5"
+                      : activeReservation.fulfillment_status === "Shipped"
+                        ? "text-green-500 border-green-500/20 bg-green-500/5"
+                        : activeReservation.fulfillment_status === "Pending"
+                          ? "text-font-color border-primary-container/20 bg-primary-container"
+                          : activeReservation.fulfillment_status ===
+                              "Pending Pickup"
+                            ? "text-font-color border-primary-container/20 bg-primary-container"
+                            : activeReservation.fulfillment_status ===
+                                "Pending Shipping"
+                              ? "text-font-color border-primary-container/20 bg-primary-container"
+                              : activeReservation.fulfillment_status ===
+                                  "Declined"
+                                ? "bg-on-primary  border-white/10 "
+                                : "text-red-500 border-red-500/20 bg-red-500/5"
                   }`}
                 >
-                  Status: {activeReservation.status}
+                  Status: {activeReservation.fulfillment_status}
                 </span>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <button
-                  disabled={activeReservation.status !== "Pending"}
+                  disabled={
+                    activeReservation.fulfillment_status === "Completed" ||
+                    activeReservation.fulfillment_status === "Shipped"
+                  }
                   onClick={() =>
                     handleActionClick(activeReservation, "Declined")
                   }
@@ -816,9 +828,12 @@ export default function AdminDashboard() {
                   <span>Decline Order</span>
                 </button>
                 <button
-                  disabled={activeReservation.status !== "Pending"}
+                  disabled={
+                    activeReservation.fulfillment_status === "Completed" ||
+                    activeReservation.fulfillment_status === "Shipped"
+                  }
                   onClick={() =>
-                    handleActionClick(activeReservation, "Approved")
+                    handleActionClick(activeReservation, "Completed")
                   }
                   className="w-full sm:w-auto px-10 py-4 bg-primary-container text-black/90 rounded-lg font-black uppercase text-xs tracking-[0.2em] hover:scale-105 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)] transition-all disabled:opacity-20 disabled:cursor-not-allowed group flex items-center justify-center space-x-2"
                 >

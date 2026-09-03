@@ -216,7 +216,7 @@ export default function Account() {
       // 1. Update reservation status to Cancelled
       const { error: updateError } = await supabase
         .from("Reservation")
-        .update({ status: "Cancelled" })
+        .update({ fulfillment_status: "Cancelled" })
         .eq("id", reservationId);
 
       if (updateError) throw updateError;
@@ -239,7 +239,9 @@ export default function Account() {
       // 3. Update local state
       setReservations((prev) =>
         prev.map((r) =>
-          r.id === reservationId ? { ...r, status: "Cancelled" } : r,
+          r.id === reservationId
+            ? { ...r, fulfillment_status: "Cancelled" }
+            : r,
         ),
       );
       showToast("Order Cancellation Successful!", "success");
@@ -270,10 +272,10 @@ export default function Account() {
   // Stats calculation
   const totalReserved = reservations.length;
   const pendingCount = reservations.filter(
-    (r) => r.status === "Pending" || !r.status,
+    (r) => r.fulfillment_status === "Pending" || !r.fulfillment_status,
   ).length;
   const approvedCount = reservations.filter(
-    (r) => r.status === "Approved",
+    (r) => r.fulfillment_status === "Approved",
   ).length;
 
   const stats = [
@@ -296,8 +298,9 @@ export default function Account() {
 
   const filteredReservations = reservations.filter((res) => {
     if (filter === "All") return true;
-    if (filter === "Pending") return res.status === "Pending" || !res.status;
-    return res.status === filter;
+    if (filter === "Pending")
+      return res.fulfillment_status === "Pending" || !res.fulfillment_status;
+    return res.fulfillment_status === filter;
   });
 
   const visibleWishlistItems = Array.isArray(wishlistData)
@@ -398,8 +401,9 @@ export default function Account() {
               <div className="grid grid-cols-2 lg:flex items-center gap-2 p-1 bg-secondary-container rounded-lg border border-white/5">
                 {[
                   "All",
-                  "Pending",
-                  "Approved",
+                  "Pending Pickup",
+                  "Pending Shipping",
+                  "Completed",
                   "Declined",
                   "Cancelled",
                   "Wishlist",
@@ -419,106 +423,112 @@ export default function Account() {
               </div>
             </div>
 
-            {filter !== "Wishlist" && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredReservations.length === 0 ? (
-                <div className="lg:col-span-2 py-20 text-center border border-dashed border-secondary-container rounded-lg">
-                  <p className="font-headline text-font-color  uppercase tracking-widest text-md px-6">
-                    No {filter !== "All" ? filter : ""} Reservations Found
-                  </p>
-                  <Link
-                    href="/customer/product"
-                    className="text-secondary-container dark:text-primary-container text-sm font-black uppercase tracking-[0.3em] mt-4 inline-block hover:underline"
-                  >
-                    Start Your Collection
-                  </Link>
-                </div>
-              ) : (
-                filteredReservations.map((res) => (
-                  <div
-                    key={res.id}
-                    onClick={() =>
-                      router.push(
-                        `/customer/productDetail?id=${res.inventory_id}`,
-                      )
-                    }
-                    className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-all cursor-pointer hover:scale-105"
-                  >
-                    <div className="relative w-full sm:w-40 h-64 sm:h-40 rounded flex items-center justify-center p-3 flex-shrink-0 transition-transform duration-500 overflow-hidden">
-                      <Image
-                        src={
-                          res.Inventory?.item_image ||
-                          "https://via.placeholder.com/150"
-                        }
-                        alt={res.Inventory?.item_name}
-                        className="object-contain p-2"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 160px"
-                      />
-                    </div>
-                    <div className="flex-1 text-center sm:text-left">
-                      <p className="text-sm font-black uppercase tracking-widest text-white/90 mb-1 leading-none">
-                        {res.Inventory?.brand}
-                      </p>
-                      <h3 className="font-headline text-xl font-bold uppercase tracking-tight text-white/90 mb-3 sm:mb-2 leading-none">
-                        {res.Inventory?.item_name}
-                      </h3>
-                      <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-white font-black uppercase tracking-widest">
-                        <span>
-                          {new Date(res.created_at).toLocaleDateString(
-                            "en-GB",
-                            { day: "2-digit", month: "short", year: "numeric" },
-                          )}
-                        </span>
-                        <span
-                          className={`p-2 rounded-lg text-md ${
-                            res.status === "Approved"
-                              ? "bg-green-500 text-white/90 border border-green-500/20"
-                              : res.status === "Declined"
-                                ? "bg-on-primary text-white/90  border border-red-500/20"
-                                : res.status === "Cancelled"
-                                  ? "bg-on-primary text-white/90 border border-red-500/20"
-                                  : "bg-primary-container text-font-color border border-yellow-500/20"
-                          }`}
-                        >
-                          {res.status || "Pending"}
-                        </span>
-                        {(res.status === "Pending" ||
-                          res.status === "Approved" ||
-                          !res.status) && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setReservationToCancel({
-                                reservationId: res.id,
-                                inventoryId: res.inventory_id,
-                                quantity: res.quantity,
-                                itemName:
-                                  res.Inventory?.item_name || "this item",
-                              });
-                              setCancelModalOpen(true);
-                            }}
-                            className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
+            {filter !== "Wishlist" && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredReservations.length === 0 ? (
+                  <div className="lg:col-span-2 py-20 text-center border border-dashed border-secondary-container rounded-lg">
+                    <p className="font-headline text-font-color  uppercase tracking-widest text-md px-6">
+                      No {filter !== "All" ? filter : ""} Reservations Found
+                    </p>
+                    <Link
+                      href="/customer/product"
+                      className="text-secondary-container dark:text-primary-container text-sm font-black uppercase tracking-[0.3em] mt-4 inline-block hover:underline"
+                    >
+                      Start Your Collection
+                    </Link>
+                  </div>
+                ) : (
+                  filteredReservations.map((res) => (
+                    <div
+                      key={res.id}
+                      onClick={() =>
+                        router.push(
+                          `/customer/productDetail?id=${res.inventory_id}`,
+                        )
+                      }
+                      className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-all cursor-pointer hover:scale-105"
+                    >
+                      <div className="relative w-full sm:w-40 h-64 sm:h-40 rounded flex items-center justify-center p-3 flex-shrink-0 transition-transform duration-500 overflow-hidden">
+                        <Image
+                          src={
+                            res.Inventory?.item_image ||
+                            "https://via.placeholder.com/150"
+                          }
+                          alt={res.Inventory?.item_name}
+                          className="object-contain p-2"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 160px"
+                        />
+                      </div>
+                      <div className="flex-1 text-center sm:text-left">
+                        <p className="text-sm font-black uppercase tracking-widest text-white/90 mb-1 leading-none">
+                          {res.Inventory?.brand}
+                        </p>
+                        <h3 className="font-headline text-xl font-bold uppercase tracking-tight text-white/90 mb-3 sm:mb-2 leading-none">
+                          {res.Inventory?.item_name}
+                        </h3>
+                        <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-white font-black uppercase tracking-widest">
+                          <span>
+                            {new Date(res.created_at).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
+                          </span>
+                          <span
+                            className={`p-2 rounded-lg text-md ${
+                              res.fulfillment_status === "Completed"
+                                ? "bg-green-500 text-white/90 border border-green-500/20"
+                                : res.fulfillment_status === "Declined"
+                                  ? "bg-on-primary text-white/90  border border-red-500/20"
+                                  : res.fulfillment_status === "Cancelled"
+                                    ? "bg-on-primary text-white/90 border border-red-500/20"
+                                    : "bg-primary-container text-font-color border border-yellow-500/20"
+                            }`}
                           >
-                            <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
-                              close
-                            </span>
-                            Cancel
-                          </button>
-                        )}
+                            {res.fulfillment_status || "Pending"}
+                          </span>
+                          {(res.fulfillment_status === "Pending Pickup" ||
+                            res.fulfillment_status === "Pending Shipping" ||
+                            !res.fulfillment_status) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReservationToCancel({
+                                  reservationId: res.id,
+                                  inventoryId: res.inventory_id,
+                                  quantity: res.quantity,
+                                  itemName:
+                                    res.Inventory?.item_name || "this item",
+                                });
+                                setCancelModalOpen(true);
+                              }}
+                              className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
+                            >
+                              <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
+                                close
+                              </span>
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="w-full sm:w-auto flex items-center justify-start sm:flex-col sm:items-end sm:justify-center gap-2 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                        <p className="text-sm font-black uppercase text-white/90">
+                          Quantity: {""}
+                        </p>
+                        <p className="font-headline text-2xl sm:text-xl font-black italic text-primary-container sm:text-white leading-none">
+                          {res.quantity?.toString().padStart(2, "0")}
+                        </p>
                       </div>
                     </div>
-                    <div className="w-full sm:w-auto flex items-center justify-start sm:flex-col sm:items-end sm:justify-center gap-2 sm:pr-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
-                      <p className="text-sm font-black uppercase text-white/90">
-                        Quantity: {""}
-                      </p>
-                      <p className="font-headline text-2xl sm:text-xl font-black italic text-primary-container sm:text-white leading-none">
-                        {res.quantity?.toString().padStart(2, "0")}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>}
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
         {filter === "Wishlist" ? (
