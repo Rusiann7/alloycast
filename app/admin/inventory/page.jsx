@@ -371,6 +371,10 @@ export default function AdminInventory() {
       description = `Removed product "${itemName}"${brand} from inventory.`;
       tag = "PRODUCT REMOVED";
       tagColor = "text-red-400 bg-red-500/10 border-red-500/20";
+    } else if (lowerComment.includes("discount")) {
+      description = `Added discount for "${itemName}"${brand}. ${comment}.`;
+      tag = "DISCOUNT ADDED";
+      tagColor = "text-purple-400 bg-purple-500/10 border-purple-500/20";
     } else if (lowerComment.includes("increased")) {
       description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
       tag = "STOCK INCREASE";
