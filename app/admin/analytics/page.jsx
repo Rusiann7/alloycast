@@ -46,7 +46,7 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
-    to: new Date()
+    to: new Date(),
   });
   const [revenueData, setRevenueData] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -95,7 +95,11 @@ export default function AdminAnalytics() {
         .gte("created_at", startDate.toISOString())
         .lte("created_at", adjustedEndDate.toISOString());
 
-      if (reservationError) throw reservationError;
+      if (reservationError) {
+        throw reservationError;
+      } else {
+        console.log(reservationData);
+      }
 
       // Fetch POS Data
       const { data: posData, error: posError } = await supabase
@@ -104,26 +108,28 @@ export default function AdminAnalytics() {
         .gte("created_at", startDate.toISOString())
         .lte("created_at", adjustedEndDate.toISOString());
 
-      if (posError) throw posError;
+      if (posError) {
+        throw posError;
+      } else {
+        console.log(posData);
+      }
 
       // Fetch Inventory Data to include products with 0 orders
       const { data: inventoryData, error: inventoryError } = await supabase
         .from("Inventory")
         .select("item_name");
 
-      if (inventoryError) throw inventoryError;
+      if (inventoryError) {
+        throw inventoryError;
+      } else {
+        console.log(inventoryData);
+      }
 
       const safeReservations = reservationData || [];
       const safePOS = posData || [];
       const safeInventory = inventoryData || [];
 
-      // Calculate in-store vs booking revenues
-      const {
-        posRevenue: calculatedPOS,
-        approvedReservationRevenue: calculatedApproved,
-      } = calculateChannelRevenues(safePOS, safeReservations);
-      setPosRevenue(calculatedPOS);
-      setApprovedReservationRevenue(calculatedApproved);
+      console.log(safePOS, safeReservations);
 
       // Aggregate revenue and chart points
       const { totalRevenue: calculatedTotal, chartData } =
@@ -222,7 +228,11 @@ export default function AdminAnalytics() {
         {/* Sticky Date Range Control */}
         <div className="sticky mt-5 z-30 bg-secondary-container backdrop-blur-xl border-b border-white/5 px-10 py-5 flex flex-wrap items-center justify-center gap-6 reveal-up rounded-lg shadow-lg/30">
           <div className="flex items-center justify-center w-full">
-             <DateRangePicker date={dateRange} setDate={setDateRange} className="flex justify-center" />
+            <DateRangePicker
+              date={dateRange}
+              setDate={setDateRange}
+              className="flex justify-center"
+            />
           </div>
         </div>
         <div className="pt-5 space-y-8 max-w-[1600px] mx-auto">
