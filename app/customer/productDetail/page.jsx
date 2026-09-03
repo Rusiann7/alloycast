@@ -54,6 +54,7 @@ function ProductDetail() {
   const [deliveryType, setDeliveryType] = useState("DoorToDoor");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+  const [isDiscountActive, setIsDiscountActive] = useState(false);
   const [customerDetails, setCustomerDetails] = useState({
     fullName: "",
     phoneNumber: "",
@@ -67,11 +68,6 @@ function ProductDetail() {
   const router = useRouter();
   const productId = searchParams.get("id"); // get the id of the product clicked url
   const supabase = createClient();
-
-  const isDiscountActive =
-    product.discount &&
-    product.start_discount <= today &&
-    product.end_discount >= today;
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -119,6 +115,20 @@ function ProductDetail() {
       fetchProduct();
     }
   }, [productId, supabase]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const today = new Date().toLocaleDateString("en-CA");
+
+    setIsDiscountActive(
+      Boolean(
+        product.discount &&
+        product.start_discount <= today &&
+        product.end_discount >= today,
+      ),
+    );
+  }, [product]);
 
   // for redirecting back to landpage if no product exists
   useEffect(() => {
