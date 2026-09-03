@@ -108,19 +108,19 @@ export default function AdminReservations() {
             contact_number: reservation.contact_number || "",
             payment_status: reservation.payment_status || "Pending Payment",
             statusColor:
-              reservation.status === "Completed" ||
-              reservation.status === "Paid"
+              reservation.fulfillment_status === "Completed" ||
+              reservation.fulfillment_status === "Paid"
                 ? "bg-green-700 text-white/90 border-green-500/20"
-                : reservation.status === "Declined" ||
-                    reservation.status === "Cancelled"
+                : reservation.fulfillment_status === "Declined" ||
+                    reservation.fulfillment_status === "Cancelled"
                   ? "bg-red-400/50 text-red-300 border-red-500/20"
                   : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
-              reservation.status === "Completed" ||
-              reservation.status === "Paid"
+              reservation.fulfillment_status === "Completed" ||
+              reservation.fulfillment_status === "Paid"
                 ? "bg-green-500"
-                : reservation.status === "Declined" ||
-                    reservation.status === "Cancelled"
+                : reservation.fulfillment_status === "Declined" ||
+                    reservation.fulfillment_status === "Cancelled"
                   ? "bg-red-500"
                   : "bg-secondary-container",
 
@@ -355,19 +355,19 @@ export default function AdminReservations() {
             brand: reservation.Inventory?.brand || "Unknown Brand",
             qty: (reservation.quantity || 0).toString().padStart(2, "0"),
             date: new Date(reservation.created_at).toLocaleDateString(),
-            status: reservation.status || "Pending",
+            status: reservation.fulfillment_status || "Pending",
             statusColor:
-              reservation.status === "Completed"
+              reservation.fulfillment_status === "Completed"
                 ? "bg-green-700 text-white/90 border-green-500/20"
-                : reservation.status === "Declined" ||
-                    reservation.status === "Cancelled"
+                : reservation.fulfillment_status === "Declined" ||
+                    reservation.fulfillment_status === "Cancelled"
                   ? "bg-red-400/50 text-red-300 border-red-500/20"
                   : "bg-primary-container text-secondary-container border-white/10",
             statusDot:
-              reservation.status === "Completed"
+              reservation.fulfillment_status === "Completed"
                 ? "bg-green-500"
-                : reservation.status === "Declined" ||
-                    reservation.status === "Cancelled"
+                : reservation.fulfillment_status === "Declined" ||
+                    reservation.fulfillment_status === "Cancelled"
                   ? "bg-red-500"
                   : "bg-secondary-container",
             img: reservation.Inventory?.item_image || "/logo.jpg",
@@ -484,7 +484,11 @@ export default function AdminReservations() {
               <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
                 PENDING ORDERS:{" "}
                 <span className="text-font-color">
-                  {reservation.filter((res) => res.status === "Pending").length}
+                  {
+                    reservation.filter(
+                      (res) => res.fulfillment_status === "Pending",
+                    ).length
+                  }
                 </span>
               </p>
             </div>
@@ -509,7 +513,9 @@ export default function AdminReservations() {
         >
           {[
             "All Items",
-            "Pending",
+            "Shipped",
+            "Pending Pickup",
+            "Pending Shipping",
             "Completed",
             "Declined",
             "Cancelled",
@@ -588,7 +594,7 @@ export default function AdminReservations() {
                       .filter((res) =>
                         activeTab === "All Items"
                           ? true
-                          : res.status === activeTab,
+                          : res.fulfillment_status === activeTab,
                       )
                       .slice(
                         (currentPage - 1) * itemsPerPage,
@@ -702,7 +708,9 @@ export default function AdminReservations() {
                                   disabled={
                                     res.fulfillment_status === "Completed" ||
                                     res.fulfillment_status ===
-                                      "Pending Shipping"
+                                      "Pending Shipping" ||
+                                    res.fulfillment_status === "Declined" ||
+                                    res.fulfillment_status === "Cancelled"
                                   }
                                   onClick={() =>
                                     handleActionClick(
@@ -726,7 +734,8 @@ export default function AdminReservations() {
                                   disabled={
                                     res.fulfillment_status === "Completed" ||
                                     res.fulfillment_status === "Declined" ||
-                                    res.fulfillment_status === "Cancelled"
+                                    res.fulfillment_status === "Cancelled" ||
+                                    res.fulfillment_status === "Shipped"
                                   }
                                   onClick={() =>
                                     handleActionClick(
@@ -935,7 +944,7 @@ export default function AdminReservations() {
                             <span
                               className={`w-2 h-2 rounded-full ${res.statusDot} animate-pulse`}
                             ></span>
-                            {res.status}
+                            {res.fulfillment_status}
                           </span>
                         </td>
                       </tr>

@@ -30,7 +30,7 @@ export const calculateChannelRevenues = (
   // It screens out canceled, declined, or sitting requests, calculating strictly
   // what inventory is currently committed to valid, physically approved client pick-up requests.
   reservationData.forEach((res) => {
-    if (res.Inventory.price && res.status === "Approved") {
+    if (res.Inventory.price && res.fulfillment_status === "Completed") {
       approvedReservationRevenue += res.quantity * res.Inventory.price;
     }
   });
@@ -183,9 +183,7 @@ export const computeProductStats = (
   // Top Selling Products must have at least 1 order to be considered "selling".
   const topProducts = sortedProducts.filter((p) => p.units > 0).slice(0, limit);
   // Low Selling Products must have 0 or few orders.
-  const lowProducts = [...sortedProducts]
-    .reverse()
-    .slice(0, limit);
+  const lowProducts = [...sortedProducts].reverse().slice(0, limit);
 
   return { topProducts, lowProducts };
 };

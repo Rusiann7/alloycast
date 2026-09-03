@@ -12,7 +12,7 @@ export default function OrderStatusConfirmationModal({
   const [reasonCancellation, setReasonCancellation] = useState("");
 
   if (!isOpen) return null;
-  const isApprove = status === "Approved";
+  const isApprove = status === "Completed";
 
   // disables reject button if textarea is empty
   // const rejectBtnDisabled = !isApprove && reasonCancellation.trim() === "";

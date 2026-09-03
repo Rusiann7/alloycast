@@ -220,12 +220,12 @@ function ProductDetail() {
         .select("id")
         .eq("user_id", user.id)
         .eq("inventory_id", productId)
-        .eq("status", "Approved")
-        .limit(1);
+        .eq("fulfillment_status", "Completed");
 
       if (!error && data && data.length > 0) {
         setCanReview(true);
       } else {
+        console.log(data);
         setCanReview(false);
       }
     };
