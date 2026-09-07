@@ -14,6 +14,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     price: 0,
     stock: 0,
     item_image: "",
+    item_color: "",
     barcode: "",
   });
   const [preview, setPreview] = useState(null);
@@ -284,6 +285,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     const sanitizedInput = {
       item_name: sanitizeInput(addFormData.item_name),
       brand: sanitizeInput(addFormData.item_brand), // These come from <select>, so they are safer
+      item_color: sanitizeInput(addFormData.item_color), // These come from <select>, so they are safer
       category: sanitizeInput(addFormData.category),
       price: Math.abs(parseFloat(addFormData.price)) || 0, // Ensure price is positive
       stock: Math.abs(parseInt(addFormData.stock)) || 0, // Ensure stock is positive
@@ -295,6 +297,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
         {
           item_name: sanitizedInput.item_name,
           brand: sanitizedInput.brand,
+          item_color: sanitizedInput.item_color,
           category: sanitizedInput.category,
           price: sanitizedInput.price,
           stock: sanitizedInput.stock,
@@ -328,6 +331,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       setAddFormData({
         item_name: "",
         item_brand: "",
+        item_color: "",
         category: "",
         price: 0,
         stock: 0,
@@ -502,10 +506,20 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                 <option value="Others">Others...</option>
               </select>
             </div>
-          </div>
-
-          {/* Price & Stock */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
+                ITEM COLOR
+              </label>
+              <input
+                name="item_color"
+                type="text"
+                value={addFormData.item_color}
+                required
+                placeholder="Carbon Gray"
+                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-14 px-6 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/60"
+                onChange={getInputValue}
+              />
+            </div>
             <div className="space-y-3">
               <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
                 PRICE (₱)
@@ -513,7 +527,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
               <input
                 name="price"
                 type="number"
-                min="0"
+                // min="0"
                 step="0.01"
                 value={addFormData.price}
                 required
@@ -522,6 +536,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={getInputValue}
               />
             </div>
+          </div>
+
+          {/* Price & Stock */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div className="space-y-3">
               <label className="text-sm text-font-color font-headline font-bold uppercase tracking-[0.3em]  inline-block border-l-2 border-secondary-container pl-2">
                 STOCK
