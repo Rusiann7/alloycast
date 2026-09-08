@@ -219,6 +219,7 @@ export default function AdminInventory() {
           price: editProductForm.price,
           stock: editProductForm.stock,
           item_image: imageUrl,
+          item_color: editProductForm.item_color,
         })
         .eq("id", editingProductId);
 
@@ -571,6 +572,9 @@ export default function AdminInventory() {
                           PRODUCT NAME
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          PRODUCT COLOR
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                           BRAND
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
@@ -673,6 +677,23 @@ export default function AdminInventory() {
                                 ) : (
                                   <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
                                     {item.item_name}
+                                  </p>
+                                )}
+                              </td>
+
+                              {/* Product Color */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <input
+                                    name="item_color"
+                                    type="text"
+                                    value={editProductForm.item_color ?? ""}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  />
+                                ) : (
+                                  <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                                    {item.item_color}
                                   </p>
                                 )}
                               </td>
