@@ -20,6 +20,7 @@ export default function StorePage() {
   const [inventory, setInventory] = useState([]);
   const [posDB, setPos] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [orderOption, setOrderOptions] = useState("Order");
   const [currentPage, setCurrentPage] = useState(1);
   // Reports tab date range (object form for DateRangePicker, defaults to last 30 days)
   const [reportDateRange, setReportDateRange] = useState({
@@ -144,19 +145,38 @@ export default function StorePage() {
   // Inline sales label derived from DateRangePicker selection
   const getSalesLabel = () => {
     if (!reportDateRange?.from) return "Sales";
-    const fromStr = new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const fromStr = new Date(reportDateRange.from).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
     const toStr = reportDateRange.to
-      ? new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      ? new Date(reportDateRange.to).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
       : fromStr;
     return `Sales (${fromStr} – ${toStr})`;
   };
 
   const getDateBadge = () => {
     if (!reportDateRange?.from) return "—";
-    const from = new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const from = new Date(reportDateRange.from).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
     const to = reportDateRange.to
-      ? new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-      : new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      ? new Date(reportDateRange.to).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : new Date(reportDateRange.from).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
     return `${from} – ${to}`;
   };
 
@@ -209,10 +229,18 @@ export default function StorePage() {
       XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
 
       const fromStr = new Date(reportDateRange?.from || new Date())
-        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
         .replace(/\s+/g, "_");
       const toStr = new Date(reportDateRange?.to || new Date())
-        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
         .replace(/\s+/g, "_");
 
       XLSX.writeFile(workbook, `Sales_Report_${fromStr}_to_${toStr}.xlsx`);
@@ -227,8 +255,7 @@ export default function StorePage() {
 
   const confirmItems = (item) => {
     if (item.stock <= 0) {
-      showToast("No Stock In The Inventory", "error");
-      return;
+      setOrderOptions("Reservation");
     }
     setSelectedItem(item);
     setIsOpen(true);
@@ -283,6 +310,23 @@ export default function StorePage() {
     }
   };
 
+  //add to wishlist or reservation
+
+  const insertWishlistItems = async (formData) => {
+    try {
+      const { error } = await supabase.from("Wishlist").insert({
+        product_id: selectedItem.id,
+        name: formData.userName,
+        email: formData.emailAddr,
+        quantity: formData.quantity,
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   //the shopping cart button
   const purchaseItems = async (formData) => {
     try {
@@ -290,8 +334,8 @@ export default function StorePage() {
         (item) => item.id === parseInt(selectedItem.id),
       );
 
-      if (!matchedItem || matchedItem.stock === 0) {
-        showToast("No Stock In The Inventory", "error");
+      if (formData.orderType === "Reservation" || matchedItem.stock === 0) {
+        insertWishlistItems();
         return;
       }
 
@@ -793,6 +837,7 @@ export default function StorePage() {
           isClose={() => setIsOpen(false)}
           selectedItem={selectedItem}
           onPurchase={purchaseItems}
+          selectedOrderOption={orderOption}
         />
       )}
 

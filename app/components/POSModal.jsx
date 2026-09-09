@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("./Toast"));
@@ -10,10 +10,12 @@ export default function POSModal({
   isClose,
   selectedItem,
   onPurchase,
+  selectedOrderOption,
 }) {
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [orderOptions, setOrderOptions] = useState("Order");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -65,13 +67,24 @@ export default function POSModal({
       return;
     }
 
-    onPurchase({ userName, emailAddr, quantity: parsedQuantity });
+    onPurchase({
+      userName,
+      emailAddr,
+      quantity: parsedQuantity,
+      orderType: orderOptions,
+    });
     setUserName("");
     setEmailAddr("");
     setQuantity(1);
   };
 
   if (!isOpen) return null;
+
+  useEffect(() => {
+    if (selectedOrderOption) {
+      setOrderOptions(selectedOrderOption);
+    }
+  }, [selectedOrderOption]);
 
   return (
     <div
@@ -109,6 +122,18 @@ export default function POSModal({
             </div>
 
             <div>
+              <label className="text-font-color text-lg mt-2">Type:</label>
+              <select
+                className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                value={orderOptions}
+                onChange={(e) => setOrderOptions(e.target.value)}
+              >
+                <option value="Order">Order</option>
+                <option value="Reservation">Reservation</option>
+              </select>
+            </div>
+
+            <div>
               <label className="text-font-color text-lg mt-2">
                 Customer Name:
               </label>
@@ -123,16 +148,34 @@ export default function POSModal({
             </div>
 
             <div>
-              <label className="text-font-color text-lg mt-2">
-                Customer Email (Optional):
-              </label>
-              <input
-                type="email"
-                placeholder="johndoe@gmail.com"
-                className="w-full bg-input-field text-white/90 p-2 rounded-lg"
-                value={emailAddr}
-                onChange={(e) => setEmailAddr(e.target.value)}
-              />
+              {orderOptions === "Order" ? (
+                <>
+                  <label className="text-font-color text-lg mt-2">
+                    Customer Email (Optional):
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="johndoe@gmail.com"
+                    className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                    value={emailAddr}
+                    onChange={(e) => setEmailAddr(e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <label className="text-font-color text-lg mt-2">
+                    Customer Email:
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="johndoe@gmail.com"
+                    className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                    value={emailAddr}
+                    onChange={(e) => setEmailAddr(e.target.value)}
+                    required
+                  />
+                </>
+              )}
             </div>
           </div>
           <div className="flex gap-3 mt-4">
