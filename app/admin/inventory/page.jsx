@@ -47,6 +47,7 @@ export default function AdminInventory() {
   const [historyData, setHistoryData] = useState([]);
   const [wishlistData, setWishlistData] = useState([]);
   const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
+  const [reservedItems, setReservedItems] = useState([]);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -102,6 +103,27 @@ export default function AdminInventory() {
     intializeFunction();
   }, [fetchInventoryProduct]);
 
+  const getReservedItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Reserved")
+        .select("*, Inventory(*)");
+
+      if (error) throw error;
+
+      setReservedItems(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const runGetReservedItems = async () => {
+      getReservedItems();
+    };
+    runGetReservedItems();
+  }, [getReservedItems]);
+
   // fetch wishlist data joined with Inventory and Customer
   useEffect(() => {
     const fetchWishlists = async () => {
@@ -117,10 +139,10 @@ export default function AdminInventory() {
           Inventory (id, item_name, item_image, brand, price, category),
           Users (
             id,
+            email,
             Customer (
               firstname,
-              lastname,
-              gender
+              lastname
             )
           )
           `,
@@ -426,6 +448,24 @@ export default function AdminInventory() {
       acc[dateKey].push(log);
       return acc;
     }, {});
+
+  const wishlistItems = [
+    ...wishlistData.map((item) => ({
+      ...item,
+      email: item.Users?.email || item.Users?.[0]?.email,
+      type: "Wishlist",
+    })),
+    ...reservedItems.map((item) => ({ ...item, type: "Reserved" })),
+  ];
+
+  const getWishlistCustomerName = (item) => {
+    const customer = Array.isArray(item.Users?.Customer)
+      ? item.Users.Customer[0]
+      : item.Users?.Customer;
+    const name =
+      `${customer?.firstname || ""} ${customer?.lastname || ""}`.trim();
+    return item.name || name || "Unknown";
+  };
 
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-hidden select-none">
@@ -1079,30 +1119,40 @@ export default function AdminInventory() {
                           Price
                         </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Type
+                        </th>
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
                           Customer
                         </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
-                          Gender
+                          Email
                         </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
-                          Wishlisted At
+                          Time
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.03]">
-                      {wishlistData
+                      {wishlistItems
                         .filter((w) => {
                           const q = wishlistSearchQuery.toLowerCase();
+                          if (!q) return true;
                           return (
                             w.Inventory?.item_name?.toLowerCase().includes(q) ||
                             w.Inventory?.brand?.toLowerCase().includes(q) ||
-                            w.Customer?.firstname?.toLowerCase().includes(q) ||
-                            w.Customer?.lastname?.toLowerCase().includes(q)
+                            w.Users?.Customer?.firstname
+                              ?.toLowerCase()
+                              .includes(q) ||
+                            w.Users?.Customer?.lastname
+                              ?.toLowerCase()
+                              .includes(q) ||
+                            w.name?.toLowerCase().includes(q) ||
+                            w.email?.toLowerCase().includes(q)
                           );
                         })
                         .map((w) => (
                           <tr
-                            key={w.id}
+                            key={`${w.type}-${w.id}`}
                             className="group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container/30"
                           >
                             {/* Product */}
@@ -1146,17 +1196,25 @@ export default function AdminInventory() {
                                 ? `₱${Number(w.Inventory.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
                                 : "—"}
                             </td>
+                            {/* Type */}
+                            <td
+                              className={`p-5 text-sm font-black uppercase tracking-wider ${
+                                w.type === "Reserved"
+                                  ? "text-amber-400"
+                                  : "text-blue-400"
+                              }`}
+                            >
+                              {w.type}
+                            </td>
                             {/* Customer */}
                             <td className="p-5">
                               <p className="font-black text-sm uppercase tracking-tight">
-                                {w.Customer
-                                  ? `${w.Customer.firstname || ""} ${w.Customer.lastname || ""}`.trim()
-                                  : "Unknown"}
+                                {getWishlistCustomerName(w)}
                               </p>
                             </td>
-                            {/* Gender */}
+                            {/* Email */}
                             <td className="p-5 text-sm font-bold uppercase tracking-wider text-white/60">
-                              {w.Customer?.gender || "—"}
+                              {w.email || w.Users?.email || "—"}
                             </td>
                             {/* Wishlisted At */}
                             <td className="p-5 text-sm font-black uppercase tracking-widest text-white/70">
@@ -1173,17 +1231,24 @@ export default function AdminInventory() {
                             </td>
                           </tr>
                         ))}
-                      {wishlistData.filter((w) => {
+                      {wishlistItems.filter((w) => {
                         const q = wishlistSearchQuery.toLowerCase();
+                        if (!q) return true;
                         return (
                           w.Inventory?.item_name?.toLowerCase().includes(q) ||
                           w.Inventory?.brand?.toLowerCase().includes(q) ||
-                          w.Customer?.firstname?.toLowerCase().includes(q) ||
-                          w.Customer?.lastname?.toLowerCase().includes(q)
+                          w.Users?.Customer?.firstname
+                            ?.toLowerCase()
+                            .includes(q) ||
+                          w.Users?.Customer?.lastname
+                            ?.toLowerCase()
+                            .includes(q) ||
+                          w.name?.toLowerCase().includes(q) ||
+                          w.email?.toLowerCase().includes(q)
                         );
                       }).length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-20 text-center">
+                          <td colSpan={8} className="py-20 text-center">
                             <div className="flex flex-col items-center justify-center opacity-60">
                               <span className="material-symbols-outlined text-5xl mb-3 text-white/60">
                                 favorite

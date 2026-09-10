@@ -314,7 +314,7 @@ export default function StorePage() {
 
   const insertWishlistItems = async (formData) => {
     try {
-      const { error } = await supabase.from("Wishlist").insert({
+      const { error } = await supabase.from("Reserved").insert({
         product_id: selectedItem.id,
         name: formData.userName,
         email: formData.emailAddr,
@@ -335,7 +335,9 @@ export default function StorePage() {
       );
 
       if (formData.orderType === "Reservation" || matchedItem.stock === 0) {
-        insertWishlistItems();
+        await insertWishlistItems(formData);
+        showToast("Reserved Successfully", "success");
+        setIsOpen(false);
         return;
       }
 
