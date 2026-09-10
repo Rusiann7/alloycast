@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 
 const DynamicToast = dynamic(() => import("./Toast"));
@@ -15,7 +15,9 @@ export default function POSModal({
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [orderOptions, setOrderOptions] = useState("Order");
+  const [orderOptions, setOrderOptions] = useState(
+    selectedOrderOption || "Order",
+  );
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -34,7 +36,11 @@ export default function POSModal({
     } else {
       const parsed = parseInt(value, 10);
       if (!isNaN(parsed)) {
-        if (parsed > selectedItem?.stock) {
+        if (
+          orderOptions === "Order" &&
+          selectedItem?.stock > 0 &&
+          parsed > selectedItem.stock
+        ) {
           setQuantity(selectedItem.stock);
           showToast(
             `Quantity capped at maximum available stock (${selectedItem.stock})`,
@@ -55,7 +61,12 @@ export default function POSModal({
       showToast("Please enter a valid quantity of at least 1.", "error");
       return;
     }
-    if (parsedQuantity > selectedItem?.stock) {
+    if (
+      selectedItem?.stock > 0 &&
+      parsedQuantity > selectedItem.stock &&
+      orderOptions === "Order"
+    ) {
+      console.log(orderOptions, parsedQuantity, selectedItem?.stock);
       showToast(
         `Cannot purchase more than the available stock of ${selectedItem.stock} units.`,
         "error",
@@ -79,12 +90,6 @@ export default function POSModal({
   };
 
   if (!isOpen) return null;
-
-  useEffect(() => {
-    if (selectedOrderOption) {
-      setOrderOptions(selectedOrderOption);
-    }
-  }, [selectedOrderOption]);
 
   return (
     <div
