@@ -87,6 +87,7 @@ const OrderCancellationModal = ({
   );
 };
 
+// TO BE CONTINUE
 export default function Account() {
   const supabase = createClient();
   const router = useRouter();
@@ -98,8 +99,10 @@ export default function Account() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState(null);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [wishlistData, setWishlistData] = useState([]);
   const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -139,14 +142,30 @@ export default function Account() {
 
         // 3. Manually fetch Inventory details for these reservations (Manual Join)
         if (reservationData && reservationData.length > 0) {
-          const inventoryIds = reservationData.map((r) => r.inventory_id);
+          const inventoryIds = [
+            ...new Set(
+              reservationData
+                .map((reservation) => reservation.inventory_id)
+                .filter(
+                  (inventoryId) =>
+                    inventoryId !== null &&
+                    inventoryId !== undefined &&
+                    inventoryId !== "" &&
+                    inventoryId !== "null",
+                ),
+            ),
+          ];
 
-          const { data: inventoryData, error: inventoryError } = await supabase
-            .from("Inventory")
-            .select("id, item_name, brand, item_image")
-            .in("id", inventoryIds);
+          let inventoryData = [];
+          if (inventoryIds.length > 0) {
+            const { data, error: inventoryError } = await supabase
+              .from("Inventory")
+              .select("id, item_name, brand, item_image")
+              .in("id", inventoryIds);
 
-          if (inventoryError) throw inventoryError;
+            if (inventoryError) throw inventoryError;
+            inventoryData = data || [];
+          }
 
           // Merge the data manually
           const mergedData = reservationData.map((res) => ({
@@ -252,6 +271,53 @@ export default function Account() {
       showToast("Failed to cancel reservation, try again later", "error");
     } finally {
       setIsCanceling(false);
+    }
+  };
+
+  const confirmReservation = async (reservation) => {
+    setIsConfirming(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from("Reservation")
+        .update({ fulfillment_status: "Confirmed" })
+        .eq("id", reservation.id);
+
+      if (updateError) throw updateError;
+
+      setReservations((prev) =>
+        prev.map((item) =>
+          item.id === reservation.id
+            ? { ...item, fulfillment_status: "Confirmed" }
+            : item,
+        ),
+      );
+
+      const response = await fetch(
+        "/api/notifications/send-confirmation-email",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reservationId: reservation.id }),
+        },
+      );
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error || "Confirmation email could not be sent.",
+        );
+      }
+
+      showToast("Order confirmation successful!", "success");
+    } catch (error) {
+      console.error("Order confirmation failed:", error.message);
+      showToast(
+        "Order confirmed, but the admin email could not be sent.",
+        "error",
+      );
+    } finally {
+      setIsConfirming(false);
     }
   };
 
@@ -449,16 +515,19 @@ export default function Account() {
                       className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-all cursor-pointer hover:scale-105"
                     >
                       <div className="relative w-full sm:w-40 h-64 sm:h-40 rounded flex items-center justify-center p-3 flex-shrink-0 transition-transform duration-500 overflow-hidden">
-                        <Image
-                          src={
-                            res.Inventory?.item_image ||
-                            "https://via.placeholder.com/150"
-                          }
-                          alt={res.Inventory?.item_name}
-                          className="object-contain p-2"
-                          fill
-                          sizes="(max-width: 768px) 100vw, 160px"
-                        />
+                        {res.Inventory?.item_image ? (
+                          <Image
+                            src={res.Inventory.item_image}
+                            alt={res.Inventory?.item_name || "Product image"}
+                            className="object-contain p-2"
+                            fill
+                            sizes="(max-width: 768px) 100vw, 160px"
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined text-white/20 text-5xl">
+                            image
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1 text-center sm:text-left">
                         <p className="text-sm font-black uppercase tracking-widest text-white/90 mb-1 leading-none">
@@ -512,6 +581,21 @@ export default function Account() {
                                 close
                               </span>
                               Cancel
+                            </button>
+                          )}
+                          {res.fulfillment_status === "Shipped" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                confirmReservation(res);
+                              }}
+                              disabled={isConfirming}
+                              className="bg-green-500 p-2 transition-colors flex items-center gap-1 group/confirm rounded-lg text-xs disabled:opacity-50"
+                            >
+                              <span className="material-symbols-outlined text-xs group-hover/confirm:scale-110 transition-transform">
+                                {isConfirming ? "progress_activity" : "check"}
+                              </span>
+                              {isConfirming ? "Confirming..." : "Confirm"}
                             </button>
                           )}
                         </div>
