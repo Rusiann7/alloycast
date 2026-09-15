@@ -257,6 +257,7 @@ export default function AdminInventory() {
         item_image: imageUrl || oldRow.item_image,
         user_id: user?.id || null,
         comment: commentDetail,
+        color: editProductForm.item_color,
       });
 
       if (historyError) throw historyError;
@@ -374,6 +375,8 @@ export default function AdminInventory() {
   const getLogInfo = (log) => {
     const comment = log.comment || "Updated";
     const itemName = log.item_name || "Unknown Product";
+    const color = log.color ? ` (${log.color})` : "";
+    const productName = `${itemName}${color}`;
     const brand = log.brand ? ` (${log.brand})` : "";
     const stock = log.stock !== undefined && log.stock !== null ? log.stock : 0;
 
@@ -384,34 +387,34 @@ export default function AdminInventory() {
     const lowerComment = comment.toLowerCase();
 
     if (lowerComment.includes("added") || lowerComment.includes("new")) {
-      description = `Added product "${itemName}"${brand} to inventory with ${stock} unit${stock !== 1 ? "s" : ""}.`;
+      description = `Added product "${productName}"${brand} to inventory with ${stock} unit${stock !== 1 ? "s" : ""}.`;
       tag = "PRODUCT ADDED";
       tagColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
     } else if (
       lowerComment.includes("deleted") ||
       lowerComment.includes("removed")
     ) {
-      description = `Removed product "${itemName}"${brand} from inventory.`;
+      description = `Removed product "${productName}"${brand} from inventory.`;
       tag = "PRODUCT REMOVED";
       tagColor = "text-red-400 bg-red-500/10 border-red-500/20";
     } else if (lowerComment.includes("discount")) {
-      description = `Added discount for "${itemName}"${brand}. ${comment}.`;
+      description = `Added discount for "${productName}"${brand}. ${comment}.`;
       tag = "DISCOUNT ADDED";
       tagColor = "text-purple-400 bg-purple-500/10 border-purple-500/20";
     } else if (lowerComment.includes("increased")) {
-      description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
+      description = `Updated stock for "${productName}"${brand}. ${comment}.`;
       tag = "STOCK INCREASE";
       tagColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
     } else if (lowerComment.includes("decreased")) {
-      description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
+      description = `Updated stock for "${productName}"${brand}. ${comment}.`;
       tag = "STOCK DECREASE";
       tagColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
     } else if (lowerComment.includes("price")) {
-      description = `Updated price for "${itemName}"${brand}. ${comment}.`;
+      description = `Updated price for "${productName}"${brand}. ${comment}.`;
       tag = "PRICE UPDATE";
       tagColor = "text-blue-400 bg-blue-500/10 border-blue-500/20";
     } else {
-      description = `Updated stock & inventory details for "${itemName}"${brand}. Current stock: ${stock} unit${stock !== 1 ? "s" : ""}.`;
+      description = `Updated stock & inventory details for "${productName}"${brand}. Current stock: ${stock} unit${stock !== 1 ? "s" : ""}.`;
       tag = "STOCK UPDATE";
       tagColor = "text-[#d4af37] bg-[#d4af37]/10 border-[#d4af37]/20";
     }
@@ -541,7 +544,7 @@ export default function AdminInventory() {
                   : "text-white/40 hover:text-white/80"
               }`}
             >
-              <span>WISHLIST</span>
+              <span>WISHLIST/RESERVATION</span>
               {wishlistData.length > 0 && (
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${

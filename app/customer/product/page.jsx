@@ -28,6 +28,8 @@ export default function Product() {
   const [selectedCategory, setSelectedCategory] = useState("All"); // for category filters
   const [selectedBrands, setSelectedBrands] = useState([]); // for selecting brand filters
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]); // for price range filters
+  const [selectedColors, setSelectedColors] = useState([]); // for selecting color filters
+  const [showAllColors, setShowAllColors] = useState(false);
   const [sortBy, setSortBy] = useState("latest"); // for sorting
   const [loading, setLoading] = useState(true);
 
@@ -84,17 +86,40 @@ export default function Product() {
 
   // Price range definitions: each entry has a label, min, and max (null = no upper bound)
   const PRICE_RANGES = [
-    { label: "₱100 – ₱300",  min: 100, max: 300  },
-    { label: "₱300 – ₱600",  min: 300, max: 600  },
-    { label: "₱600 – ₱800",  min: 600, max: 800  },
-    { label: "₱800 & Above", min: 800, max: null  },
+    { label: "₱100 – ₱300", min: 100, max: 300 },
+    { label: "₱300 – ₱600", min: 300, max: 600 },
+    { label: "₱600 – ₱800", min: 600, max: 800 },
+    { label: "₱800 & Above", min: 800, max: null },
   ];
 
   const filterPriceRange = (label) => {
     setSelectedPriceRanges((prev) =>
-      prev.includes(label)
-        ? prev.filter((r) => r !== label)
-        : [...prev, label],
+      prev.includes(label) ? prev.filter((r) => r !== label) : [...prev, label],
+    );
+    setCurrentPage(1);
+  };
+
+  const availableColors = inventory
+    .map((item) => item.item_color)
+    .filter(
+      (color, index, colors) =>
+        color &&
+        !colors.find(
+          (existingColor, existingIndex) =>
+            existingIndex < index &&
+            existingColor &&
+            existingColor.toLowerCase() === color.toLowerCase(),
+        ),
+    );
+  const displayedColors = showAllColors
+    ? availableColors
+    : availableColors.slice(0, 5);
+
+  const filterColor = (color) => {
+    setSelectedColors((prev) =>
+      prev.includes(color)
+        ? prev.filter((selectedColor) => selectedColor !== color)
+        : [...prev, color],
     );
     setCurrentPage(1);
   };
@@ -113,6 +138,12 @@ export default function Product() {
       const matchesBrand =
         selectedBrands.length === 0 || selectedBrands.includes(item.brand);
 
+      const matchesColor =
+        selectedColors.length === 0 ||
+        selectedColors.find(
+          (color) => color.toLowerCase() === item.item_color?.toLowerCase(),
+        );
+
       // price range filtering – passes if no range selected, or item.price falls in ANY selected range
       const matchesPrice =
         selectedPriceRanges.length === 0 ||
@@ -125,7 +156,13 @@ export default function Product() {
             : price >= range.min && price <= range.max;
         });
 
-      return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesBrand &&
+        matchesPrice &&
+        matchesColor
+      );
     })
     .sort((a, b) => {
       // sorts price in ascending order
@@ -240,6 +277,33 @@ export default function Product() {
                     onChange={() => filterPriceRange(range.label)}
                   />
                 ))}
+              </FilterSection>
+            </div>
+          </aside>
+          <aside className="hidden md:flex flex-col w-[280px] shrink-0 bg-secondary-container p-8 rounded-lg carbon-noise h-fit mt-10 reveal-up drop-shadow-lg/50">
+            <h2 className="font-headline text-2xl text-white/90 font-black uppercase mb-8 border-b border-white/5F pb-4 tracking-tighter italic">
+              Filter by Color
+            </h2>
+
+            <div className="space-y-12">
+              <FilterSection title="Colors">
+                {displayedColors.map((color) => (
+                  <FilterCheckbox
+                    key={color}
+                    label={color}
+                    checked={selectedColors.includes(color)}
+                    onChange={() => filterColor(color)}
+                  />
+                ))}
+                {availableColors.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllColors((prev) => !prev)}
+                    className="text-left text-sm font-black uppercase tracking-widest text-primary-container hover:text-white transition-colors"
+                  >
+                    {showAllColors ? "Show Less" : "Show More"}
+                  </button>
+                )}
               </FilterSection>
             </div>
           </aside>

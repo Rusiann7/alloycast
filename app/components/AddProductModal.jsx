@@ -320,6 +320,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       item_image: imageUrl,
       user_id: user.id,
       comment: "Added",
+      color: sanitizedInput.item_color,
     });
 
     if (historyError) throw historyError;
