@@ -63,7 +63,7 @@ const Track = styled.div`
   display: flex;
   width: max-content;
   gap: 24px;
-  animation: scroll ${(props) => props.$speed || 30}s linear infinite;
+  // animation: scroll ${(props) => props.$speed || 30}s linear infinite;
 
   /* Pause sliding when the user hovers over any card so they can easily click links */
   &:hover {

@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "../lib/supabase/client";
 import dynamic from "next/dynamic";
 import { Phone } from "lucide-react";
@@ -155,7 +156,7 @@ export default function LandingPage() {
       >
         {/* Video Background — deepest layer, behind DotGrid */}
         <video
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover dark:opacity-50"
           style={{ zIndex: -55, filter: "hue-rotate(55deg) saturate(1.3)" }}
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260227_042027_c4b2f2ea-1c7c-4d6e-9e3d-81a78063703f.mp4"
           autoPlay
@@ -166,7 +167,10 @@ export default function LandingPage() {
 
         {!discountItems ? null : (
           <div className="w-full bg-red-600 text-white py-2 font-bold uppercase tracking-wider z-50  mt-20 overflow-hidden whitespace-nowrap flex">
-            <div className="marquee flex-shrink-0">
+            <div
+              className="marquee flex-shrink-0 cursor-pointer"
+              onClick={() => router.push("/customer/on-sale")}
+            >
               {/* Duplicate the content to create a seamless looping effect */}
               {[1, 2].map((loopId) => (
                 <span key={loopId}>
@@ -212,44 +216,74 @@ export default function LandingPage() {
             Your exclusive source for limited-edition diecast brands. Reserved
             for elite collectors.
           </p>
-
-          {/* Browse Products button */}
-          <Link
-            href="/customer/product"
-            className="btn-clipped inline-flex items-center gap-2 bg-primary-container text-black/90 text-xs font-bold uppercase tracking-widest px-7 py-3.5 transition-all hover:opacity-90 active:scale-95"
-          >
-            Browse Products
-            <span className="material-symbols-outlined text-[14px] leading-none">
-              arrow_forward
-            </span>
-          </Link>
-        </div>
-
-        {/* ── Liquid Glass Consultation Card — Bottom Left ──── */}
-        <div className="relative z-20 px-8 lg:px-16 pb-10">
-          <div className="liquid-glass rounded-xl p-5 max-w-[300px] flex items-center gap-4">
-            {/* Icon bubble — primary-container/black */}
-            <div className="btn-clipped flex-shrink-0 w-10 h-10 bg-primary-container flex items-center justify-center">
-              <Phone size={16} className="text-black" strokeWidth={2.5} />
-            </div>
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-xs font-bold uppercase tracking-widest mb-0.5">
-                How It Works
-              </p>
-              <p className="text-white/50 text-[11px] leading-snug">
-                See how to reserve & collect
-              </p>
-            </div>
-            {/* Pill CTA — secondary-container */}
+          <div className="flex gap-3">
             <button
+              className="btn-clipped  bg-primary-container text-black/90 text-xs font-bold uppercase tracking-widest px-7 py-3.5 transition-all hover:opacity-90 active:scale-95"
               onClick={() => setHowItWorksModal(true)}
-              className="btn-clipped flex-shrink-0 bg-primary-container text-black/90 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 transition-opacity hover:opacity-80"
             >
-              Learn
+              How It Works
             </button>
+            {/* Browse Products button */}
+            <Link
+              href="/customer/product"
+              className="btn-clipped inline-flex items-center gap-2 bg-primary-container text-black/90 text-xs font-bold uppercase tracking-widest px-7 py-3.5 transition-all hover:opacity-90 active:scale-95"
+            >
+              Browse Products
+              <span className="material-symbols-outlined text-[14px] leading-none">
+                arrow_forward
+              </span>
+            </Link>
           </div>
         </div>
+
+        {inventory.length > 0 && (
+          <div className="m-6 p-0 ">
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-[0.3em] text-primary-container">
+                  Available now!
+                </h2>
+                <p className="mt-1 text-md font-medium text-white/80">
+                  Explore what is in stock today
+                </p>
+              </div>
+              <Link
+                href="/customer/product"
+                className="shrink-0 text-2xl font-black uppercase tracking-widest text-white underline decoration-primary-container decoration-2 underline-offset-4 transition-colors hover:text-primary-container"
+              >
+                View all
+              </Link>
+            </div>
+
+            <div className="flex snap-x gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {inventory.slice(0, 6).map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/customer/productDetail?id=${product.id}`}
+                  className="bg-primary-container/70 group flex min-w-[220px] snap-start items-center gap-3 rounded-lg p-2.5 transition-transform hover:-translate-y-1 sm:min-w-[240px]"
+                >
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-black/30 sm:size-[72px]">
+                    <Image
+                      fill
+                      sizes="72px"
+                      src={product.item_image || "/placeholder-car.png"}
+                      alt={product.item_name || "Diecast product"}
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-[9px] font-black uppercase tracking-widest text-white/90">
+                      {product.brand || "Diecast"}
+                    </p>
+                    <h2 className="mt-1 line-clamp-2 text-xs font-black uppercase leading-tight text-white">
+                      {product.item_name}
+                    </h2>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
       {/* ── End Targo Hero ────────────────────────────────────── */}
 
@@ -261,13 +295,22 @@ export default function LandingPage() {
       {/* Discounted Products */}
       {!discountItems || discountItems.length === 0 ? null : (
         <section className="py-10">
-          <div className="container mx-auto px-6 lg:px-12">
+          <div className="container mx-auto px-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
               <div>
                 <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md drop-shadow-xl/30">
                   On Sale Products
                 </h2>
               </div>
+              <button
+                onClick={() => router.push("/customer/on-sale")}
+                className="group flex items-center gap-2 border border-primary-container bg-primary-container p-3 rounded-xl italic tracking-tight uppercase text-md font-black text-black/90 drop-shadow-xl/30"
+              >
+                View More
+                <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
+                  arrow_right
+                </span>
+              </button>
             </div>
 
             <DynamicProductCarousel
@@ -281,7 +324,7 @@ export default function LandingPage() {
 
       {/* Top Products */}
       <section className="py-10">
-        <div className="container mx-auto px-6 lg:px-12">
+        <div className="container mx-auto px-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
             <div>
               <h2 className="font-headline font-black text-4xl  uppercase italic tracking-tight mb-2 text-font-color text-md drop-shadow-xl/30">

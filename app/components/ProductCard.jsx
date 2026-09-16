@@ -11,6 +11,7 @@ export default function ProductCard({
   tag,
   tagColor,
   showPrice = true,
+  showDiscountPrice = false,
 }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -75,9 +76,20 @@ export default function ProductCard({
           {/* Pricing & Call-To-Action Footer Area */}
           <div className="card__footer mt-2 flex items-center justify-between">
             {showPrice && product.price ? (
-              <p className="card__price font-black text-base mb-2 text-black/90">
-                ₱{product.price}
-              </p>
+              showDiscountPrice && product.discount ? (
+                <div className="mb-2 flex flex-col font-black text-black/90">
+                  <span className="text-xs text-black/50 line-through">
+                    ₱{product.price}
+                  </span>
+                  <span className="card__price text-base text-red-700">
+                    ₱{Number(product.price) - Number(product.discount)}
+                  </span>
+                </div>
+              ) : (
+                <p className="card__price mb-2 text-base font-black text-black/90">
+                  ₱{product.price}
+                </p>
+              )
             ) : null}
 
             <div className="flex items-center gap-3">
