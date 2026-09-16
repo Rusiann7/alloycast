@@ -32,6 +32,7 @@ export default function AdminReservations() {
   const [reservationDB, setReservationDB] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dropdownValue, setDropdownValue] = useState("");
   const [loading, setLoading] = useState(true);
   // Reports tab date range (object form for DateRangePicker)
   const [reportDateRange, setReportDateRange] = useState({
@@ -419,6 +420,11 @@ export default function AdminReservations() {
     }
   };
 
+  const getSortedItems = (event) => {
+    setDropdownValue(event.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
@@ -511,16 +517,7 @@ export default function AdminReservations() {
           className="flex items-center gap-10  mb-10 overflow-x-auto scrollbar-hide reveal-up"
           style={{ animationDelay: "0.1s" }}
         >
-          {[
-            "All Items",
-            "Shipped",
-            "Pending Pickup",
-            "Pending Shipping",
-            "Completed",
-            "Declined",
-            "Cancelled",
-            "Reports",
-          ].map((tab) => (
+          {["All Items", "Reports"].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -582,6 +579,21 @@ export default function AdminReservations() {
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Status
+                        <select
+                          value={dropdownValue}
+                          className="bg-secondary-container text-center rounded-lg p-2 uppercase font-black"
+                          onChange={getSortedItems}
+                        >
+                          <option value="">All Items</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Declined">Declined</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Pending Pickup">Pending Pickup</option>
+                          <option value="Pending Shipping">
+                            Pending Shipping
+                          </option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
                       </th>
 
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
@@ -590,12 +602,12 @@ export default function AdminReservations() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.02]">
-                    {reservation
-                      .filter((res) =>
-                        activeTab === "All Items"
-                          ? true
-                          : res.fulfillment_status === activeTab,
-                      )
+                    {(dropdownValue
+                      ? reservation.filter(
+                          (res) => res.fulfillment_status === dropdownValue,
+                        )
+                      : reservation
+                    )
                       .slice(
                         (currentPage - 1) * itemsPerPage,
                         currentPage * itemsPerPage,

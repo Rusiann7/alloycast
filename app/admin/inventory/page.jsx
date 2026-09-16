@@ -103,7 +103,7 @@ export default function AdminInventory() {
     intializeFunction();
   }, [fetchInventoryProduct]);
 
-  const getReservedItems = async () => {
+  const getReservedItems = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("Reserved")
@@ -115,7 +115,7 @@ export default function AdminInventory() {
     } catch (error) {
       console.log(error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const runGetReservedItems = async () => {
@@ -825,8 +825,14 @@ export default function AdminInventory() {
                                     className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                                   />
                                 ) : (
-                                  <p className="text-md text-white font-headline font-bold">
-                                    {item.stock}
+                                  <p
+                                    className={
+                                      Number(item.stock) < 2
+                                        ? "text-red-400 font-bold text-xl"
+                                        : "text-white"
+                                    }
+                                  >
+                                    {item.stock}/5
                                   </p>
                                 )}
                               </td>
@@ -884,10 +890,10 @@ export default function AdminInventory() {
                                           setItemToDelete(item);
                                           setDeleteModalOpen(true);
                                         }}
-                                        className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
+                                        className="w-8 h-8 flex items-center justify-center bg-red-400 rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                                       >
                                         <span className="material-symbols-outlined text-sm">
-                                          delete
+                                          archive
                                         </span>
                                       </button>
                                     </>
