@@ -792,20 +792,22 @@ export default function AdminDashboard() {
                   className={`px-6 py-2 rounded-full border text-sm font-black uppercase tracking-[0.2em] ${
                     activeReservation.fulfillment_status === "Completed"
                       ? "text-green-500 border-green-500/20 bg-green-500/5"
-                      : activeReservation.fulfillment_status === "Shipped"
+                      : activeReservation.fulfillment_status === "Confirmed"
                         ? "text-green-500 border-green-500/20 bg-green-500/5"
-                        : activeReservation.fulfillment_status === "Pending"
-                          ? "text-font-color border-primary-container/20 bg-primary-container"
-                          : activeReservation.fulfillment_status ===
-                              "Pending Pickup"
+                        : activeReservation.fulfillment_status === "Shipped"
+                          ? "text-green-500 border-green-500/20 bg-green-500/5"
+                          : activeReservation.fulfillment_status === "Pending"
                             ? "text-font-color border-primary-container/20 bg-primary-container"
                             : activeReservation.fulfillment_status ===
-                                "Pending Shipping"
+                                "Pending Pickup"
                               ? "text-font-color border-primary-container/20 bg-primary-container"
                               : activeReservation.fulfillment_status ===
-                                  "Declined"
-                                ? "bg-on-primary  border-white/10 "
-                                : "text-red-500 border-red-500/20 bg-red-500/5"
+                                  "Pending Shipping"
+                                ? "text-font-color border-primary-container/20 bg-primary-container"
+                                : activeReservation.fulfillment_status ===
+                                    "Declined"
+                                  ? "bg-on-primary  border-white/10 "
+                                  : "text-red-500 border-red-500/20 bg-red-500/5"
                   }`}
                 >
                   Status: {activeReservation.fulfillment_status}
