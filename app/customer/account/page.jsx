@@ -139,14 +139,20 @@ export default function Account() {
 
         // 3. Manually fetch Inventory details for these reservations (Manual Join)
         if (reservationData && reservationData.length > 0) {
-          const inventoryIds = reservationData.map((r) => r.inventory_id);
+          const inventoryIds = reservationData
+            .map((reservation) => reservation.inventory_id)
+            .filter((id) => id !== null && id !== undefined && id !== "null");
 
-          const { data: inventoryData, error: inventoryError } = await supabase
-            .from("Inventory")
-            .select("id, item_name, brand, item_image")
-            .in("id", inventoryIds);
+          let inventoryData = [];
+          if (inventoryIds.length > 0) {
+            const { data, error: inventoryError } = await supabase
+              .from("Inventory")
+              .select("id, item_name, brand, item_image")
+              .in("id", inventoryIds);
 
-          if (inventoryError) throw inventoryError;
+            if (inventoryError) throw inventoryError;
+            inventoryData = data || [];
+          }
 
           // Merge the data manually
           const mergedData = reservationData.map((res) => ({
@@ -449,23 +455,26 @@ export default function Account() {
                       className="bg-secondary-container border border-white/5 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 shadow-lg/30 transition-all cursor-pointer hover:scale-105"
                     >
                       <div className="relative w-full sm:w-40 h-64 sm:h-40 rounded flex items-center justify-center p-3 flex-shrink-0 transition-transform duration-500 overflow-hidden">
-                        <Image
-                          src={
-                            res.Inventory?.item_image ||
-                            "https://via.placeholder.com/150"
-                          }
-                          alt={res.Inventory?.item_name}
-                          className="object-contain p-2"
-                          fill
-                          sizes="(max-width: 768px) 100vw, 160px"
-                        />
+                        {res.Inventory?.item_image ? (
+                          <Image
+                            src={res.Inventory.item_image}
+                            alt={res.Inventory.item_name || "Product"}
+                            className="object-contain p-2"
+                            fill
+                            sizes="(max-width: 768px) 100vw, 160px"
+                          />
+                        ) : (
+                          <span className="text-center text-sm font-black uppercase tracking-widest text-white/60">
+                            Product not found
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1 text-center sm:text-left">
                         <p className="text-sm font-black uppercase tracking-widest text-white/90 mb-1 leading-none">
-                          {res.Inventory?.brand}
+                          {res.Inventory?.brand || "Product not found"}
                         </p>
                         <h3 className="font-headline text-xl font-bold uppercase tracking-tight text-white/90 mb-3 sm:mb-2 leading-none">
-                          {res.Inventory?.item_name}
+                          {res.Inventory?.item_name || "Product not found"}
                         </h3>
                         <div className="flex items-center justify-center sm:justify-start gap-4 text-xs text-white font-black uppercase tracking-widest">
                           <span>
@@ -478,41 +487,45 @@ export default function Account() {
                               },
                             )}
                           </span>
-                          <span
-                            className={`p-2 rounded-lg text-md ${
-                              res.fulfillment_status === "Completed"
-                                ? "bg-green-500 text-white/90 border border-green-500/20"
-                                : res.fulfillment_status === "Declined"
-                                  ? "bg-on-primary text-white/90  border border-red-500/20"
-                                  : res.fulfillment_status === "Cancelled"
-                                    ? "bg-on-primary text-white/90 border border-red-500/20"
-                                    : "bg-primary-container text-font-color border border-yellow-500/20"
-                            }`}
-                          >
-                            {res.fulfillment_status || "Pending"}
-                          </span>
-                          {(res.fulfillment_status === "Pending Pickup" ||
-                            res.fulfillment_status === "Pending Shipping" ||
-                            !res.fulfillment_status) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setReservationToCancel({
-                                  reservationId: res.id,
-                                  inventoryId: res.inventory_id,
-                                  quantity: res.quantity,
-                                  itemName:
-                                    res.Inventory?.item_name || "this item",
-                                });
-                                setCancelModalOpen(true);
-                              }}
-                              className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
-                            >
-                              <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
-                                close
+                          {res.Inventory && (
+                            <>
+                              <span
+                                className={`p-2 rounded-lg text-md ${
+                                  res.fulfillment_status === "Completed"
+                                    ? "bg-green-500 text-white/90 border border-green-500/20"
+                                    : res.fulfillment_status === "Declined"
+                                      ? "bg-on-primary text-white/90  border border-red-500/20"
+                                      : res.fulfillment_status === "Cancelled"
+                                        ? "bg-on-primary text-white/90 border border-red-500/20"
+                                        : "bg-primary-container text-font-color border border-yellow-500/20"
+                                }`}
+                              >
+                                {res.fulfillment_status || "Pending"}
                               </span>
-                              Cancel
-                            </button>
+                              {(res.fulfillment_status === "Pending Pickup" ||
+                                res.fulfillment_status === "Pending Shipping" ||
+                                !res.fulfillment_status) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReservationToCancel({
+                                      reservationId: res.id,
+                                      inventoryId: res.inventory_id,
+                                      quantity: res.quantity,
+                                      itemName:
+                                        res.Inventory?.item_name || "this item",
+                                    });
+                                    setCancelModalOpen(true);
+                                  }}
+                                  className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
+                                >
+                                  <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
+                                    close
+                                  </span>
+                                  Cancel
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
