@@ -43,6 +43,7 @@ export default function AdminInventory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyTagFilter, setHistoryTagFilter] = useState("ALL");
   const [user, setUser] = useState(null); // for checking auth users
   const [historyData, setHistoryData] = useState([]);
   const [wishlistData, setWishlistData] = useState([]);
@@ -424,15 +425,20 @@ export default function AdminInventory() {
 
   const groupedHistory = historyData
     .filter((log) => {
-      if (!historySearchQuery) return true;
+      const matchesTag =
+        historyTagFilter === "ALL" || getLogInfo(log).tag === historyTagFilter;
+
+      if (!historySearchQuery) return matchesTag;
+
       const query = historySearchQuery.toLowerCase();
       const itemName = (log.item_name || "").toLowerCase();
       const brand = (log.brand || "").toLowerCase();
       const comment = (log.comment || "").toLowerCase();
       return (
-        itemName.includes(query) ||
-        brand.includes(query) ||
-        comment.includes(query)
+        matchesTag &&
+        (itemName.includes(query) ||
+          brand.includes(query) ||
+          comment.includes(query))
       );
     })
     .reduce((acc, log) => {
@@ -971,7 +977,7 @@ export default function AdminInventory() {
             <div className="space-y-8 reveal-up">
               {/* History Filter Bar */}
               <div
-                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex items-center gap-4 sm:gap-5"
+                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex flex-col items-center gap-4 sm:gap-5"
                 style={{ animationDelay: "0.1s" }}
               >
                 <div className="w-full flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
@@ -986,6 +992,22 @@ export default function AdminInventory() {
                     className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
                   />
                 </div>
+              </div>
+              <div className="flex justify-end">
+                <select
+                  value={historyTagFilter}
+                  onChange={(e) => setHistoryTagFilter(e.target.value)}
+                  className="w-md h-12 border border-primary-container rounded-lg px-4 bg-input-field text-sm font-headline font-bold uppercase tracking-widest text-white/90 outline-none"
+                >
+                  <option value="ALL">ALL TAGS</option>
+                  <option value="PRODUCT ADDED">PRODUCT ADDED</option>
+                  <option value="PRODUCT REMOVED">PRODUCT REMOVED</option>
+                  <option value="DISCOUNT ADDED">DISCOUNT ADDED</option>
+                  <option value="STOCK INCREASE">STOCK INCREASE</option>
+                  <option value="STOCK DECREASE">STOCK DECREASE</option>
+                  <option value="PRICE UPDATE">PRICE UPDATE</option>
+                  <option value="STOCK UPDATE">STOCK UPDATE</option>
+                </select>
               </div>
 
               {/* Vertical Timeline Changelog */}
@@ -1044,6 +1066,7 @@ export default function AdminInventory() {
                                   },
                                 )
                               : "";
+                            const batchNumber = `${log.id}-${log.created_at ? new Date(log.created_at).toLocaleDateString("en-CA") : "unknown-date"}`;
 
                             return (
                               <li
@@ -1055,6 +1078,14 @@ export default function AdminInventory() {
                                     •
                                   </span>
                                   <div className="flex-1">
+                                    <span className="mx-2 text-sm font-mono text-white/70">
+                                      Batch #: {batchNumber}
+                                    </span>
+                                    {timeStr && (
+                                      <span className="text-sm font-mono text-white/60">
+                                        {timeStr}
+                                      </span>
+                                    )}
                                     <p className="text-sm sm:text-base font-body text-white/90 font-medium leading-relaxed">
                                       {description}
                                     </p>
@@ -1064,11 +1095,6 @@ export default function AdminInventory() {
                                       >
                                         {tag}
                                       </span>
-                                      {timeStr && (
-                                        <span className="text-[11px] font-mono text-white/40">
-                                          {timeStr}
-                                        </span>
-                                      )}
                                     </div>
                                   </div>
                                 </div>

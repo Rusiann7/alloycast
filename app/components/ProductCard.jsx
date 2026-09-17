@@ -108,7 +108,7 @@ export default function ProductCard({
               >
                 <button className="card__button size-10 flex items-center justify-center shadow-md bg-secondary-container rounded-full p-3 text-black/90 transition-colors">
                   <span className="material-symbols-outlined text-white">
-                    shopping_cart
+                    local_mall
                   </span>
                 </button>
               </Link>

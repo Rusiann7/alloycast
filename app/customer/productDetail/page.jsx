@@ -1190,11 +1190,11 @@ function ProductDetail() {
                 {wishlistStatus ? (
                   <button
                     onClick={removeWishlist}
-                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-amber-600 text-white transition-all hover:scale-105 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-grey-100 text-white transition-all hover:scale-105 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
                     title="Reset wishlist"
                   >
                     <span className="material-symbols-outlined text-xl">
-                      restart_alt
+                      favorite
                     </span>
                   </button>
                 ) : (

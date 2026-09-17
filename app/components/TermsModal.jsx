@@ -51,24 +51,32 @@ export default function TermsModal({ isOpen, onClose, onAgree }) {
           <ul className="list-disc list-inside ">
             <li>
               For Pickup Orders with Cash/Online Payment. Orders must be paid
-              and pickup within 48hrs. Failure to follow withing 48hrs will
-              result to Order Failure status.
+              and pickup within a week. Failure to follow within the same week
+              will result to Order Failure status.
             </li>
             <li>
               For Door-to-Door Delivery with Online Payment. Orders must be paid
-              within 48hrs. Failure to follow withing 48hrs will result to Order
-              Failure status and your payment will be refunded by the Admin
+              within a week. Failure to follow within the same week will result
+              to Order Failure status and your payment will be refunded by the
+              Admin through Gcash
             </li>
             <li>
               For Local LBC branch pickup with Cash Payment . Orders must be
-              paid within 48hrs. Failure to follow withing 48hrs will result to
+              paid within a week. Failure to follow the same week will result to
               Order Failure status.
             </li>
           </ul>
-
           <p className="font-bold  text-primary-container uppercase italic">
-            4. Code of Conduct
+            4. Cancellation of Orders
           </p>
+          <p>
+            Orders can be cancelled while in the "Pending Shipping" status in
+            the account profile.
+          </p>
+          <p className="font-bold  text-primary-container uppercase italic">
+            5. Code of Conduct
+          </p>
+
           <p>
             No spamming, no sniping unless It&apos;s an auction!, and no toxic
             behavior. Keep it professional, collector.
