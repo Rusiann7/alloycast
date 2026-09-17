@@ -551,6 +551,7 @@ export default function Account() {
                                 }`}
                               >
                                 {res.fulfillment_status || "Pending"}
+<<<<<<< HEAD
                               </span>
                               {(res.fulfillment_status === "Pending Pickup" ||
                                 res.fulfillment_status === "Pending Shipping" ||
@@ -591,6 +592,33 @@ export default function Account() {
                               </span>
                               {isConfirming ? "Confirming..." : "Confirm"}
                             </button>
+=======
+                              </span>
+                              {(res.fulfillment_status === "Pending Pickup" ||
+                                res.fulfillment_status === "Pending Shipping" ||
+                                !res.fulfillment_status) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReservationToCancel({
+                                      reservationId: res.id,
+                                      inventoryId: res.inventory_id,
+                                      quantity: res.quantity,
+                                      itemName:
+                                        res.Inventory?.item_name || "this item",
+                                    });
+                                    setCancelModalOpen(true);
+                                  }}
+                                  className="bg-on-primary p-2 transition-colors flex items-center gap-1 group/cancel rounded-lg text-xs"
+                                >
+                                  <span className="material-symbols-outlined text-xs group-hover/cancel:rotate-90 transition-transform">
+                                    close
+                                  </span>
+                                  Cancel
+                                </button>
+                              )}
+                            </>
+>>>>>>> d06f6d2 (Intial Ma'am Denise revisions)
                           )}
                         </div>
                       </div>
