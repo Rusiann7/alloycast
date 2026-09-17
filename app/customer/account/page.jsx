@@ -87,6 +87,7 @@ const OrderCancellationModal = ({
   );
 };
 
+// TO BE CONTINUE
 export default function Account() {
   const supabase = createClient();
   const router = useRouter();
@@ -98,8 +99,10 @@ export default function Account() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState(null);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [wishlistData, setWishlistData] = useState([]);
   const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -258,6 +261,53 @@ export default function Account() {
       showToast("Failed to cancel reservation, try again later", "error");
     } finally {
       setIsCanceling(false);
+    }
+  };
+
+  const confirmReservation = async (reservation) => {
+    setIsConfirming(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from("Reservation")
+        .update({ fulfillment_status: "Confirmed" })
+        .eq("id", reservation.id);
+
+      if (updateError) throw updateError;
+
+      setReservations((prev) =>
+        prev.map((item) =>
+          item.id === reservation.id
+            ? { ...item, fulfillment_status: "Confirmed" }
+            : item,
+        ),
+      );
+
+      const response = await fetch(
+        "/api/notifications/send-confirmation-email",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reservationId: reservation.id }),
+        },
+      );
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error || "Confirmation email could not be sent.",
+        );
+      }
+
+      showToast("Order confirmation successful!", "success");
+    } catch (error) {
+      console.error("Order confirmation failed:", error.message);
+      showToast(
+        "Order confirmed, but the admin email could not be sent.",
+        "error",
+      );
+    } finally {
+      setIsConfirming(false);
     }
   };
 
@@ -526,6 +576,21 @@ export default function Account() {
                                 </button>
                               )}
                             </>
+                          )}
+                          {res.fulfillment_status === "Shipped" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                confirmReservation(res);
+                              }}
+                              disabled={isConfirming}
+                              className="bg-green-500 p-2 transition-colors flex items-center gap-1 group/confirm rounded-lg text-xs disabled:opacity-50"
+                            >
+                              <span className="material-symbols-outlined text-xs group-hover/confirm:scale-110 transition-transform">
+                                {isConfirming ? "progress_activity" : "check"}
+                              </span>
+                              {isConfirming ? "Confirming..." : "Confirm"}
+                            </button>
                           )}
                         </div>
                       </div>
