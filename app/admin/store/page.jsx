@@ -7,6 +7,8 @@ import Image from "next/image";
 import { TableSkeleton } from "../../components/Skeleton";
 import { DateRangePicker } from "../../../components/DateRangePicker";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { styleWorksheet } from "../../../utils/excelFormatter";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
@@ -35,11 +37,17 @@ export default function StorePage() {
     type: "error",
   });
   const [activeTab, setActiveTab] = useState("Point of Sales");
+  const [reportTypeFilter, setReportTypeFilter] = useState("All");
 
   const supabase = createClient();
   const itemsPerPage = 5;
 
-  const transaction = posDB.length;
+  const filteredPosDB =
+    reportTypeFilter === "All"
+      ? posDB
+      : posDB.filter((pos) => pos.type === reportTypeFilter);
+
+  const transaction = filteredPosDB.length;
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -87,30 +95,61 @@ export default function StorePage() {
       const endDate = new Date(reportDateRange.to || reportDateRange.from);
       endDate.setHours(23, 59, 59, 999);
 
-      const { data, error } = await supabase
-        .from("POS")
-        .select(
-          `id,
-          product_id,
-          quantity,
-          created_at,
-          name,
-          email,
-          Inventory!product_id (
-            id,
-            item_name,
-            brand,
-            item_image,
-            price,
-            category
-          )`,
-        )
-        .gte("created_at", toLocalISO(startDate))
-        .lte("created_at", toLocalISO(endDate))
-        .order("created_at", { ascending: false });
+      const [posResult, reservationResult] = await Promise.all([
+        supabase
+          .from("POS")
+          .select(
+            `id,
+            product_id,
+            quantity,
+            created_at,
+            name,
+            email,
+            Inventory!product_id (
+              id,
+              item_name,
+              brand,
+              item_image,
+              price,
+              category
+            )`,
+          )
+          .gte("created_at", toLocalISO(startDate))
+          .lte("created_at", toLocalISO(endDate)),
+        supabase
+          .from("Reservation")
+          .select(
+            "*, Users(email), Inventory(item_name, brand, item_image, price, category)",
+          )
+          .gte("created_at", toLocalISO(startDate))
+          .lte("created_at", toLocalISO(endDate)),
+      ]);
 
-      if (error) throw error;
-      setPos(data || []);
+      if (posResult.error) throw posResult.error;
+      if (reservationResult.error) throw reservationResult.error;
+
+      const posRows = (posResult.data || []).map((pos) => ({
+        ...pos,
+        type: "POS",
+      }));
+      const reservationRows = (reservationResult.data || []).map(
+        (reservation) => ({
+          id: reservation.id,
+          quantity: reservation.quantity,
+          created_at: reservation.created_at,
+          name: reservation.customer_name,
+          email: reservation.Users?.email,
+          Inventory: reservation.Inventory,
+          type: "Reservation",
+        }),
+      );
+
+      setPos(
+        [...posRows, ...reservationRows].sort(
+          (first, second) =>
+            new Date(second.created_at) - new Date(first.created_at),
+        ),
+      );
     } catch (error) {
       console.error("Error fetching POS records:", error);
     } finally {
@@ -136,7 +175,7 @@ export default function StorePage() {
   const totalProducts = searchedInventory.length;
 
   // Dynamically computes total earnings for the specific fetched date block
-  const dynamicSalesTotal = posDB.reduce((sum, currentItem) => {
+  const dynamicSalesTotal = filteredPosDB.reduce((sum, currentItem) => {
     const itemPrice = currentItem.Inventory?.price || 0;
     const quantityCount = currentItem.quantity || 0;
     return sum + itemPrice * quantityCount;
@@ -180,16 +219,16 @@ export default function StorePage() {
     return `${from} – ${to}`;
   };
 
-  const exportSalesData = () => {
+  const exportSalesData = async () => {
     try {
-      if (!posDB || posDB.length === 0) {
+      if (!filteredPosDB || filteredPosDB.length === 0) {
         showToast("No data available to export.", "error");
         return;
       }
 
       let grandTotal = 0;
 
-      const salesExport = posDB.map((pos) => {
+      const salesExport = filteredPosDB.map((pos) => {
         const price = pos.Inventory?.price || 0;
         const quantity = pos.quantity || 0;
         const revenue = price * quantity;
@@ -201,6 +240,7 @@ export default function StorePage() {
           "Product Name": pos.Inventory?.item_name || "N/A",
           Brand: pos.Inventory?.brand || "N/A",
           Category: pos.Inventory?.category || "N/A",
+          Type: pos.type,
           "Price (PHP)": price,
           Quantity: quantity,
           "Total Revenue (PHP)": revenue,
@@ -215,6 +255,7 @@ export default function StorePage() {
         "Product Name": "",
         Brand: "",
         Category: "",
+        Type: "",
         "Price (PHP)": "",
         Quantity: "",
         "Total Revenue (PHP)": grandTotal,
@@ -244,6 +285,46 @@ export default function StorePage() {
         .replace(/\s+/g, "_");
 
       XLSX.writeFile(workbook, `Sales_Report_${fromStr}_to_${toStr}.xlsx`);
+
+      const pdf = new jsPDF({ orientation: "landscape" });
+      const logo = await fetch("/logo.jpg")
+        .then((response) => response.blob())
+        .then(
+          (blob) =>
+            new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            }),
+        );
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(16);
+      pdf.text("Sales Report", pdf.internal.pageSize.getWidth() / 2, 18, {
+        align: "center",
+      });
+      const logoWidth = 25;
+      const logoY = 8;
+      const logoHeight =
+        (pdf.getImageProperties(logo).height /
+          pdf.getImageProperties(logo).width) *
+        logoWidth;
+      pdf.addImage(
+        logo,
+        "JPEG",
+        pdf.internal.pageSize.getWidth() - logoWidth - 14,
+        logoY,
+        logoWidth,
+        logoHeight,
+      );
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 8,
+        theme: "grid",
+        styles: { textColor: 0, fontSize: 8 },
+        head: [Object.keys(salesExport[0])],
+        body: salesExport.map((row) => Object.values(row)),
+      });
+      pdf.save(`Sales_Report_${fromStr}_to_${toStr}.pdf`);
       showToast("Sales report exported successfully!", "success");
     } catch (err) {
       showToast("Failed to export sales data.", "error");
@@ -625,6 +706,28 @@ export default function StorePage() {
                 />
               </div>
 
+              <div className="flex items-center gap-3 justify-end">
+                <label
+                  htmlFor="report-type-filter"
+                  className="text-xs font-headline font-black uppercase tracking-[0.2em] text-white/60"
+                >
+                  Filter by Type
+                </label>
+                <select
+                  id="report-type-filter"
+                  value={reportTypeFilter}
+                  onChange={(event) => {
+                    setReportTypeFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-lg border border-white/10 bg-input-field px-4 py-2 text-sm font-bold uppercase tracking-widest text-white outline-none"
+                >
+                  <option value="All">All</option>
+                  <option value="POS">POS</option>
+                  <option value="Reservation">Reservation</option>
+                </select>
+              </div>
+
               {/* Dynamic KPI Dashboard View metrics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:scale-105 transition-all">
@@ -687,6 +790,9 @@ export default function StorePage() {
                           Category/Series
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          Type
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                           Price
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
@@ -701,8 +807,8 @@ export default function StorePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.02]">
-                      {posDB.length > 0 ? (
-                        posDB
+                      {filteredPosDB.length > 0 ? (
+                        filteredPosDB
                           .slice(
                             (currentPage - 1) * itemsPerPage,
                             currentPage * itemsPerPage,
@@ -743,6 +849,9 @@ export default function StorePage() {
                                   {pos.Inventory?.category}
                                 </p>
                               </td>
+                              <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest">
+                                {pos.type}
+                              </td>
                               <td className="px-8 py-5 text-center">
                                 <p className="text-2xl text-primary-container">
                                   ₱
@@ -773,7 +882,7 @@ export default function StorePage() {
                       ) : (
                         <tr>
                           <td
-                            colSpan="8"
+                            colSpan="9"
                             className="px-8 py-12 text-center text-white/60 uppercase text-sm tracking-widest font-bold"
                           >
                             No transaction records found for this period.
@@ -805,12 +914,13 @@ export default function StorePage() {
                           setCurrentPage((p) =>
                             Math.min(
                               p + 1,
-                              Math.ceil(posDB.length / itemsPerPage),
+                              Math.ceil(filteredPosDB.length / itemsPerPage),
                             ),
                           )
                         }
                         disabled={
-                          currentPage >= Math.ceil(posDB.length / itemsPerPage)
+                          currentPage >=
+                          Math.ceil(filteredPosDB.length / itemsPerPage)
                         }
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
                       >
