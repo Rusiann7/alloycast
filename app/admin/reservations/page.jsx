@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { styleWorksheet } from "../../../utils/excelFormatter";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -149,8 +151,7 @@ export default function AdminReservations() {
     todayCountGetter();
   }, []);
 
-  const exportToExcel = () => {
-    // data to be expored to excel
+  const exportToExcel = async () => {
     const exportData = reservation.map((res) => ({
       "Customer Name": res.customer,
       "Email Address": res.customer_email,
@@ -169,8 +170,69 @@ export default function AdminReservations() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Reservations");
 
-    // download the excel
     XLSX.writeFile(workbook, "Ethan_Marcus_Reservations_Report.xlsx");
+
+    try {
+      const pdf = new jsPDF({ orientation: "landscape" });
+      const logo = await fetch("/logo.jpg")
+        .then((response) => {
+          if (!response.ok) throw new Error("Unable to load report logo");
+          return response.blob();
+        })
+        .then(
+          (blob) =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(blob);
+            }),
+        );
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(16);
+      pdf.text("Order Report", pdf.internal.pageSize.getWidth() / 2, 18, {
+        align: "center",
+      });
+
+      const logoWidth = 25;
+      const logoY = 8;
+      const logoProperties = pdf.getImageProperties(logo);
+      const logoHeight =
+        (logoProperties.height / logoProperties.width) * logoWidth;
+      pdf.addImage(
+        logo,
+        "JPEG",
+        pdf.internal.pageSize.getWidth() - logoWidth - 14,
+        logoY,
+        logoWidth,
+        logoHeight,
+      );
+
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 8,
+        theme: "grid",
+        styles: { textColor: 0, fontSize: 8 },
+        head: [
+          Object.keys(
+            exportData[0] || {
+              "Customer Name": "",
+              "Email Address": "",
+              "Product Name": "",
+              Brand: "",
+              Quantity: "",
+              "Date Reserved": "",
+              "Fulfillment Status": "",
+            },
+          ),
+        ],
+        body: exportData.map((row) => Object.values(row)),
+      });
+      pdf.save("Ethan_Marcus_Order_Report.pdf");
+    } catch (error) {
+      showToast("Excel downloaded, but PDF export failed.", "error");
+      console.error("Failed to export reservations PDF:", error);
+    }
   };
 
   const handleActionClick = (
@@ -569,13 +631,13 @@ export default function AdminReservations() {
                         Product Brand
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                        Quantity
+                        Qnt
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Date Reserved
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                        Order Type
+                        Type
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Status

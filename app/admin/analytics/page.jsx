@@ -13,6 +13,8 @@ import {
   Cell,
 } from "recharts";
 import dynamic from "next/dynamic";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import {
   calculateChannelRevenues,
@@ -178,7 +180,54 @@ export default function AdminAnalytics() {
         .lte("created_at", endDate);
 
       if (error) throw error;
-      exportAnnualRevenueToCSV(data || [], currentYear);
+
+      const reportRows = exportAnnualRevenueToCSV(data || [], currentYear);
+      const pdf = new jsPDF({ orientation: "landscape" });
+      const logo = await fetch("/logo.jpg")
+        .then((response) => {
+          if (!response.ok) throw new Error("Unable to load report logo");
+          return response.blob();
+        })
+        .then(
+          (blob) =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(blob);
+            }),
+        );
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(16);
+      pdf.text(
+        `Annual Revenue Report`,
+        pdf.internal.pageSize.getWidth() / 2,
+        18,
+        { align: "center" },
+      );
+
+      const logoWidth = 25;
+      const logoY = 8;
+      const logoProperties = pdf.getImageProperties(logo);
+      const logoHeight =
+        (logoProperties.height / logoProperties.width) * logoWidth;
+      pdf.addImage(
+        logo,
+        "JPEG",
+        pdf.internal.pageSize.getWidth() - logoWidth - 14,
+        logoY,
+        logoWidth,
+        logoHeight,
+      );
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 8,
+        theme: "grid",
+        styles: { textColor: 0, fontSize: 8 },
+        head: [Object.keys(reportRows[0])],
+        body: reportRows.map((row) => Object.values(row)),
+      });
+      pdf.save(`Analytics_Annual_Revenue_Report_${currentYear}.pdf`);
     } catch (err) {
       showToast("Failed to export data. Try again later", "error");
       console.error("Failed to export data: ", err);
