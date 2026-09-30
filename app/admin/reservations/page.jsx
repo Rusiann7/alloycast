@@ -643,7 +643,7 @@ export default function AdminReservations() {
                         Status
                         <select
                           value={dropdownValue}
-                          className="bg-secondary-container text-center rounded-lg p-2 uppercase font-black"
+                          className="[field-sizing:content] bg-secondary-container text-center rounded-lg p-1 uppercase font-black"
                           onChange={getSortedItems}
                         >
                           <option value="">All Items</option>
