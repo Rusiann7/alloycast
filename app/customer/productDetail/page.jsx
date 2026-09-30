@@ -1088,7 +1088,7 @@ function ProductDetail() {
                       COLOR:
                     </span>
                     <span className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
-                      {product.item_color}
+                      {product.item_color?.trim() || " No Color"}
                     </span>
                   </div>
                 </div>

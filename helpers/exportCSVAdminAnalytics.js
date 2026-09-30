@@ -54,4 +54,5 @@ export const exportAnnualRevenueToCSV = (posData = [], currentYear) => {
     workbook,
     `Analytics_Annual_Revenue_Report_${currentYear}.xlsx`,
   );
+  return exportData;
 };
