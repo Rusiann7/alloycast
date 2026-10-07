@@ -215,7 +215,7 @@ export default function AdminAnalytics() {
       pdf.addImage(
         logo,
         "JPEG",
-        pdf.internal.pageSize.getWidth() - logoWidth - 14,
+        14,
         logoY,
         logoWidth,
         logoHeight,
