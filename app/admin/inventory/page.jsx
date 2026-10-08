@@ -487,16 +487,16 @@ export default function AdminInventory() {
               INVENTORY
             </h3>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+              <p className="text-lg sm:text-md font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] rounded-lg p-1 bg-primary-container text-black/90">
                 TOTAL STOCKS:{" "}
-                <span className="text-font-color font-bold">
+                <span className="text-black/90 font-bold">
                   {totalProductStock.toLocaleString()}
                 </span>{" "}
               </p>
               <div className="hidden sm:block w-1 h-1 bg-secondary-container rounded-full" />
-              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+              <p className="text-lg sm:text-md font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] rounded-lg p-1 bg-primary-container text-black/90">
                 TOTAL ITEMS:{" "}
-                <span className="text-font-color">{totalProducts}</span>
+                <span className="text-black/90">{totalProducts}</span>
               </p>
             </div>
           </div>
@@ -505,7 +505,7 @@ export default function AdminInventory() {
           <div className="mb-10 reveal-up border-b border-white/10 flex items-center gap-8 sm:gap-12">
             <button
               onClick={() => setActiveTab("inventory")}
-              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative ${
+              className={`pb-3.5 text-lg  sm:text-md font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative ${
                 activeTab === "inventory"
                   ? "text-[#d4af37] font-black"
                   : "text-white/40 hover:text-white/80"
@@ -519,7 +519,7 @@ export default function AdminInventory() {
 
             <button
               onClick={() => setActiveTab("history")}
-              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
+              className={`pb-3.5 text-lg  sm:text-md font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
                 activeTab === "history"
                   ? "text-[#d4af37] font-black"
                   : "text-white/40 hover:text-white/80"
@@ -528,7 +528,7 @@ export default function AdminInventory() {
               <span>STOCK HISTORY</span>
               {historyData.length > 0 && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`px-2 py-0.5 rounded-full text-[15px] font-bold ${
                     activeTab === "history"
                       ? "bg-[#d4af37]/20 text-[#d4af37]"
                       : "bg-white/10 text-white/50"
@@ -544,7 +544,7 @@ export default function AdminInventory() {
 
             <button
               onClick={() => setActiveTab("wishlist")}
-              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
+              className={`pb-3.5 text-lg  sm:text-md font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
                 activeTab === "wishlist"
                   ? "text-[#d4af37] font-black"
                   : "text-white/40 hover:text-white/80"
@@ -553,7 +553,7 @@ export default function AdminInventory() {
               <span>WISHLIST/RESERVATION</span>
               {wishlistData.length > 0 && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`px-2 py-0.5 rounded-full text-[15px] font-bold ${
                     activeTab === "wishlist"
                       ? "bg-[#d4af37]/20 text-[#d4af37]"
                       : "bg-white/10 text-white/50"

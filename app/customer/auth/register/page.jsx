@@ -523,13 +523,13 @@ function RegisterPageContent() {
             </form>
 
             <div className="mt-8 pt-6  border-t border-primary-container flex flex-col gap-4">
-              <p className="text-xs text-white/90 uppercase tracking-widest text-center">
+              <p className="text-sm text-white/90 uppercase tracking-widest text-center">
                 Already have an account?{" "}
                 <Link
                   href="/customer/auth/login"
                   className="text-primary-container hover:underline italic font-bold"
                 >
-                  SIGN IN
+                  <u>SIGN IN</u>
                 </Link>
               </p>
             </div>
