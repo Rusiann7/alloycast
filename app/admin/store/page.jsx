@@ -244,8 +244,8 @@ export default function StorePage() {
           "Price (PHP)": price,
           Quantity: quantity,
           "Total Revenue (PHP)": revenue,
-          "Customer Name": pos.name || "N/A",
-          "Customer Email": pos.email || "N/A",
+          Name: pos.name || "N/A",
+          Email: pos.email || "N/A",
         };
       });
 
@@ -259,8 +259,8 @@ export default function StorePage() {
         "Price (PHP)": "",
         Quantity: "",
         "Total Revenue (PHP)": grandTotal,
-        "Customer Name": "",
-        "Customer Email": "",
+        Name: "",
+        Email: "",
       });
 
       const worksheet = XLSX.utils.json_to_sheet(salesExport);
@@ -286,7 +286,7 @@ export default function StorePage() {
 
       XLSX.writeFile(workbook, `Sales_Report_${fromStr}_to_${toStr}.xlsx`);
 
-      const pdf = new jsPDF({ orientation: "landscape" });
+      const pdf = new jsPDF({ orientation: "portrait" });
       const logo = await fetch("/logo.jpg")
         .then((response) => response.blob())
         .then(
@@ -298,32 +298,130 @@ export default function StorePage() {
             }),
         );
 
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(16);
-      pdf.text("Sales Report", pdf.internal.pageSize.getWidth() / 2, 18, {
-        align: "center",
-      });
+      const { data: authData } = await supabase.auth.getUser();
+      const adminName =
+        [
+          authData?.user?.user_metadata?.first_name,
+          authData?.user?.user_metadata?.last_name,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        authData?.user?.email ||
+        "Admin";
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageCenterX = pageWidth / 2;
       const logoWidth = 25;
-      const logoY = 8;
+      const logoY = 12;
       const logoHeight =
         (pdf.getImageProperties(logo).height /
           pdf.getImageProperties(logo).width) *
         logoWidth;
+
+      pdf.setTextColor(0, 0, 0);
       pdf.addImage(
         logo,
         "JPEG",
-        14,
+        pageCenterX - logoWidth / 2,
         logoY,
         logoWidth,
         logoHeight,
       );
-      autoTable(pdf, {
-        startY: logoY + logoHeight + 8,
-        theme: "grid",
-        styles: { textColor: 0, fontSize: 8 },
-        head: [Object.keys(salesExport[0])],
-        body: salesExport.map((row) => Object.values(row)),
+
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Ethan Marcus Diecast", pageCenterX, logoY + logoHeight + 16, {
+        align: "center",
       });
+
+      const leftColumnX = 16;
+
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Sales Report", leftColumnX, logoY + logoHeight + 42, {
+        align: "left",
+      });
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(
+        `${new Date(reportDateRange?.from || new Date()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })} - ${new Date(reportDateRange?.to || new Date()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}`,
+        leftColumnX,
+        logoY + logoHeight + 50,
+        { align: "left" },
+      );
+
+      const pdfHeaderLabels = {
+        "Transaction ID": "ID",
+        "Price (PHP)": "Price",
+        Quantity: "QNT",
+        "Total Revenue (PHP)": "Total Revenue",
+      };
+      const pdfHeaders = [
+        "#",
+        ...Object.keys(salesExport[0]).map(
+          (header) => pdfHeaderLabels[header] || header,
+        ),
+      ];
+      const currencyFormatter = new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+      });
+      const pdfRows = salesExport.slice(0, -1).map((row, index) => [
+        index + 1,
+        ...Object.entries(row).map(([header, value]) =>
+          ["Price (PHP)", "Total Revenue (PHP)"].includes(header) &&
+          typeof value === "number"
+            ? currencyFormatter.format(value)
+            : value,
+        ),
+      ]);
+
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 58,
+        theme: "grid",
+        headStyles: {
+          fillColor: [255, 220, 80],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          fontSize: 7,
+        },
+        styles: { textColor: 0, fontSize: 7, cellPadding: 1.5 },
+        head: [pdfHeaders],
+        body: pdfRows,
+        foot: [
+          [
+            {
+              content: "Grand Total",
+              colSpan: 9,
+              styles: { halign: "right", fontStyle: "bold" },
+            },
+            {
+              content: currencyFormatter.format(grandTotal),
+              styles: { fontStyle: "bold" },
+            },
+            "",
+            "",
+          ],
+        ],
+        footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+      });
+
+      const preparedByY = pdf.internal.pageSize.getHeight() - 26;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Prepared By:", leftColumnX, preparedByY, { align: "left" });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(adminName, leftColumnX, preparedByY + 8, { align: "left" });
+
       pdf.save(`Sales_Report_${fromStr}_to_${toStr}.pdf`);
       showToast("Sales report exported successfully!", "success");
     } catch (err) {

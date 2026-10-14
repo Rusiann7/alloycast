@@ -18,6 +18,12 @@ export function DateRangePicker({
   date,
   setDate,
 }) {
+  const isMounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+
   return (
     <div className={className}>
       <Label htmlFor="date-picker-range" className="sr-only">Date Picker Range</Label>
@@ -33,7 +39,7 @@ export function DateRangePicker({
             }
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
+            {isMounted && date?.from ? (
               date.to ? (
                 <>
                   {format(date.from, "LLL dd, y")} -{" "}
