@@ -173,7 +173,7 @@ export default function AdminReservations() {
     XLSX.writeFile(workbook, "Ethan_Marcus_Reservations_Report.xlsx");
 
     try {
-      const pdf = new jsPDF({ orientation: "landscape" });
+      const pdf = new jsPDF({ orientation: "portrait" });
       const logo = await fetch("/logo.jpg")
         .then((response) => {
           if (!response.ok) throw new Error("Unable to load report logo");
@@ -189,45 +189,125 @@ export default function AdminReservations() {
             }),
         );
 
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(16);
-      pdf.text("Order Report", pdf.internal.pageSize.getWidth() / 2, 18, {
-        align: "center",
-      });
+      const { data: authData } = await supabase.auth.getUser();
+      const adminName =
+        [
+          authData?.user?.user_metadata?.first_name,
+          authData?.user?.user_metadata?.last_name,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        authData?.user?.email ||
+        "Admin";
 
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageCenterX = pageWidth / 2;
       const logoWidth = 25;
-      const logoY = 8;
+      const logoY = 12;
       const logoProperties = pdf.getImageProperties(logo);
       const logoHeight =
         (logoProperties.height / logoProperties.width) * logoWidth;
+
+      pdf.setTextColor(0, 0, 0);
       pdf.addImage(
         logo,
         "JPEG",
-        14,
+        pageCenterX - logoWidth / 2,
         logoY,
         logoWidth,
         logoHeight,
       );
 
-      autoTable(pdf, {
-        startY: logoY + logoHeight + 8,
-        theme: "grid",
-        styles: { textColor: 0, fontSize: 8 },
-        head: [
-          Object.keys(
-            exportData[0] || {
-              "Customer Name": "",
-              "Email Address": "",
-              "Product Name": "",
-              Brand: "",
-              Quantity: "",
-              "Date Reserved": "",
-              "Fulfillment Status": "",
-            },
-          ),
-        ],
-        body: exportData.map((row) => Object.values(row)),
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Ethan Marcus Diecast", pageCenterX, logoY + logoHeight + 16, {
+        align: "center",
       });
+
+      const leftColumnX = 16;
+      const fromDate = reportDateRange?.from || new Date();
+      const toDate = reportDateRange?.to || fromDate;
+      const dateRangeText = `${new Date(fromDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })} - ${new Date(toDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Order Reports", leftColumnX, logoY + logoHeight + 42, {
+        align: "left",
+      });
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(dateRangeText, leftColumnX, logoY + logoHeight + 50, {
+        align: "left",
+      });
+
+      const pdfHeaderLabels = {
+        "Customer Name": "Name",
+        "Email Address": "Email",
+        Quantity: "QNT",
+      };
+      const pdfHeaders = [
+        "#",
+        ...Object.keys(exportData[0] || {
+          "Customer Name": "",
+          "Email Address": "",
+          "Product Name": "",
+          Brand: "",
+          Quantity: "",
+          "Date Reserved": "",
+          "Fulfillment Status": "",
+        }).map((header) => pdfHeaderLabels[header] || header),
+      ];
+
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 58,
+        theme: "grid",
+        headStyles: {
+          fillColor: [255, 220, 80],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          fontSize: 7,
+        },
+        styles: { textColor: 0, fontSize: 7, cellPadding: 1.5 },
+        head: [pdfHeaders],
+        body: exportData.map((row, index) => [
+          index + 1,
+          ...Object.values(row),
+        ]),
+        foot: [
+          [
+            {
+              content: "Grand Total",
+              colSpan: 5,
+              styles: { halign: "right", fontStyle: "bold" },
+            },
+            {
+              content: String(exportData.length),
+              styles: { fontStyle: "bold" },
+            },
+            "",
+            "",
+          ],
+        ],
+        footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+        showFoot: "lastPage",
+      });
+
+      const signatureY = pdf.internal.pageSize.getHeight() - 26;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Prepared By:", leftColumnX, signatureY, { align: "left" });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(adminName, leftColumnX, signatureY + 8, { align: "left" });
+
       pdf.save("Ethan_Marcus_Order_Report.pdf");
     } catch (error) {
       showToast("Excel downloaded, but PDF export failed.", "error");
