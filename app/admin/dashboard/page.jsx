@@ -171,51 +171,6 @@ export default function AdminDashboard() {
     initializeFunction();
   }, [fetchDashboardData, fetchAllAnalytics]);
 
-  // 7. Decoupled Excel export handler
-  const exportToExcel = async () => {
-    try {
-      if (!dateRange || !dateRange.from) return;
-      const startDate = dateRange.from;
-      const endDate = dateRange.to || dateRange.from;
-      const adjustedEndDate = new Date(endDate);
-      adjustedEndDate.setHours(23, 59, 59, 999);
-
-      const { data: posData, error: posErr } = await supabase
-        .from("POS")
-        .select("quantity, created_at, Inventory(price, item_name)")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", adjustedEndDate.toISOString());
-
-      if (posErr) throw posErr;
-
-      const { data: reservations } = await supabase
-        .from("Reservation")
-        .select(
-          "id, created_at, status, quantity, user_id, Inventory(item_name, item_image), Users(email)",
-        )
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", adjustedEndDate.toISOString())
-        .order("created_at", { ascending: false });
-
-      const { data: arrivals } = await supabase
-        .from("Inventory")
-        .select("id, item_name, price, created_at")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", adjustedEndDate.toISOString())
-        .order("created_at", { ascending: false });
-
-      exportToExcelFile({
-        dateRange,
-        posData: posData || [],
-        reservations: reservations || [],
-        arrivals: arrivals || [],
-        showToast,
-      });
-    } catch (err) {
-      console.error("Export failed: ", err);
-      showToast("Failed to export dashboard data", "error");
-    }
-  };
 
   const handleActionClick = (res, newStatus) => {
     setConfirmModal({
@@ -336,17 +291,6 @@ export default function AdminDashboard() {
             <h3 className="text-4xl sm:text-5xl lg:text-6xl text-font-color font-black font-headline tracking-tighter uppercase italic leading-none">
               Admin Dashboard
             </h3>
-          </div>
-          <div className="w-full lg:w-auto">
-            <button
-              onClick={exportToExcel}
-              className="w-full lg:w-auto bg-primary-container text-black/90 shadow-lg/30 px-6 py-3 rounded-lg text-sm font-headline font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:scale-[1.02] transition-transform active:scale-95"
-            >
-              <span className="material-symbols-outlined text-sm">
-                download
-              </span>
-              <span>Export Dashboard Data</span>
-            </button>
           </div>
         </div>
         {/* KPI Bento Grid */}
