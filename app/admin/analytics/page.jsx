@@ -260,6 +260,18 @@ export default function AdminAnalytics() {
         currencyFormatter.format(row["Total Revenue (PHP)"]),
       ]);
       const annualTotal = reportRows.at(-1)?.["Total Revenue (PHP)"] || 0;
+      const monthlyRevenue = reportRows
+        .slice(0, -1)
+        .map((row) => row["Total Revenue (PHP)"]);
+      const chartAxisWidth = 18;
+      const chartX = leftColumnX + chartAxisWidth;
+      const chartWidth = pageWidth - leftColumnX * 2 - chartAxisWidth;
+      const chartHeight = 34;
+      const chartGap = 3;
+      const barWidth =
+        (chartWidth - chartGap * (monthlyRevenue.length - 1)) /
+        monthlyRevenue.length;
+      const maxMonthlyRevenue = Math.max(...monthlyRevenue, 0);
 
       autoTable(pdf, {
         startY: logoY + logoHeight + 58,
@@ -287,6 +299,53 @@ export default function AdminAnalytics() {
           ],
         ],
         footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+      });
+
+      const chartTitleY = pdf.lastAutoTable.finalY + 12;
+      const chartTop = chartTitleY + 7;
+      const chartBaseline = chartTop + chartHeight;
+      const chartTicks = Array.from(
+        { length: 5 },
+        (_, index) => (maxMonthlyRevenue * index) / 4,
+      );
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Monthly Revenue (PHP)", leftColumnX, chartTitleY, {
+        align: "left",
+      });
+      pdf.setDrawColor(180, 180, 180);
+      pdf.line(chartX, chartTop, chartX, chartBaseline);
+      pdf.line(chartX, chartBaseline, chartX + chartWidth, chartBaseline);
+      pdf.setFontSize(7);
+      pdf.setFont("helvetica", "normal");
+      chartTicks.forEach((tick, index) => {
+        const y = chartBaseline - (index / 4) * chartHeight;
+        pdf.setDrawColor(225, 225, 225);
+        pdf.line(chartX, y, chartX + chartWidth, y);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(
+          Math.round(tick).toLocaleString("en-US"),
+          chartX - 2,
+          y + 2,
+          { align: "right" },
+        );
+      });
+      pdf.setFillColor(34, 197, 94);
+      monthlyRevenue.forEach((revenue, index) => {
+        const barHeight =
+          maxMonthlyRevenue > 0
+            ? (revenue / maxMonthlyRevenue) * chartHeight
+            : 0;
+        const barX = chartX + index * (barWidth + chartGap);
+        if (barHeight > 0) {
+          pdf.rect(barX, chartBaseline - barHeight, barWidth, barHeight, "F");
+        }
+        pdf.text(
+          reportRows[index].Month.slice(0, 3),
+          barX + barWidth / 2,
+          chartBaseline + 5,
+          { align: "center" },
+        );
       });
 
       const preparedByY = pdf.internal.pageSize.getHeight() - 26;
