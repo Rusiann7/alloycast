@@ -33,6 +33,11 @@ const DynamicCartModal = dynamic(
   () => import("../../components/AddToCartModal"),
 );
 
+const DynamicOrderConfirmationModal = dynamic(
+  () => import("../../components/OrderConfirmationModal"),
+  { ssr: false },
+);
+
 function ProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -49,9 +54,9 @@ function ProductDetail() {
   const [submitBtn, setSubmitBtn] = useState(true);
   const [canReview, setCanReview] = useState(false);
   const [wishlistStatus, setWishlistStatus] = useState(null);
-  const [orderType, setOrderType] = useState("Pickup");
-  const [paymentType, setPaymentType] = useState("Cash");
-  const [deliveryType, setDeliveryType] = useState("DoorToDoor");
+  const [orderType, setOrderType] = useState(null);
+  const [paymentType, setPaymentType] = useState(null);
+  const [deliveryType, setDeliveryType] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
   const [isDiscountActive, setIsDiscountActive] = useState(false);
@@ -287,48 +292,51 @@ function ProductDetail() {
       }, 4000);
       return;
     }
+    setOrderType(null);
+    setPaymentType(null);
+    setDeliveryType(null);
+    setQuantity(1);
     setIsModalOpen(true);
   };
 
-  const getOrderType = (event) => {
-    const val = event.target.value;
+  const getOrderType = (eventOrVal) => {
+    if (!eventOrVal) {
+      setOrderType(null);
+      return;
+    }
+    const val =
+      typeof eventOrVal === "string" ? eventOrVal : eventOrVal?.target?.value;
     setOrderType(val);
     if (val === "Delivery") {
-      // Reset to Door-to-Door and Online payment when switching to Delivery
-      setDeliveryType("DoorToDoor");
-      setPaymentType("Online");
+      setDeliveryType(null);
+      setPaymentType(null);
     } else {
-      // Pickup: reset delivery type and default to Cash
       setDeliveryType("DoorToDoor");
-      setPaymentType("Cash");
+      setPaymentType(null);
     }
   };
 
-  const getPaymentType = (event) => {
-    const val = event.target.value;
-    if (orderType === "Delivery" && deliveryType === "LbcBranch") {
-      // LBC branch is always Cash, do not allow changing
+  const getPaymentType = (eventOrVal) => {
+    if (!eventOrVal) {
+      setPaymentType(null);
       return;
     }
-    if (orderType === "Delivery" && val === "Cash") {
-      showToast(
-        "Cash on Pickup is not applicable for Delivery orders.",
-        "error",
-      );
-      setPaymentType("Online");
-      return;
-    }
+    const val =
+      typeof eventOrVal === "string" ? eventOrVal : eventOrVal?.target?.value;
     setPaymentType(val);
   };
 
-  const getDeliveryType = (event) => {
-    const val = event.target.value;
+  const getDeliveryType = (eventOrVal) => {
+    if (!eventOrVal) {
+      setDeliveryType(null);
+      return;
+    }
+    const val =
+      typeof eventOrVal === "string" ? eventOrVal : eventOrVal?.target?.value;
     setDeliveryType(val);
     if (val === "LbcBranch") {
-      // LBC local branch pickup is always Cash
       setPaymentType("Cash");
     } else {
-      // Door to Door is Online Payment
       setPaymentType("Online");
     }
   };
@@ -353,6 +361,19 @@ function ProductDetail() {
       .select(`firstname, lastname,Users(phone_number)`);
 
     if (error) throw error;
+
+    if (!orderType) {
+      showToast("Please select an Order Type (Pickup or Delivery).", "error");
+      return;
+    }
+    if (orderType === "Pickup" && !paymentType) {
+      showToast("Please select a Mode of Payment.", "error");
+      return;
+    }
+    if (orderType === "Delivery" && !deliveryType) {
+      showToast("Please select a Delivery Type.", "error");
+      return;
+    }
 
     const parsedQuantity = parseInt(quantity, 10);
     if (isNaN(parsedQuantity) || parsedQuantity < 1) {
@@ -1356,176 +1377,25 @@ function ProductDetail() {
         <DynamicFooter />
       </main>
       {/* Reservation Confirmation Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
-          {/* Removed mt-10 and adjusted padding to max out at p-6 instead of p-12 */}
-          <div className="relative mt-30 w-full max-w-md bg-modal-background border border-white/10 rounded-lg p-5 sm:p-6 text-font-color shadow-2xl">
-            {/* Header - Reduced mb */}
-            <div className="flex justify-between items-start mb-4 sm:mb-5">
-              {/* Scaled down the massive heading sizes slightly */}
-              <h2 className="text-xl sm:text-2xl font-headline font-black uppercase italic leading-tight flex-1 pr-4">
-                Order Confirmation
-              </h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="material-symbols-outlined flex-shrink-0 bg-on-primary text-white/90 rounded-full p-1.5 transition-colors"
-                aria-label="Close reservation modal"
-              >
-                close
-              </button>
-            </div>
-
-            {/* Quantity Section - Tighter spacing */}
-            <div className="space-y-2 mb-4 sm:mb-5 flex flex-col ">
-              <p className="text-md ">Available stock: {product.stock}</p>
-              <label htmlFor="quantity-input" className="text-sm sm:text-base">
-                Enter amount of items you want to reserve
-              </label>
-              <div className="flex flex-col gap-1.5 items-end w-full sm:w-auto">
-                <input
-                  id="quantity-input"
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "") {
-                      setQuantity("");
-                      return;
-                    }
-                    const parsed = parseInt(val, 10);
-                    if (isNaN(parsed)) {
-                      setQuantity("");
-                    } else if (parsed > product.stock) {
-                      setQuantity(product.stock);
-                      showToast(
-                        `Quantity capped at maximum available stock (${product.stock})`,
-                        "error",
-                      );
-                    } else if (parsed < 1) {
-                      setQuantity(1);
-                    } else {
-                      setQuantity(parsed);
-                    }
-                  }}
-                  max={product.stock}
-                  min="1"
-                  className="w-16 bg-input-field border border-white/10 rounded-lg p-3 text-center text-white font-headline text-base focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all"
-                  placeholder="1"
-                />
-              </div>
-              <label htmlFor="">Order Type</label>
-              <select
-                name="orderType"
-                id="orderType"
-                className="w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold  tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
-                value={orderType}
-                onChange={getOrderType}
-              >
-                <option value="Pickup">Pickup</option>
-                <option value="Delivery">
-                  Delivery (Outside Olongapo Only)
-                </option>
-              </select>
-              {/* Delivery Type — only shown for Delivery orders */}
-              {orderType === "Delivery" && (
-                <>
-                  <label htmlFor="deliveryType">Delivery Type:</label>
-                  <select
-                    name="deliveryType"
-                    id="deliveryType"
-                    className="w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10"
-                    value={deliveryType}
-                    onChange={getDeliveryType}
-                  >
-                    <option value="DoorToDoor">
-                      Door to Door Delivery (Online Payment)
-                    </option>
-                    <option value="LbcBranch">
-                      LBC Local Branch Pickup (Cash)
-                    </option>
-                  </select>
-                </>
-              )}
-
-              <label htmlFor="paymentType">Mode of Payment:</label>
-              <select
-                name="paymentType"
-                id="paymentType"
-                className={`w-full bg-input-field border border-white/[0.03] rounded-lg h-auto p-2 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all duration-300 text-white placeholder:text-white/10 ${
-                  orderType === "Delivery"
-                    ? "opacity-60 cursor-not-allowed"
-                    : ""
-                }`}
-                value={paymentType}
-                onChange={getPaymentType}
-                disabled={orderType === "Delivery"}
-              >
-                {/* Mode of payment */}
-                <option value="Cash">Cash</option>
-                <option value="Online">Online</option>
-              </select>
-            </div>
-
-            {/* Summary Section - Compact padding and margins */}
-            <div className="border border-primary-container bg-input-field rounded-lg p-3 sm:p-4 mb-4 sm:mb-5">
-              <p className="text-center text-md uppercase tracking-wider text-primary-container font-headline mb-1.5">
-                Order Summary
-              </p>
-              <div className="space-y-1.5 text-sm sm:text-base">
-                <div className="flex flex-col ">
-                  <span className="text-primary-container">Product:</span>
-                  <p className="text-white/90 truncate max-w-full">
-                    {product.item_name}
-                  </p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-primary-container">Quantity:</span>
-                  <span className="font-bold text-white/90">
-                    {quantity || 0} {quantity > 1 ? "units" : "unit"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-primary-container">Order Type:</span>
-                  <span className="font-bold text-white/90">{orderType}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-primary-container">
-                    Mode of Payment:
-                  </span>
-                  <span className="font-bold text-white/90">{paymentType}</span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-white/10 mt-2">
-                  <span className="text-primary-container">Total Price:</span>
-                  <span className="font-black text-[#d4af37]">
-                    ₱
-                    {(
-                      (isDiscountActive
-                        ? Number(product.price) - Number(product.discount)
-                        : Number(product.price)) * (parseInt(quantity, 10) || 1)
-                    ).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons - Shaved off large button heights */}
-            <div className="space-y-2">
-              <button
-                className="w-full py-2.5 sm:py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98]"
-                onClick={insertReservationToTable}
-              >
-                Confirm Order
-              </button>
-              <button
-                className="w-full py-2 sm:py-2.5 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-xs sm:text-sm text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DynamicOrderConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        product={product}
+        quantity={quantity}
+        setQuantity={setQuantity}
+        orderType={orderType}
+        setOrderType={setOrderType}
+        deliveryType={deliveryType}
+        setDeliveryType={setDeliveryType}
+        paymentType={paymentType}
+        setPaymentType={setPaymentType}
+        isDiscountActive={isDiscountActive}
+        onConfirm={insertReservationToTable}
+        showToast={showToast}
+        onOrderTypeChange={getOrderType}
+        onDeliveryTypeChange={getDeliveryType}
+        onPaymentTypeChange={getPaymentType}
+      />
 
       <DynamicDeliveryAddressMapModal
         isOpen={isAddressModalOpen}
