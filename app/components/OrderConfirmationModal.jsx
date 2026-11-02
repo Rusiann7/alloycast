@@ -38,11 +38,9 @@ export default function OrderConfirmationModal({
     if (type === "Pickup") {
       setDeliveryType?.("DoorToDoor");
       onDeliveryTypeChange?.("DoorToDoor");
-      // Reset payment mode so user chooses Cash or Online via buttons
       setPaymentType?.(null);
       onPaymentTypeChange?.(null);
     } else {
-      // Delivery: reset deliveryType and paymentType so user chooses DoorToDoor or LbcBranch
       setDeliveryType?.(null);
       onDeliveryTypeChange?.(null);
       setPaymentType?.(null);
@@ -53,6 +51,7 @@ export default function OrderConfirmationModal({
   const handleSelectPayment = (mode) => {
     setPaymentType?.(mode);
     onPaymentTypeChange?.(mode);
+    // Explicitly do not auto-advance; user must click Proceed to Order Summary
   };
 
   const handleSelectDeliveryType = (delType) => {
@@ -61,6 +60,7 @@ export default function OrderConfirmationModal({
     const mode = delType === "LbcBranch" ? "Cash" : "Online";
     setPaymentType?.(mode);
     onPaymentTypeChange?.(mode);
+    // Explicitly do not auto-advance; user must click Proceed to Order Summary
   };
 
   const handleQuantityChange = (e) => {
@@ -110,7 +110,7 @@ export default function OrderConfirmationModal({
     (orderType === "Pickup" && Boolean(paymentType)) ||
     (orderType === "Delivery" && Boolean(deliveryType));
 
-  // If selection is complete and user has advanced, display summary view; otherwise selection view
+  // Determine current view
   const currentStep = isSelectionReady && userStep === "summary" ? "summary" : "selection";
 
   const unitPrice = isDiscountActive
@@ -157,10 +157,11 @@ export default function OrderConfirmationModal({
                   type="button"
                   id="pickup-option-btn"
                   onClick={() => handleSelectOrderType("Pickup")}
-                  className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${orderType === "Pickup"
+                  className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                    orderType === "Pickup"
                       ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
                       : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
-                    }`}
+                  }`}
                 >
                   <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5 transition-transform">
                     storefront
@@ -178,10 +179,11 @@ export default function OrderConfirmationModal({
                   type="button"
                   id="delivery-option-btn"
                   onClick={() => handleSelectOrderType("Delivery")}
-                  className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${orderType === "Delivery"
+                  className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                    orderType === "Delivery"
                       ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
                       : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
-                    }`}
+                  }`}
                 >
                   <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5 transition-transform">
                     local_shipping
@@ -190,7 +192,7 @@ export default function OrderConfirmationModal({
                     Delivery
                   </span>
                   <span className="text-[10px] text-white/50 tracking-wider font-sans mt-0.5">
-                    Outside the City
+                    Outside Olongapo
                   </span>
                 </button>
               </div>
@@ -207,10 +209,11 @@ export default function OrderConfirmationModal({
                     type="button"
                     id="pickup-cash-btn"
                     onClick={() => handleSelectPayment("Cash")}
-                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${paymentType === "Cash"
+                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                      paymentType === "Cash"
                         ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
                         : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
-                      }`}
+                    }`}
                   >
                     <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5 transition-transform">
                       payments
@@ -227,10 +230,11 @@ export default function OrderConfirmationModal({
                     type="button"
                     id="pickup-online-btn"
                     onClick={() => handleSelectPayment("Online")}
-                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${paymentType === "Online"
+                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                      paymentType === "Online"
                         ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
                         : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
-                      }`}
+                    }`}
                   >
                     <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5 transition-transform">
                       qr_code_2
@@ -257,10 +261,11 @@ export default function OrderConfirmationModal({
                     type="button"
                     id="delivery-doortodoor-btn"
                     onClick={() => handleSelectDeliveryType("DoorToDoor")}
-                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${deliveryType === "DoorToDoor"
+                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                      deliveryType === "DoorToDoor"
                         ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
                         : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
-                      }`}
+                    }`}
                   >
                     <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5 transition-transform">
                       home
@@ -277,10 +282,11 @@ export default function OrderConfirmationModal({
                     type="button"
                     id="delivery-lbcbranch-btn"
                     onClick={() => handleSelectDeliveryType("LbcBranch")}
-                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${deliveryType === "LbcBranch"
+                    className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                      deliveryType === "LbcBranch"
                         ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
                         : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
-                      }`}
+                    }`}
                   >
                     <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5 transition-transform">
                       store
@@ -296,7 +302,7 @@ export default function OrderConfirmationModal({
               </div>
             )}
 
-            {/* Reserve Quantity Picker included with the buttons */}
+            {/* Reserve Quantity Picker (Included with the buttons) */}
             <div className="flex justify-between items-center bg-input-field/40 p-3 sm:p-3.5 rounded-lg border border-white/5">
               <div>
                 <label
@@ -344,12 +350,13 @@ export default function OrderConfirmationModal({
               </div>
             </div>
 
-            {/* If selection is already ready, offer explicit continue button */}
+            {/* Explicit Proceed to Order Summary button - user must click this before advancing */}
             {isSelectionReady && (
               <button
                 type="button"
+                id="proceed-to-summary-btn"
                 onClick={() => setUserStep("summary")}
-                className="w-full py-2.5 sm:py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] transition-all rounded-lg shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 sm:py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] active:scale-[0.98] transition-all rounded-lg shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
               >
                 Proceed to Order Summary
                 <span className="material-symbols-outlined text-sm">
