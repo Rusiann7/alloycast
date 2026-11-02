@@ -7,6 +7,8 @@ import Image from "next/image";
 import { TableSkeleton } from "../../components/Skeleton";
 import { DateRangePicker } from "../../../components/DateRangePicker";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { styleWorksheet } from "../../../utils/excelFormatter";
 
 const DynamicToast = dynamic(() => import("../../components/Toast"));
@@ -20,6 +22,7 @@ export default function StorePage() {
   const [inventory, setInventory] = useState([]);
   const [posDB, setPos] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [orderOption, setOrderOptions] = useState("Order");
   const [currentPage, setCurrentPage] = useState(1);
   // Reports tab date range (object form for DateRangePicker, defaults to last 30 days)
   const [reportDateRange, setReportDateRange] = useState({
@@ -34,11 +37,17 @@ export default function StorePage() {
     type: "error",
   });
   const [activeTab, setActiveTab] = useState("Point of Sales");
+  const [reportTypeFilter, setReportTypeFilter] = useState("All");
 
   const supabase = createClient();
   const itemsPerPage = 5;
 
-  const transaction = posDB.length;
+  const filteredPosDB =
+    reportTypeFilter === "All"
+      ? posDB
+      : posDB.filter((pos) => pos.type === reportTypeFilter);
+
+  const transaction = filteredPosDB.length;
 
   const showToast = (message, type = "error") => {
     setToast({ visible: true, message, type });
@@ -86,30 +95,61 @@ export default function StorePage() {
       const endDate = new Date(reportDateRange.to || reportDateRange.from);
       endDate.setHours(23, 59, 59, 999);
 
-      const { data, error } = await supabase
-        .from("POS")
-        .select(
-          `id,
-          product_id,
-          quantity,
-          created_at,
-          name,
-          email,
-          Inventory!product_id (
-            id,
-            item_name,
-            brand,
-            item_image,
-            price,
-            category
-          )`,
-        )
-        .gte("created_at", toLocalISO(startDate))
-        .lte("created_at", toLocalISO(endDate))
-        .order("created_at", { ascending: false });
+      const [posResult, reservationResult] = await Promise.all([
+        supabase
+          .from("POS")
+          .select(
+            `id,
+            product_id,
+            quantity,
+            created_at,
+            name,
+            email,
+            Inventory!product_id (
+              id,
+              item_name,
+              brand,
+              item_image,
+              price,
+              category
+            )`,
+          )
+          .gte("created_at", toLocalISO(startDate))
+          .lte("created_at", toLocalISO(endDate)),
+        supabase
+          .from("Reservation")
+          .select(
+            "*, Users(email), Inventory(item_name, brand, item_image, price, category)",
+          )
+          .gte("created_at", toLocalISO(startDate))
+          .lte("created_at", toLocalISO(endDate)),
+      ]);
 
-      if (error) throw error;
-      setPos(data || []);
+      if (posResult.error) throw posResult.error;
+      if (reservationResult.error) throw reservationResult.error;
+
+      const posRows = (posResult.data || []).map((pos) => ({
+        ...pos,
+        type: "POS",
+      }));
+      const reservationRows = (reservationResult.data || []).map(
+        (reservation) => ({
+          id: reservation.id,
+          quantity: reservation.quantity,
+          created_at: reservation.created_at,
+          name: reservation.customer_name,
+          email: reservation.Users?.email,
+          Inventory: reservation.Inventory,
+          type: "Reservation",
+        }),
+      );
+
+      setPos(
+        [...posRows, ...reservationRows].sort(
+          (first, second) =>
+            new Date(second.created_at) - new Date(first.created_at),
+        ),
+      );
     } catch (error) {
       console.error("Error fetching POS records:", error);
     } finally {
@@ -135,7 +175,7 @@ export default function StorePage() {
   const totalProducts = searchedInventory.length;
 
   // Dynamically computes total earnings for the specific fetched date block
-  const dynamicSalesTotal = posDB.reduce((sum, currentItem) => {
+  const dynamicSalesTotal = filteredPosDB.reduce((sum, currentItem) => {
     const itemPrice = currentItem.Inventory?.price || 0;
     const quantityCount = currentItem.quantity || 0;
     return sum + itemPrice * quantityCount;
@@ -144,32 +184,51 @@ export default function StorePage() {
   // Inline sales label derived from DateRangePicker selection
   const getSalesLabel = () => {
     if (!reportDateRange?.from) return "Sales";
-    const fromStr = new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const fromStr = new Date(reportDateRange.from).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
     const toStr = reportDateRange.to
-      ? new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      ? new Date(reportDateRange.to).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
       : fromStr;
     return `Sales (${fromStr} – ${toStr})`;
   };
 
   const getDateBadge = () => {
     if (!reportDateRange?.from) return "—";
-    const from = new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const from = new Date(reportDateRange.from).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
     const to = reportDateRange.to
-      ? new Date(reportDateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-      : new Date(reportDateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      ? new Date(reportDateRange.to).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : new Date(reportDateRange.from).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
     return `${from} – ${to}`;
   };
 
-  const exportSalesData = () => {
+  const exportSalesData = async () => {
     try {
-      if (!posDB || posDB.length === 0) {
+      if (!filteredPosDB || filteredPosDB.length === 0) {
         showToast("No data available to export.", "error");
         return;
       }
 
       let grandTotal = 0;
 
-      const salesExport = posDB.map((pos) => {
+      const salesExport = filteredPosDB.map((pos) => {
         const price = pos.Inventory?.price || 0;
         const quantity = pos.quantity || 0;
         const revenue = price * quantity;
@@ -181,11 +240,12 @@ export default function StorePage() {
           "Product Name": pos.Inventory?.item_name || "N/A",
           Brand: pos.Inventory?.brand || "N/A",
           Category: pos.Inventory?.category || "N/A",
+          Type: pos.type,
           "Price (PHP)": price,
           Quantity: quantity,
           "Total Revenue (PHP)": revenue,
-          "Customer Name": pos.name || "N/A",
-          "Customer Email": pos.email || "N/A",
+          Name: pos.name || "N/A",
+          Email: pos.email || "N/A",
         };
       });
 
@@ -195,11 +255,12 @@ export default function StorePage() {
         "Product Name": "",
         Brand: "",
         Category: "",
+        Type: "",
         "Price (PHP)": "",
         Quantity: "",
         "Total Revenue (PHP)": grandTotal,
-        "Customer Name": "",
-        "Customer Email": "",
+        Name: "",
+        Email: "",
       });
 
       const worksheet = XLSX.utils.json_to_sheet(salesExport);
@@ -209,13 +270,159 @@ export default function StorePage() {
       XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
 
       const fromStr = new Date(reportDateRange?.from || new Date())
-        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
         .replace(/\s+/g, "_");
       const toStr = new Date(reportDateRange?.to || new Date())
-        .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        .toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
         .replace(/\s+/g, "_");
 
       XLSX.writeFile(workbook, `Sales_Report_${fromStr}_to_${toStr}.xlsx`);
+
+      const pdf = new jsPDF({ orientation: "portrait" });
+      const logo = await fetch("/logo.jpg")
+        .then((response) => response.blob())
+        .then(
+          (blob) =>
+            new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            }),
+        );
+
+      const { data: authData } = await supabase.auth.getUser();
+      const adminName =
+        [
+          authData?.user?.user_metadata?.first_name,
+          authData?.user?.user_metadata?.last_name,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        authData?.user?.email ||
+        "Admin";
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageCenterX = pageWidth / 2;
+      const logoWidth = 25;
+      const logoY = 12;
+      const logoHeight =
+        (pdf.getImageProperties(logo).height /
+          pdf.getImageProperties(logo).width) *
+        logoWidth;
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.addImage(
+        logo,
+        "JPEG",
+        pageCenterX - logoWidth / 2,
+        logoY,
+        logoWidth,
+        logoHeight,
+      );
+
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Ethan Marcus Diecast", pageCenterX, logoY + logoHeight + 16, {
+        align: "center",
+      });
+
+      const leftColumnX = 16;
+
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Sales Report", leftColumnX, logoY + logoHeight + 42, {
+        align: "left",
+      });
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(
+        `${new Date(reportDateRange?.from || new Date()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })} - ${new Date(reportDateRange?.to || new Date()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}`,
+        leftColumnX,
+        logoY + logoHeight + 50,
+        { align: "left" },
+      );
+
+      const pdfHeaderLabels = {
+        "Transaction ID": "ID",
+        "Price (PHP)": "Price",
+        Quantity: "QNT",
+        "Total Revenue (PHP)": "Total Revenue",
+      };
+      const pdfHeaders = [
+        "#",
+        ...Object.keys(salesExport[0]).map(
+          (header) => pdfHeaderLabels[header] || header,
+        ),
+      ];
+      const currencyFormatter = new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+      });
+      const pdfRows = salesExport.slice(0, -1).map((row, index) => [
+        index + 1,
+        ...Object.entries(row).map(([header, value]) =>
+          ["Price (PHP)", "Total Revenue (PHP)"].includes(header) &&
+          typeof value === "number"
+            ? currencyFormatter.format(value)
+            : value,
+        ),
+      ]);
+
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 58,
+        theme: "grid",
+        headStyles: {
+          fillColor: [255, 220, 80],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          fontSize: 7,
+        },
+        styles: { textColor: 0, fontSize: 7, cellPadding: 1.5 },
+        head: [pdfHeaders],
+        body: pdfRows,
+        foot: [
+          [
+            {
+              content: "Grand Total",
+              colSpan: 9,
+              styles: { halign: "right", fontStyle: "bold" },
+            },
+            {
+              content: currencyFormatter.format(grandTotal),
+              styles: { fontStyle: "bold" },
+            },
+            "",
+            "",
+          ],
+        ],
+        footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+      });
+
+      const preparedByY = pdf.internal.pageSize.getHeight() - 26;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Prepared By:", leftColumnX, preparedByY, { align: "left" });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(adminName, leftColumnX, preparedByY + 8, { align: "left" });
+
+      pdf.save(`Sales_Report_${fromStr}_to_${toStr}.pdf`);
       showToast("Sales report exported successfully!", "success");
     } catch (err) {
       showToast("Failed to export sales data.", "error");
@@ -227,8 +434,7 @@ export default function StorePage() {
 
   const confirmItems = (item) => {
     if (item.stock <= 0) {
-      showToast("No Stock In The Inventory", "error");
-      return;
+      setOrderOptions("Reservation");
     }
     setSelectedItem(item);
     setIsOpen(true);
@@ -283,6 +489,23 @@ export default function StorePage() {
     }
   };
 
+  //add to wishlist or reservation
+
+  const insertWishlistItems = async (formData) => {
+    try {
+      const { error } = await supabase.from("Reserved").insert({
+        product_id: selectedItem.id,
+        name: formData.userName,
+        email: formData.emailAddr,
+        quantity: formData.quantity,
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   //the shopping cart button
   const purchaseItems = async (formData) => {
     try {
@@ -290,8 +513,10 @@ export default function StorePage() {
         (item) => item.id === parseInt(selectedItem.id),
       );
 
-      if (!matchedItem || matchedItem.stock === 0) {
-        showToast("No Stock In The Inventory", "error");
+      if (formData.orderType === "Reservation" || matchedItem.stock === 0) {
+        await insertWishlistItems(formData);
+        showToast("Reserved Successfully", "success");
+        setIsOpen(false);
         return;
       }
 
@@ -579,6 +804,28 @@ export default function StorePage() {
                 />
               </div>
 
+              <div className="flex items-center gap-3 justify-end">
+                <label
+                  htmlFor="report-type-filter"
+                  className="text-xs font-headline font-black uppercase tracking-[0.2em] text-white/60"
+                >
+                  Filter by Type
+                </label>
+                <select
+                  id="report-type-filter"
+                  value={reportTypeFilter}
+                  onChange={(event) => {
+                    setReportTypeFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-lg border border-white/10 bg-input-field px-4 py-2 text-sm font-bold uppercase tracking-widest text-white outline-none"
+                >
+                  <option value="All">All</option>
+                  <option value="POS">POS</option>
+                  <option value="Reservation">Reservation</option>
+                </select>
+              </div>
+
               {/* Dynamic KPI Dashboard View metrics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="bg-secondary-container shadow-lg/30 p-6 rounded-lg border border-white/5 group hover:scale-105 transition-all">
@@ -641,6 +888,9 @@ export default function StorePage() {
                           Category/Series
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          Type
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                           Price
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
@@ -655,8 +905,8 @@ export default function StorePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.02]">
-                      {posDB.length > 0 ? (
-                        posDB
+                      {filteredPosDB.length > 0 ? (
+                        filteredPosDB
                           .slice(
                             (currentPage - 1) * itemsPerPage,
                             currentPage * itemsPerPage,
@@ -697,6 +947,9 @@ export default function StorePage() {
                                   {pos.Inventory?.category}
                                 </p>
                               </td>
+                              <td className="px-8 py-5 text-center text-sm font-black text-white/80 uppercase tracking-widest">
+                                {pos.type}
+                              </td>
                               <td className="px-8 py-5 text-center">
                                 <p className="text-2xl text-primary-container">
                                   ₱
@@ -727,7 +980,7 @@ export default function StorePage() {
                       ) : (
                         <tr>
                           <td
-                            colSpan="8"
+                            colSpan="9"
                             className="px-8 py-12 text-center text-white/60 uppercase text-sm tracking-widest font-bold"
                           >
                             No transaction records found for this period.
@@ -759,12 +1012,13 @@ export default function StorePage() {
                           setCurrentPage((p) =>
                             Math.min(
                               p + 1,
-                              Math.ceil(posDB.length / itemsPerPage),
+                              Math.ceil(filteredPosDB.length / itemsPerPage),
                             ),
                           )
                         }
                         disabled={
-                          currentPage >= Math.ceil(posDB.length / itemsPerPage)
+                          currentPage >=
+                          Math.ceil(filteredPosDB.length / itemsPerPage)
                         }
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/5 text-white/90 hover:bg-white/50 hover:text-white transition-colors"
                       >
@@ -793,6 +1047,7 @@ export default function StorePage() {
           isClose={() => setIsOpen(false)}
           selectedItem={selectedItem}
           onPurchase={purchaseItems}
+          selectedOrderOption={orderOption}
         />
       )}
 

@@ -43,10 +43,12 @@ export default function AdminInventory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyTagFilter, setHistoryTagFilter] = useState("ALL");
   const [user, setUser] = useState(null); // for checking auth users
   const [historyData, setHistoryData] = useState([]);
   const [wishlistData, setWishlistData] = useState([]);
   const [wishlistSearchQuery, setWishlistSearchQuery] = useState("");
+  const [reservedItems, setReservedItems] = useState([]);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -102,6 +104,27 @@ export default function AdminInventory() {
     intializeFunction();
   }, [fetchInventoryProduct]);
 
+  const getReservedItems = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Reserved")
+        .select("*, Inventory(*)");
+
+      if (error) throw error;
+
+      setReservedItems(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const runGetReservedItems = async () => {
+      getReservedItems();
+    };
+    runGetReservedItems();
+  }, [getReservedItems]);
+
   // fetch wishlist data joined with Inventory and Customer
   useEffect(() => {
     const fetchWishlists = async () => {
@@ -117,10 +140,10 @@ export default function AdminInventory() {
           Inventory (id, item_name, item_image, brand, price, category),
           Users (
             id,
+            email,
             Customer (
               firstname,
-              lastname,
-              gender
+              lastname
             )
           )
           `,
@@ -219,6 +242,7 @@ export default function AdminInventory() {
           price: editProductForm.price,
           stock: editProductForm.stock,
           item_image: imageUrl,
+          item_color: editProductForm.item_color,
         })
         .eq("id", editingProductId);
 
@@ -234,6 +258,7 @@ export default function AdminInventory() {
         item_image: imageUrl || oldRow.item_image,
         user_id: user?.id || null,
         comment: commentDetail,
+        color: editProductForm.item_color,
       });
 
       if (historyError) throw historyError;
@@ -351,6 +376,8 @@ export default function AdminInventory() {
   const getLogInfo = (log) => {
     const comment = log.comment || "Updated";
     const itemName = log.item_name || "Unknown Product";
+    const color = log.color ? ` (${log.color})` : "";
+    const productName = `${itemName}${color}`;
     const brand = log.brand ? ` (${log.brand})` : "";
     const stock = log.stock !== undefined && log.stock !== null ? log.stock : 0;
 
@@ -361,34 +388,34 @@ export default function AdminInventory() {
     const lowerComment = comment.toLowerCase();
 
     if (lowerComment.includes("added") || lowerComment.includes("new")) {
-      description = `Added product "${itemName}"${brand} to inventory with ${stock} unit${stock !== 1 ? "s" : ""}.`;
+      description = `Added product "${productName}"${brand} to inventory with ${stock} unit${stock !== 1 ? "s" : ""}.`;
       tag = "PRODUCT ADDED";
       tagColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
     } else if (
       lowerComment.includes("deleted") ||
       lowerComment.includes("removed")
     ) {
-      description = `Removed product "${itemName}"${brand} from inventory.`;
+      description = `Removed product "${productName}"${brand} from inventory.`;
       tag = "PRODUCT REMOVED";
       tagColor = "text-red-400 bg-red-500/10 border-red-500/20";
     } else if (lowerComment.includes("discount")) {
-      description = `Added discount for "${itemName}"${brand}. ${comment}.`;
+      description = `Added discount for "${productName}"${brand}. ${comment}.`;
       tag = "DISCOUNT ADDED";
       tagColor = "text-purple-400 bg-purple-500/10 border-purple-500/20";
     } else if (lowerComment.includes("increased")) {
-      description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
+      description = `Updated stock for "${productName}"${brand}. ${comment}.`;
       tag = "STOCK INCREASE";
       tagColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
     } else if (lowerComment.includes("decreased")) {
-      description = `Updated stock for "${itemName}"${brand}. ${comment}.`;
+      description = `Updated stock for "${productName}"${brand}. ${comment}.`;
       tag = "STOCK DECREASE";
       tagColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
     } else if (lowerComment.includes("price")) {
-      description = `Updated price for "${itemName}"${brand}. ${comment}.`;
+      description = `Updated price for "${productName}"${brand}. ${comment}.`;
       tag = "PRICE UPDATE";
       tagColor = "text-blue-400 bg-blue-500/10 border-blue-500/20";
     } else {
-      description = `Updated stock & inventory details for "${itemName}"${brand}. Current stock: ${stock} unit${stock !== 1 ? "s" : ""}.`;
+      description = `Updated stock & inventory details for "${productName}"${brand}. Current stock: ${stock} unit${stock !== 1 ? "s" : ""}.`;
       tag = "STOCK UPDATE";
       tagColor = "text-[#d4af37] bg-[#d4af37]/10 border-[#d4af37]/20";
     }
@@ -398,15 +425,20 @@ export default function AdminInventory() {
 
   const groupedHistory = historyData
     .filter((log) => {
-      if (!historySearchQuery) return true;
+      const matchesTag =
+        historyTagFilter === "ALL" || getLogInfo(log).tag === historyTagFilter;
+
+      if (!historySearchQuery) return matchesTag;
+
       const query = historySearchQuery.toLowerCase();
       const itemName = (log.item_name || "").toLowerCase();
       const brand = (log.brand || "").toLowerCase();
       const comment = (log.comment || "").toLowerCase();
       return (
-        itemName.includes(query) ||
-        brand.includes(query) ||
-        comment.includes(query)
+        matchesTag &&
+        (itemName.includes(query) ||
+          brand.includes(query) ||
+          comment.includes(query))
       );
     })
     .reduce((acc, log) => {
@@ -426,6 +458,24 @@ export default function AdminInventory() {
       return acc;
     }, {});
 
+  const wishlistItems = [
+    ...wishlistData.map((item) => ({
+      ...item,
+      email: item.Users?.email || item.Users?.[0]?.email,
+      type: "Wishlist",
+    })),
+    ...reservedItems.map((item) => ({ ...item, type: "Reserved" })),
+  ];
+
+  const getWishlistCustomerName = (item) => {
+    const customer = Array.isArray(item.Users?.Customer)
+      ? item.Users.Customer[0]
+      : item.Users?.Customer;
+    const name =
+      `${customer?.firstname || ""} ${customer?.lastname || ""}`.trim();
+    return item.name || name || "Unknown";
+  };
+
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-hidden select-none">
       {/* --- Main Content --- */}
@@ -437,16 +487,16 @@ export default function AdminInventory() {
               INVENTORY
             </h3>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+              <p className="text-lg sm:text-md font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] rounded-lg p-1 bg-primary-container text-black/90">
                 TOTAL STOCKS:{" "}
-                <span className="text-font-color font-bold">
+                <span className="text-black/90 font-bold">
                   {totalProductStock.toLocaleString()}
                 </span>{" "}
               </p>
               <div className="hidden sm:block w-1 h-1 bg-secondary-container rounded-full" />
-              <p className="text-xs sm:text-sm font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] text-font-color">
+              <p className="text-lg sm:text-md font-headline font-bold uppercase tracking-[0.15em] sm:tracking-[0.25em] rounded-lg p-1 bg-primary-container text-black/90">
                 TOTAL ITEMS:{" "}
-                <span className="text-font-color">{totalProducts}</span>
+                <span className="text-black/90">{totalProducts}</span>
               </p>
             </div>
           </div>
@@ -455,7 +505,7 @@ export default function AdminInventory() {
           <div className="mb-10 reveal-up border-b border-white/10 flex items-center gap-8 sm:gap-12">
             <button
               onClick={() => setActiveTab("inventory")}
-              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative ${
+              className={`pb-3.5 text-lg  sm:text-md font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative ${
                 activeTab === "inventory"
                   ? "text-[#d4af37] font-black"
                   : "text-white/40 hover:text-white/80"
@@ -469,7 +519,7 @@ export default function AdminInventory() {
 
             <button
               onClick={() => setActiveTab("history")}
-              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
+              className={`pb-3.5 text-lg  sm:text-md font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
                 activeTab === "history"
                   ? "text-[#d4af37] font-black"
                   : "text-white/40 hover:text-white/80"
@@ -478,7 +528,7 @@ export default function AdminInventory() {
               <span>STOCK HISTORY</span>
               {historyData.length > 0 && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`px-2 py-0.5 rounded-full text-[15px] font-bold ${
                     activeTab === "history"
                       ? "bg-[#d4af37]/20 text-[#d4af37]"
                       : "bg-white/10 text-white/50"
@@ -494,16 +544,16 @@ export default function AdminInventory() {
 
             <button
               onClick={() => setActiveTab("wishlist")}
-              className={`pb-3.5 text-sm sm:text-base font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
+              className={`pb-3.5 text-lg  sm:text-md font-headline font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-all relative flex items-center gap-2.5 ${
                 activeTab === "wishlist"
                   ? "text-[#d4af37] font-black"
                   : "text-white/40 hover:text-white/80"
               }`}
             >
-              <span>WISHLIST</span>
+              <span>WISHLIST/RESERVATION</span>
               {wishlistData.length > 0 && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`px-2 py-0.5 rounded-full text-[15px] font-bold ${
                     activeTab === "wishlist"
                       ? "bg-[#d4af37]/20 text-[#d4af37]"
                       : "bg-white/10 text-white/50"
@@ -569,6 +619,9 @@ export default function AdminInventory() {
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                           PRODUCT NAME
+                        </th>
+                        <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
+                          PRODUCT COLOR
                         </th>
                         <th className="px-8 py-5 text-center text-md font-black font-headline uppercase tracking-[0.3em] text-primary-container">
                           BRAND
@@ -677,6 +730,23 @@ export default function AdminInventory() {
                                 )}
                               </td>
 
+                              {/* Product Color */}
+                              <td className="px-8 py-5 text-center">
+                                {editingProductId === item.id ? (
+                                  <input
+                                    name="item_color"
+                                    type="text"
+                                    value={editProductForm.item_color ?? ""}
+                                    onChange={editProduct}
+                                    className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
+                                  />
+                                ) : (
+                                  <p className="text-lg text-white font-bold font-headline uppercase tracking-tight group-hover:text-primary-container transition-colors duration-300">
+                                    {item.item_color}
+                                  </p>
+                                )}
+                              </td>
+
                               {/* Brand */}
                               <td className="px-8 py-5 text-center">
                                 {editingProductId === item.id ? (
@@ -761,8 +831,14 @@ export default function AdminInventory() {
                                     className="w-full bg-black/60 border border-primary-container/30 p-2 text-xs font-headline uppercase outline-none focus:border-primary-container text-white"
                                   />
                                 ) : (
-                                  <p className="text-md text-white font-headline font-bold">
-                                    {item.stock}
+                                  <p
+                                    className={
+                                      Number(item.stock) < 2
+                                        ? "text-red-400 font-bold text-xl"
+                                        : "text-white"
+                                    }
+                                  >
+                                    {item.stock}/5
                                   </p>
                                 )}
                               </td>
@@ -820,10 +896,10 @@ export default function AdminInventory() {
                                           setItemToDelete(item);
                                           setDeleteModalOpen(true);
                                         }}
-                                        className="w-8 h-8 flex items-center justify-center bg-error-container rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
+                                        className="w-8 h-8 flex items-center justify-center bg-red-400 rounded-lg text-white hover:bg-error-container/40 hover:text-white/90 transition-all"
                                       >
                                         <span className="material-symbols-outlined text-sm">
-                                          delete
+                                          archive
                                         </span>
                                       </button>
                                     </>
@@ -901,7 +977,7 @@ export default function AdminInventory() {
             <div className="space-y-8 reveal-up">
               {/* History Filter Bar */}
               <div
-                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex items-center gap-4 sm:gap-5"
+                className="bg-secondary-container shadow-lg/30 p-4 sm:p-5 rounded-lg flex flex-col items-center gap-4 sm:gap-5"
                 style={{ animationDelay: "0.1s" }}
               >
                 <div className="w-full flex items-center gap-4 sm:gap-5 border border-primary-container px-4 sm:px-6 h-14 rounded-lg bg-input-field">
@@ -916,6 +992,22 @@ export default function AdminInventory() {
                     className="flex-1 bg-transparent border-none outline-none text-sm sm:text-md font-headline font-bold tracking-[0.1em] placeholder:opacity-80 text-white/90"
                   />
                 </div>
+              </div>
+              <div className="flex justify-end">
+                <select
+                  value={historyTagFilter}
+                  onChange={(e) => setHistoryTagFilter(e.target.value)}
+                  className="w-md h-12 border border-primary-container rounded-lg px-4 bg-input-field text-sm font-headline font-bold uppercase tracking-widest text-white/90 outline-none"
+                >
+                  <option value="ALL">ALL TAGS</option>
+                  <option value="PRODUCT ADDED">PRODUCT ADDED</option>
+                  <option value="PRODUCT REMOVED">PRODUCT REMOVED</option>
+                  <option value="DISCOUNT ADDED">DISCOUNT ADDED</option>
+                  <option value="STOCK INCREASE">STOCK INCREASE</option>
+                  <option value="STOCK DECREASE">STOCK DECREASE</option>
+                  <option value="PRICE UPDATE">PRICE UPDATE</option>
+                  <option value="STOCK UPDATE">STOCK UPDATE</option>
+                </select>
               </div>
 
               {/* Vertical Timeline Changelog */}
@@ -974,6 +1066,7 @@ export default function AdminInventory() {
                                   },
                                 )
                               : "";
+                            const batchNumber = `${log.id}-${log.created_at ? new Date(log.created_at).toLocaleDateString("en-CA") : "unknown-date"}`;
 
                             return (
                               <li
@@ -985,6 +1078,14 @@ export default function AdminInventory() {
                                     •
                                   </span>
                                   <div className="flex-1">
+                                    <span className="mx-2 text-sm font-mono text-white/70">
+                                      Batch #: {batchNumber}
+                                    </span>
+                                    {timeStr && (
+                                      <span className="text-sm font-mono text-white/60">
+                                        {timeStr}
+                                      </span>
+                                    )}
                                     <p className="text-sm sm:text-base font-body text-white/90 font-medium leading-relaxed">
                                       {description}
                                     </p>
@@ -994,11 +1095,6 @@ export default function AdminInventory() {
                                       >
                                         {tag}
                                       </span>
-                                      {timeStr && (
-                                        <span className="text-[11px] font-mono text-white/40">
-                                          {timeStr}
-                                        </span>
-                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1058,30 +1154,40 @@ export default function AdminInventory() {
                           Price
                         </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
+                          Type
+                        </th>
+                        <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
                           Customer
                         </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
-                          Gender
+                          Email
                         </th>
                         <th className="p-5 text-[11px] font-black tracking-[0.25em] uppercase text-[#d4af37]">
-                          Wishlisted At
+                          Time
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.03]">
-                      {wishlistData
+                      {wishlistItems
                         .filter((w) => {
                           const q = wishlistSearchQuery.toLowerCase();
+                          if (!q) return true;
                           return (
                             w.Inventory?.item_name?.toLowerCase().includes(q) ||
                             w.Inventory?.brand?.toLowerCase().includes(q) ||
-                            w.Customer?.firstname?.toLowerCase().includes(q) ||
-                            w.Customer?.lastname?.toLowerCase().includes(q)
+                            w.Users?.Customer?.firstname
+                              ?.toLowerCase()
+                              .includes(q) ||
+                            w.Users?.Customer?.lastname
+                              ?.toLowerCase()
+                              .includes(q) ||
+                            w.name?.toLowerCase().includes(q) ||
+                            w.email?.toLowerCase().includes(q)
                           );
                         })
                         .map((w) => (
                           <tr
-                            key={w.id}
+                            key={`${w.type}-${w.id}`}
                             className="group hover:bg-white/[0.01] transition-all duration-300 border-b border-primary-container/30"
                           >
                             {/* Product */}
@@ -1125,17 +1231,25 @@ export default function AdminInventory() {
                                 ? `₱${Number(w.Inventory.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`
                                 : "—"}
                             </td>
+                            {/* Type */}
+                            <td
+                              className={`p-5 text-sm font-black uppercase tracking-wider ${
+                                w.type === "Reserved"
+                                  ? "text-amber-400"
+                                  : "text-blue-400"
+                              }`}
+                            >
+                              {w.type}
+                            </td>
                             {/* Customer */}
                             <td className="p-5">
                               <p className="font-black text-sm uppercase tracking-tight">
-                                {w.Customer
-                                  ? `${w.Customer.firstname || ""} ${w.Customer.lastname || ""}`.trim()
-                                  : "Unknown"}
+                                {getWishlistCustomerName(w)}
                               </p>
                             </td>
-                            {/* Gender */}
+                            {/* Email */}
                             <td className="p-5 text-sm font-bold uppercase tracking-wider text-white/60">
-                              {w.Customer?.gender || "—"}
+                              {w.email || w.Users?.email || "—"}
                             </td>
                             {/* Wishlisted At */}
                             <td className="p-5 text-sm font-black uppercase tracking-widest text-white/70">
@@ -1152,17 +1266,24 @@ export default function AdminInventory() {
                             </td>
                           </tr>
                         ))}
-                      {wishlistData.filter((w) => {
+                      {wishlistItems.filter((w) => {
                         const q = wishlistSearchQuery.toLowerCase();
+                        if (!q) return true;
                         return (
                           w.Inventory?.item_name?.toLowerCase().includes(q) ||
                           w.Inventory?.brand?.toLowerCase().includes(q) ||
-                          w.Customer?.firstname?.toLowerCase().includes(q) ||
-                          w.Customer?.lastname?.toLowerCase().includes(q)
+                          w.Users?.Customer?.firstname
+                            ?.toLowerCase()
+                            .includes(q) ||
+                          w.Users?.Customer?.lastname
+                            ?.toLowerCase()
+                            .includes(q) ||
+                          w.name?.toLowerCase().includes(q) ||
+                          w.email?.toLowerCase().includes(q)
                         );
                       }).length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-20 text-center">
+                          <td colSpan={8} className="py-20 text-center">
                             <div className="flex flex-col items-center justify-center opacity-60">
                               <span className="material-symbols-outlined text-5xl mb-3 text-white/60">
                                 favorite

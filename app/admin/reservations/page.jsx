@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../lib/supabase/client";
 import emailjs from "@emailjs/browser";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { styleWorksheet } from "../../../utils/excelFormatter";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -32,6 +34,7 @@ export default function AdminReservations() {
   const [reservationDB, setReservationDB] = useState([]);
   const [todayCount, setTodayCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dropdownValue, setDropdownValue] = useState("");
   const [loading, setLoading] = useState(true);
   // Reports tab date range (object form for DateRangePicker)
   const [reportDateRange, setReportDateRange] = useState({
@@ -148,8 +151,7 @@ export default function AdminReservations() {
     todayCountGetter();
   }, []);
 
-  const exportToExcel = () => {
-    // data to be expored to excel
+  const exportToExcel = async () => {
     const exportData = reservation.map((res) => ({
       "Customer Name": res.customer,
       "Email Address": res.customer_email,
@@ -168,8 +170,149 @@ export default function AdminReservations() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Reservations");
 
-    // download the excel
     XLSX.writeFile(workbook, "Ethan_Marcus_Reservations_Report.xlsx");
+
+    try {
+      const pdf = new jsPDF({ orientation: "portrait" });
+      const logo = await fetch("/logo.jpg")
+        .then((response) => {
+          if (!response.ok) throw new Error("Unable to load report logo");
+          return response.blob();
+        })
+        .then(
+          (blob) =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(blob);
+            }),
+        );
+
+      const { data: authData } = await supabase.auth.getUser();
+      const adminName =
+        [
+          authData?.user?.user_metadata?.first_name,
+          authData?.user?.user_metadata?.last_name,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        authData?.user?.email ||
+        "Admin";
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageCenterX = pageWidth / 2;
+      const logoWidth = 25;
+      const logoY = 12;
+      const logoProperties = pdf.getImageProperties(logo);
+      const logoHeight =
+        (logoProperties.height / logoProperties.width) * logoWidth;
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.addImage(
+        logo,
+        "JPEG",
+        pageCenterX - logoWidth / 2,
+        logoY,
+        logoWidth,
+        logoHeight,
+      );
+
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Ethan Marcus Diecast", pageCenterX, logoY + logoHeight + 16, {
+        align: "center",
+      });
+
+      const leftColumnX = 16;
+      const fromDate = reportDateRange?.from || new Date();
+      const toDate = reportDateRange?.to || fromDate;
+      const dateRangeText = `${new Date(fromDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })} - ${new Date(toDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Order Reports", leftColumnX, logoY + logoHeight + 42, {
+        align: "left",
+      });
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(dateRangeText, leftColumnX, logoY + logoHeight + 50, {
+        align: "left",
+      });
+
+      const pdfHeaderLabels = {
+        "Customer Name": "Name",
+        "Email Address": "Email",
+        Quantity: "QNT",
+      };
+      const pdfHeaders = [
+        "#",
+        ...Object.keys(exportData[0] || {
+          "Customer Name": "",
+          "Email Address": "",
+          "Product Name": "",
+          Brand: "",
+          Quantity: "",
+          "Date Reserved": "",
+          "Fulfillment Status": "",
+        }).map((header) => pdfHeaderLabels[header] || header),
+      ];
+
+      autoTable(pdf, {
+        startY: logoY + logoHeight + 58,
+        theme: "grid",
+        headStyles: {
+          fillColor: [255, 220, 80],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          fontSize: 7,
+        },
+        styles: { textColor: 0, fontSize: 7, cellPadding: 1.5 },
+        head: [pdfHeaders],
+        body: exportData.map((row, index) => [
+          index + 1,
+          ...Object.values(row),
+        ]),
+        foot: [
+          [
+            {
+              content: "Grand Total",
+              colSpan: 5,
+              styles: { halign: "right", fontStyle: "bold" },
+            },
+            {
+              content: String(exportData.length),
+              styles: { fontStyle: "bold" },
+            },
+            "",
+            "",
+          ],
+        ],
+        footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0] },
+        showFoot: "lastPage",
+      });
+
+      const signatureY = pdf.internal.pageSize.getHeight() - 26;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Prepared By:", leftColumnX, signatureY, { align: "left" });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(adminName, leftColumnX, signatureY + 8, { align: "left" });
+
+      pdf.save("Ethan_Marcus_Order_Report.pdf");
+    } catch (error) {
+      showToast("Excel downloaded, but PDF export failed.", "error");
+      console.error("Failed to export reservations PDF:", error);
+    }
   };
 
   const handleActionClick = (
@@ -419,6 +562,11 @@ export default function AdminReservations() {
     }
   };
 
+  const getSortedItems = (event) => {
+    setDropdownValue(event.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="text-white/90 min-h-screen font-body relative overflow-x-hidden selection:bg-primary-container selection:text-white">
       <DynamicToast
@@ -511,16 +659,7 @@ export default function AdminReservations() {
           className="flex items-center gap-10  mb-10 overflow-x-auto scrollbar-hide reveal-up"
           style={{ animationDelay: "0.1s" }}
         >
-          {[
-            "All Items",
-            "Shipped",
-            "Pending Pickup",
-            "Pending Shipping",
-            "Completed",
-            "Declined",
-            "Cancelled",
-            "Reports",
-          ].map((tab) => (
+          {["All Items", "Reports"].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -572,16 +711,31 @@ export default function AdminReservations() {
                         Product Brand
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                        Quantity
+                        Qnt
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Date Reserved
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
-                        Order Type
+                        Type
                       </th>
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
                         Status
+                        <select
+                          value={dropdownValue}
+                          className="[field-sizing:content] bg-secondary-container text-center rounded-lg p-1 uppercase font-black"
+                          onChange={getSortedItems}
+                        >
+                          <option value="">All Items</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Declined">Declined</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Pending Pickup">Pending Pickup</option>
+                          <option value="Pending Shipping">
+                            Pending Shipping
+                          </option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
                       </th>
 
                       <th className="p-6  text-md font-black tracking-[0.3em] uppercase text-primary-container">
@@ -590,12 +744,12 @@ export default function AdminReservations() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.02]">
-                    {reservation
-                      .filter((res) =>
-                        activeTab === "All Items"
-                          ? true
-                          : res.fulfillment_status === activeTab,
-                      )
+                    {(dropdownValue
+                      ? reservation.filter(
+                          (res) => res.fulfillment_status === dropdownValue,
+                        )
+                      : reservation
+                    )
                       .slice(
                         (currentPage - 1) * itemsPerPage,
                         currentPage * itemsPerPage,

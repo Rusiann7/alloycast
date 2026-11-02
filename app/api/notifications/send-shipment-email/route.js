@@ -269,9 +269,6 @@ export async function POST(request) {
             <div class="row"><span class="label">Tracking Number:</span><span class="value">${trackingNumber || "N/A"}</span></div>
           </div>
 
-          <div class="btn-container">
-            <a href="${checkoutUrl}" class="btn">Pay Online Now</a>
-          </div>
 
           <div class="footer">
             <p>Thank you for shopping at AlloyDash! — AlloyDash Automated Inventory &amp; Fulfillment System</p>

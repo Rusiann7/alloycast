@@ -79,6 +79,11 @@ export default function LandingPageNavbar() {
       label: "Browse Products",
       href: "/customer/product",
     },
+    {
+      id: 1,
+      label: "On Sale",
+      href: "/customer/on-sale",
+    },
   ];
 
   const showLogoutModal = async () => {

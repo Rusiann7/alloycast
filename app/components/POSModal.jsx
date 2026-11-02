@@ -10,10 +10,14 @@ export default function POSModal({
   isClose,
   selectedItem,
   onPurchase,
+  selectedOrderOption,
 }) {
   const [userName, setUserName] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [orderOptions, setOrderOptions] = useState(
+    selectedOrderOption || "Order",
+  );
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -32,7 +36,11 @@ export default function POSModal({
     } else {
       const parsed = parseInt(value, 10);
       if (!isNaN(parsed)) {
-        if (parsed > selectedItem?.stock) {
+        if (
+          orderOptions === "Order" &&
+          selectedItem?.stock > 0 &&
+          parsed > selectedItem.stock
+        ) {
           setQuantity(selectedItem.stock);
           showToast(
             `Quantity capped at maximum available stock (${selectedItem.stock})`,
@@ -53,7 +61,12 @@ export default function POSModal({
       showToast("Please enter a valid quantity of at least 1.", "error");
       return;
     }
-    if (parsedQuantity > selectedItem?.stock) {
+    if (
+      selectedItem?.stock > 0 &&
+      parsedQuantity > selectedItem.stock &&
+      orderOptions === "Order"
+    ) {
+      console.log(orderOptions, parsedQuantity, selectedItem?.stock);
       showToast(
         `Cannot purchase more than the available stock of ${selectedItem.stock} units.`,
         "error",
@@ -65,7 +78,12 @@ export default function POSModal({
       return;
     }
 
-    onPurchase({ userName, emailAddr, quantity: parsedQuantity });
+    onPurchase({
+      userName,
+      emailAddr,
+      quantity: parsedQuantity,
+      orderType: orderOptions,
+    });
     setUserName("");
     setEmailAddr("");
     setQuantity(1);
@@ -109,6 +127,18 @@ export default function POSModal({
             </div>
 
             <div>
+              <label className="text-font-color text-lg mt-2">Type:</label>
+              <select
+                className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                value={orderOptions}
+                onChange={(e) => setOrderOptions(e.target.value)}
+              >
+                <option value="Order">Order</option>
+                <option value="Reservation">Reservation</option>
+              </select>
+            </div>
+
+            <div>
               <label className="text-font-color text-lg mt-2">
                 Customer Name:
               </label>
@@ -123,16 +153,34 @@ export default function POSModal({
             </div>
 
             <div>
-              <label className="text-font-color text-lg mt-2">
-                Customer Email (Optional):
-              </label>
-              <input
-                type="email"
-                placeholder="johndoe@gmail.com"
-                className="w-full bg-input-field text-white/90 p-2 rounded-lg"
-                value={emailAddr}
-                onChange={(e) => setEmailAddr(e.target.value)}
-              />
+              {orderOptions === "Order" ? (
+                <>
+                  <label className="text-font-color text-lg mt-2">
+                    Customer Email (Optional):
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="johndoe@gmail.com"
+                    className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                    value={emailAddr}
+                    onChange={(e) => setEmailAddr(e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <label className="text-font-color text-lg mt-2">
+                    Customer Email:
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="johndoe@gmail.com"
+                    className="w-full bg-input-field text-white/90 p-2 rounded-lg"
+                    value={emailAddr}
+                    onChange={(e) => setEmailAddr(e.target.value)}
+                    required
+                  />
+                </>
+              )}
             </div>
           </div>
           <div className="flex gap-3 mt-4">

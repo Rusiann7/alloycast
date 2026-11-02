@@ -1095,14 +1095,24 @@ function ProductDetail() {
 
           {/* Right Column: Spec Sheet & Control */}
           <div className="py-0 reveal-up" style={{ animationDelay: "0.2s" }}>
-            <div className="space-y -12">
+            <div className="space-y-12">
               <div>
                 <span className="inline-block bg-primary-container text-black/90 font-headline font-black text-sm tracking-[0.4em] px-4 py-2  drop-shadow-lg/30 rounded-lg mb-8 uppercase italic">
                   {product.brand} PERFORMANCE
                 </span>
-                <h1 className="text-[40px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
-                  {product.item_name}
-                </h1>
+                <div className="flex gap-10">
+                  <h1 className="text-[40px] font-headline font-black uppercase leading-[0.8] tracking-tighter mb-6 italic">
+                    {product.item_name}
+                  </h1>
+                  <div>
+                    <span className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
+                      COLOR:
+                    </span>
+                    <span className="font-headline text-sm  text-font-color  uppercase tracking-[0.5em] mb-3 font-bold">
+                      {product.item_color?.trim() || " No Color"}
+                    </span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-6">
                   <p className="text-font-color font-headline font-black tracking-[0.2em] text-lg uppercase flex items-center gap-4 italic">
                     {product.brand} OFFICIAL SERIES
@@ -1148,6 +1158,7 @@ function ProductDetail() {
                       </p>
                     )}
                   </div>
+
                   <div className="text-right">
                     <p className="text-xl font-headline font-black text-on-primary dark:text-red-500 uppercase tracking-tight animate-pulse">
                       {product.stock === 1
@@ -1200,11 +1211,11 @@ function ProductDetail() {
                 {wishlistStatus ? (
                   <button
                     onClick={removeWishlist}
-                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-amber-600 text-white transition-all hover:scale-105 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
+                    className="flex-shrink-0 w-12 h-12 rounded-lg bg-grey-100 text-white transition-all hover:scale-105 active:scale-[0.95] drop-shadow-lg/50 flex items-center justify-center"
                     title="Reset wishlist"
                   >
                     <span className="material-symbols-outlined text-xl">
-                      restart_alt
+                      favorite
                     </span>
                   </button>
                 ) : (

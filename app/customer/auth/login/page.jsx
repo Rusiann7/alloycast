@@ -450,13 +450,13 @@ function LoginContent() {
             </form>
 
             <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4">
-              <p className="text-xs text-white/90 uppercase tracking-widest text-center">
+              <p className="text-sm text-white/90 uppercase tracking-widest text-center">
                 Don&apos;t have an account?{" "}
                 <Link
                   href="/customer/auth/register"
                   className="text-primary-container hover:underline italic font-bold"
                 >
-                  SIGN UP
+                  <u>SIGN UP</u>
                 </Link>
               </p>
             </div>
