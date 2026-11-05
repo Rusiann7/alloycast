@@ -22,10 +22,11 @@ export default function CartViewModal({ isOpen, onClose, user }) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [confirmationStep, setConfirmationStep] = useState("selection");
 
-  const [orderType, setOrderType] = useState("Pickup");
-  const [deliveryType, setDeliveryType] = useState("DoorToDoor");
-  const [paymentType, setPaymentType] = useState("Cash");
+  const [orderType, setOrderType] = useState(null);
+  const [deliveryType, setDeliveryType] = useState(null);
+  const [paymentType, setPaymentType] = useState(null);
 
   const [customerDetails, setCustomerDetails] = useState({
     fullName: "",
@@ -106,46 +107,31 @@ export default function CartViewModal({ isOpen, onClose, user }) {
     }
   }, [isOpen, user, fetchCartItems]);
 
-  // Option Handlers matching exact rules
-  const handleOrderTypeChange = (e) => {
-    const val = e.target.value;
-    setOrderType(val);
-    if (val === "Delivery") {
-      // Delivery defaults to Door-to-Door (Online)
-      setDeliveryType("DoorToDoor");
-      setPaymentType("Online");
-    } else {
-      // Pickup defaults to Cash
-      setDeliveryType("DoorToDoor");
-      setPaymentType("Cash");
-    }
+  // Checkout option handlers
+  const handleOrderTypeChange = (type) => {
+    setOrderType(type);
+    setDeliveryType(type === "Pickup" ? "DoorToDoor" : null);
+    setPaymentType(null);
   };
 
-  const handleDeliveryTypeChange = (e) => {
-    const val = e.target.value;
-    setDeliveryType(val);
-    if (val === "LbcBranch") {
-      // LBC Local Branch is always Cash
-      setPaymentType("Cash");
-    } else {
-      // Door to Door is always Online
-      setPaymentType("Online");
-    }
+  const handleDeliveryTypeChange = (type) => {
+    setDeliveryType(type);
+    setPaymentType(type === "LbcBranch" ? "Cash" : "Online");
   };
 
-  const handlePaymentTypeChange = (e) => {
-    const val = e.target.value;
-    if (orderType === "Delivery" && deliveryType === "LbcBranch") {
-      // Locked to Cash
-      return;
-    }
-    if (orderType === "Delivery" && val === "Cash") {
-      showToast("Cash on Pickup is not applicable for Delivery orders.", "error");
-      setPaymentType("Online");
-      return;
-    }
-    setPaymentType(val);
+  const handleOpenConfirmation = () => {
+    setConfirmationStep("selection");
+    setIsConfirmModalOpen(true);
   };
+
+  const closeConfirmationModal = () => {
+    setConfirmationStep("selection");
+    setIsConfirmModalOpen(false);
+  };
+
+  const isSelectionReady =
+    (orderType === "Pickup" && Boolean(paymentType)) ||
+    (orderType === "Delivery" && Boolean(deliveryType));
 
   // Delete a cart item
   const handleDelete = async (cartId, itemName) => {
@@ -522,7 +508,7 @@ export default function CartViewModal({ isOpen, onClose, user }) {
                   Continue Shopping
                 </button>
                 <button
-                  onClick={() => setIsConfirmModalOpen(true)}
+                  onClick={handleOpenConfirmation}
                   className="py-4 text-xs font-black uppercase tracking-[0.2em] text-black/90 bg-primary-container hover:brightness-110 transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-sm">
@@ -539,160 +525,298 @@ export default function CartViewModal({ isOpen, onClose, user }) {
       {/* Order Confirmation Modal */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-md bg-modal-background border border-white/10 rounded-lg p-5 sm:p-6 text-font-color shadow-2xl animate-scale-in">
+          <div
+            className="relative my-auto w-full max-w-md bg-modal-background border border-white/10 rounded-xl p-5 sm:p-6 text-font-color shadow-2xl transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <div className="flex justify-between items-start mb-4 sm:mb-5">
+            <div className="flex justify-between items-center mb-4 sm:mb-5">
               <h2 className="text-xl sm:text-2xl font-headline font-black uppercase italic leading-tight flex-1 pr-4 text-white">
                 Order Confirmation
               </h2>
               <button
-                onClick={() => setIsConfirmModalOpen(false)}
-                className="material-symbols-outlined flex-shrink-0 bg-on-primary text-white/90 rounded-full p-1.5 transition-colors cursor-pointer"
-                aria-label="Close confirmation modal"
+                type="button"
+                onClick={closeConfirmationModal}
+                className="material-symbols-outlined flex-shrink-0 bg-on-primary text-white/90 rounded-full p-1.5 transition-colors cursor-pointer hover:bg-white/20"
+                aria-label="Close order confirmation"
               >
                 close
               </button>
             </div>
 
-            {/* Inputs */}
-            <div className="space-y-4 mb-4 sm:mb-5 flex flex-col">
-              <div>
-                <label htmlFor="orderType" className="block text-sm font-bold text-white/70 mb-1.5">
-                  Order Type
-                </label>
-                <select
-                  name="orderType"
-                  id="orderType"
-                  className="w-full bg-input-field border border-white/[0.03] rounded-lg p-2.5 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all text-white"
-                  value={orderType}
-                  onChange={handleOrderTypeChange}
-                >
-                  <option value="Pickup">Pickup</option>
-                  <option value="Delivery">Delivery (Outside Olongapo Only)</option>
-                </select>
-              </div>
-
-              {/* Delivery Type — only shown for Delivery orders */}
-              {orderType === "Delivery" && (
+            {confirmationStep === "selection" && (
+              <div className="space-y-4 animate-in fade-in duration-200">
                 <div>
-                  <label htmlFor="deliveryType" className="block text-sm font-bold text-white/70 mb-1.5">
-                    Delivery Type:
+                  <label className="block text-xs font-headline font-bold uppercase tracking-wider text-white/70 mb-2">
+                    Order Type
                   </label>
-                  <select
-                    name="deliveryType"
-                    id="deliveryType"
-                    className="w-full bg-input-field border border-white/[0.03] rounded-lg p-2.5 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all text-white"
-                    value={deliveryType}
-                    onChange={handleDeliveryTypeChange}
-                  >
-                    <option value="DoorToDoor">Door to Door Delivery (Online Payment)</option>
-                    <option value="LbcBranch">LBC Local Branch Pickup (Cash)</option>
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="paymentType" className="block text-sm font-bold text-white/70 mb-1.5">
-                  Mode of Payment:
-                </label>
-                <select
-                  name="paymentType"
-                  id="paymentType"
-                  className={`w-full bg-input-field border border-white/[0.03] rounded-lg p-2.5 text-md font-headline font-bold tracking-widest focus:border-primary-container outline-none transition-all text-white ${
-                    orderType === "Delivery" ? "opacity-60 cursor-not-allowed" : ""
-                  }`}
-                  value={paymentType}
-                  onChange={handlePaymentTypeChange}
-                  disabled={orderType === "Delivery"}
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="Online">Online</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Summary Section */}
-            <div className="border border-primary-container bg-input-field rounded-lg p-3 sm:p-4 mb-4 sm:mb-5">
-              <p className="text-center text-md uppercase tracking-wider text-primary-container font-headline mb-2 border-b border-white/10 pb-1">
-                Order Summary
-              </p>
-              <div className="space-y-2 text-sm sm:text-base">
-                <div className="flex flex-col">
-                  <span className="text-primary-container text-[11px] font-black uppercase tracking-wider">
-                    Products:
-                  </span>
-                  <div className="max-h-24 overflow-y-auto space-y-1.5 custom-scrollbar pr-1 mt-1">
-                    {cartItems.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center text-white/95">
-                        <span className="truncate max-w-[75%] text-xs font-semibold uppercase">
-                          {item.item_name}
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      {
+                        type: "Pickup",
+                        icon: "storefront",
+                        detail: "In-Store Claim",
+                      },
+                      {
+                        type: "Delivery",
+                        icon: "local_shipping",
+                        detail: "Outside Olongapo",
+                      },
+                    ].map(({ type, icon, detail }) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => handleOrderTypeChange(type)}
+                        className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                          orderType === type
+                            ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
+                            : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5">
+                          {icon}
                         </span>
-                        <span className="text-xs font-bold text-white/70">
-                          x{item.quantity}
+                        <span className="font-headline font-bold text-sm sm:text-base uppercase tracking-wider">
+                          {type}
                         </span>
-                      </div>
+                        <span className="text-[10px] text-white/50 tracking-wider font-sans mt-0.5">
+                          {detail}
+                        </span>
+                      </button>
                     ))}
                   </div>
                 </div>
-                <div className="flex justify-between items-center border-t border-white/5 pt-2">
-                  <span className="text-primary-container text-[11px] font-black uppercase tracking-wider">
-                    Order Type:
-                  </span>
-                  <span className="font-bold text-white/90 text-xs sm:text-sm">{orderType}</span>
-                </div>
-                {orderType === "Delivery" && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-primary-container text-[11px] font-black uppercase tracking-wider">
-                      Delivery Type:
-                    </span>
-                    <span className="font-bold text-white/90 text-xs sm:text-sm">
-                      {deliveryType === "DoorToDoor" ? "Door-to-Door" : "LBC Branch"}
-                    </span>
+
+                {orderType === "Pickup" && (
+                  <div className="animate-in fade-in duration-200">
+                    <label className="block text-xs font-headline font-bold uppercase tracking-wider text-white/70 mb-2">
+                      Mode of Payment
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        {
+                          type: "Cash",
+                          icon: "payments",
+                          detail: "Pay Upon Pickup",
+                        },
+                        {
+                          type: "Online",
+                          icon: "qr_code_2",
+                          detail: "GCash / PayMongo",
+                        },
+                      ].map(({ type, icon, detail }) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setPaymentType(type)}
+                          className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                            paymentType === type
+                              ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
+                              : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5">
+                            {icon}
+                          </span>
+                          <span className="font-headline font-bold text-sm sm:text-base uppercase tracking-wider">
+                            {type}
+                          </span>
+                          <span className="text-[10px] text-white/50 tracking-wider font-sans mt-0.5">
+                            {detail}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className="flex justify-between items-center">
-                  <span className="text-primary-container text-[11px] font-black uppercase tracking-wider">
-                    Mode of Payment:
-                  </span>
-                  <span className="font-bold text-white/90 text-xs sm:text-sm">{paymentType}</span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-white/10 mt-2">
-                  <span className="text-primary-container text-xs sm:text-sm font-black uppercase tracking-wider">
-                    Total Price:
-                  </span>
-                  <span className="font-black text-[#d4af37] text-base sm:text-lg">
-                    ₱{grandTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                  </span>
+
+                {orderType === "Delivery" && (
+                  <div className="animate-in fade-in duration-200">
+                    <label className="block text-xs font-headline font-bold uppercase tracking-wider text-white/70 mb-2">
+                      Delivery Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        {
+                          type: "DoorToDoor",
+                          title: "Door to Door",
+                          icon: "home",
+                          detail: "Online Payment",
+                        },
+                        {
+                          type: "LbcBranch",
+                          title: "LBC Branch",
+                          icon: "store",
+                          detail: "Cash on Pickup",
+                        },
+                      ].map(({ type, title, icon, detail }) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleDeliveryTypeChange(type)}
+                          className={`flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                            deliveryType === type
+                              ? "border-primary-container bg-primary-container/15 text-primary-container shadow-md ring-1 ring-primary-container font-black"
+                              : "border-white/10 bg-input-field/50 text-white/70 hover:border-white/30 hover:text-white hover:bg-input-field/80"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-3xl sm:text-4xl mb-1.5">
+                            {icon}
+                          </span>
+                          <span className="font-headline font-bold text-sm sm:text-base uppercase tracking-wider text-center leading-tight">
+                            {title}
+                          </span>
+                          <span className="text-[10px] text-white/50 tracking-wider font-sans mt-0.5 text-center">
+                            {detail}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {isSelectionReady && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmationStep("summary")}
+                    className="w-full py-2.5 sm:py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] active:scale-[0.98] transition-all rounded-lg shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    Proceed to Order Summary
+                    <span className="material-symbols-outlined text-sm">
+                      arrow_forward
+                    </span>
+                  </button>
+                )}
+
+                <div className="pt-2 border-t border-white/5">
+                  <button
+                    type="button"
+                    className="w-full py-2 sm:py-2.5 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-xs sm:text-sm text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg cursor-pointer"
+                    onClick={closeConfirmationModal}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Action Buttons */}
-            <div className="space-y-2">
-              <button
-                disabled={isSubmittingOrder}
-                className="w-full py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-                onClick={handleConfirmOrder}
-              >
-                {isSubmittingOrder ? (
-                  <>
-                    <span className="material-symbols-outlined text-sm animate-spin">
-                      progress_activity
+            {confirmationStep === "summary" && isSelectionReady && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="border border-primary-container bg-input-field rounded-xl p-4 sm:p-5 shadow-lg">
+                  <p className="text-center text-sm sm:text-base uppercase tracking-widest text-primary-container font-headline font-black mb-3 pb-2 border-b border-white/10">
+                    Order Summary
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-primary-container text-[11px] font-bold uppercase tracking-wider">
+                        Products:
+                      </span>
+                      <div className="max-h-28 overflow-y-auto space-y-1.5 custom-scrollbar pr-1 mt-1">
+                        {cartItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex justify-between items-center text-white/95"
+                          >
+                            <span className="truncate max-w-[75%] text-xs font-semibold uppercase">
+                              {item.item_name}
+                            </span>
+                            <span className="font-bold text-white/70">
+                              {item.quantity} {item.quantity === 1 ? "unit" : "units"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-white/10 pt-2">
+                      <span className="text-primary-container font-medium">
+                        Order Type:
+                      </span>
+                      <span className="font-bold text-white/90 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">
+                          {orderType === "Pickup"
+                            ? "storefront"
+                            : "local_shipping"}
+                        </span>
+                        {orderType}
+                      </span>
+                    </div>
+                    {orderType === "Delivery" && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-primary-container font-medium">
+                          Delivery Type:
+                        </span>
+                        <span className="font-bold text-white/90">
+                          {deliveryType === "DoorToDoor"
+                            ? "Door to Door"
+                            : "LBC Branch Pickup"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-primary-container font-medium">
+                        Mode of Payment:
+                      </span>
+                      <span className="font-bold text-white/90 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">
+                          {paymentType === "Cash" ? "payments" : "qr_code_2"}
+                        </span>
+                        {paymentType}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-2">
+                      <span className="text-primary-container font-bold text-sm sm:text-base">
+                        Total Price:
+                      </span>
+                      <span className="font-black text-[#d4af37] text-lg sm:text-xl">
+                        ₱
+                        {grandTotal.toLocaleString("en-PH", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    disabled={isSubmittingOrder}
+                    className="w-full py-3 bg-primary-container text-black/90 font-headline font-black uppercase tracking-widest text-xs sm:text-sm hover:scale-[1.02] transition-all rounded-lg shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={handleConfirmOrder}
+                  >
+                    {isSubmittingOrder ? (
+                      <>
+                        <span className="material-symbols-outlined text-sm animate-spin">
+                          progress_activity
+                        </span>
+                        Placing Order...
+                      </>
+                    ) : (
+                      "Confirm Order"
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmittingOrder}
+                    className="w-full py-2 sm:py-2.5 bg-surface-container border border-secondary-container font-headline font-bold uppercase tracking-wider text-xs sm:text-sm text-on-surface hover:bg-secondary-container hover:text-white/90 transition-all rounded-lg cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setConfirmationStep("selection")}
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      arrow_back
                     </span>
-                    Placing Order...
-                  </>
-                ) : (
-                  "Confirm Order"
-                )}
-              </button>
-              <button
-                disabled={isSubmittingOrder}
-                className="w-full py-2.5 bg-secondary-container border border-white/10 font-headline font-bold uppercase tracking-wider text-xs sm:text-sm text-white/90 hover:bg-white/5 transition-all rounded-lg cursor-pointer"
-                onClick={() => setIsConfirmModalOpen(false)}
-              >
-                Cancel
-              </button>
-            </div>
+                    Change Options
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmittingOrder}
+                    className="w-full py-2 text-white/50 hover:text-white text-xs font-headline font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                    onClick={closeConfirmationModal}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
