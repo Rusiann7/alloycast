@@ -337,6 +337,14 @@ export default function AdminInventory() {
       const item = inventory.find((x) => x.id === itemId);
       if (!item) throw new Error("Product not found in local state");
 
+      if (Number(amount) > Number(item.price)) {
+        showToast(
+          `Discount amount cannot exceed the product price of ₱${item.price}`,
+          "error",
+        );
+        return false;
+      }
+
       const { error } = await supabase
         .from("Inventory")
         .update({
@@ -367,9 +375,11 @@ export default function AdminInventory() {
       showToast("Added Discount!", "success");
       fetchInventoryProduct(); // reload the page to display updated products
       getInventoryHistory();
+      return true;
     } catch (error) {
       console.log(error);
       showToast("Failed to add discount to history log", "error");
+      return false;
     }
   };
 
@@ -1334,7 +1344,7 @@ export default function AdminInventory() {
           setItemToDiscount(null);
         }}
         onConfirm={(amount, startDate, endDate, itemId) => {
-          insertDiscount(amount, startDate, endDate, itemId);
+          return insertDiscount(amount, startDate, endDate, itemId);
         }}
         itemName={itemToDiscount?.item_name}
         itemId={itemToDiscount?.id}

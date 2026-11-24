@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function AddDiscountModal({
   isOpen,
@@ -11,11 +11,23 @@ export default function AddDiscountModal({
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionInProgress = useRef(false);
 
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
-    onConfirm(amount, startDate, endDate, itemId);
+  const handleConfirm = async () => {
+    if (submissionInProgress.current) return;
+
+    submissionInProgress.current = true;
+    setIsSubmitting(true);
+    try {
+      const succeeded = await onConfirm(amount, startDate, endDate, itemId);
+      if (succeeded) handleClose();
+    } finally {
+      submissionInProgress.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -113,9 +125,10 @@ export default function AddDiscountModal({
           </button>
           <button
             onClick={handleConfirm}
-            className="py-4 text-xs font-black uppercase tracking-[0.2em] text-black/90 bg-primary-container hover:brightness-110 transition-all cursor-pointer"
+            disabled={isSubmitting}
+            className="py-4 text-xs font-black uppercase tracking-[0.2em] text-black/90 bg-primary-container hover:brightness-110 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Confirm
+            {isSubmitting ? "Saving..." : "Confirm"}
           </button>
         </div>
       </div>
